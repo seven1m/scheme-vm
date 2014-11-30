@@ -16,8 +16,6 @@ class VM
     const_set(name.to_sym, index)
   end
 
-  TYPE_INT = 0
-
   Frame = Struct.new(:locals, :ret_addr)
   Closure = Struct.new(:function_addr, :locals)
 
