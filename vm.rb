@@ -3,24 +3,18 @@ class VM
   STACK_SIZE = 128
   MEM_SIZE = 1024 * 1024 # 1 MiB
 
-  PUSH   = 0
-  PUTS   = 1
-  ADD    = 2
-  SUB    = 3
-  MULT   = 4
-  DIV    = 5
-  EQ     = 6
-  GT     = 7
-  LT     = 8
-  NOT    = 9
-  JIF    = 10
-  ALLOC  = 16
-  ASSIGN = 17
-  RETR   = 18
-  FUNC   = 19
-  ENDF   = 20
-  CALL   = 21
-  RETURN = 22
+  INSTRUCTIONS = %w(
+    PUSH POP DUP PUTS
+    ADD SUB MULT DIV
+    EQ GT LT NOT JIF
+    ALLOC ASSIGN RETR
+    FUNC ENDF
+    CALL RETURN
+  )
+
+  INSTRUCTIONS.each_with_index do |name, index|
+    const_set(name.to_sym, index)
+  end
 
   TYPE_INT = 0
 
@@ -59,7 +53,18 @@ class VM
     step until @ret_val
   end
 
-  def step
+  def debug_execute
+    puts "\n#{'instructions'.ljust(30)} #{'stack arguments'.ljust(30)} #{'stack result'.ljust(30)} frames"
+    loop do
+      break if @ret_val
+      @debug_instr = [INSTRUCTIONS[@heap[@ip]]]
+      @debug_stack_args = []
+      step(:debug)
+      puts "#{@debug_instr.inspect.ljust(30)} #{@debug_stack_args.inspect.ljust(30)} #{stack.compact.inspect.ljust(30)} #{128 - @fp}"
+    end
+  end
+
+  def step(debug=false)
     op = @heap[@ip]
     @ip += 1
     case op
@@ -68,80 +73,106 @@ class VM
       raise "trying to execute from invalid heap location"
     when PUSH
       val = advance
+      @debug_instr << val if debug
+      push(val)
+    when POP
+      pop
+    when DUP
+      val = peek
+      @debug_stack_args << val if debug
       push(val)
     when PUTS
       count = pop
+      @debug_stack_args << count if debug
       count.times do
-        @stdout << pop.chr
+        value = pop.chr
+        @debug_stack_args << value if debug
+        @stdout << value
       end
     when ADD
       val1 = pop
       val2 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val1 + val2)
     when SUB
       val1 = pop
       val2 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val2 - val1)
     when MULT
       val1 = pop
       val2 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val1 * val2)
     when DIV
       val1 = pop
       val2 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val2 / val1)
     when EQ
       val1 = pop
       val2 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val2 == val1 ? 1 : 0)
     when NOT
       val = pop
+      @debug_stack_args << val if debug
       push(val == 1 ? 0 : 1)
     when JIF
       val = pop
+      @debug_stack_args << val if debug
       jump_count = advance
+      @debug_instr << jump_count if debug
       if val == 1
         @ip += (jump_count - 1)
       end
     when GT
-      val1 = pop
       val2 = pop
+      val1 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val1 > val2 ? 1 : 0)
     when LT
-      val1 = pop
       val2 = pop
+      val1 = pop
+      @debug_stack_args += [val1, val2] if debug
       push(val1 < val2 ? 1 : 0)
     when ALLOC
       index = pop
       size = pop
+      @debug_stack_args += [index, size] if debug
       addr = alloc(size)
       frame.locals[index] = addr
     when ASSIGN
       index = pop
       value = pop
+      @debug_stack_args += [index, value] if debug
       addr = frame.locals[index]
       @heap[addr] = value
     when RETR
       index = pop
+      @debug_stack_args << index if debug
       addr = frame.locals[index]
       value = @heap[addr]
       push(value)
     when FUNC
       addr = alloc(1)
       index = pop
+      @debug_stack_args << index if debug
       frame.locals[index] = addr
       heap[addr] = Closure.new(@ip, frame.locals)
       while advance != ENDF; end
     when CALL
       index = pop
+      @debug_stack_args << index if debug
       args = []
       addr = frame.locals[index]
       closure = heap[addr]
       @fp -= 1
-      @frames[@fp] = Frame.new(closure.locals, @ip)
+      @frames[@fp] = Frame.new(closure.locals.dup, @ip)
       @ip = closure.function_addr
     when RETURN
       value = pop
+      @debug_stack_args << value if debug
       assert !value.nil?, 'return value cannot be nil'
       @ip = frame.ret_addr
       @frames[@fp] = nil
@@ -214,6 +245,36 @@ describe VM do
     it 'pushes a value onto the stack' do
       expect { subject.step }.to change(subject, :sp).by(-1)
       expect(subject.peek).to eq(1)
+    end
+  end
+
+  describe 'POP' do
+    before do
+      subject.load([
+        VM::POP,
+        VM::RETURN
+      ])
+      subject.push(5)
+    end
+
+    it 'pops a value from the stack and discards it' do
+      expect { subject.step }.to change(subject, :sp).by(1)
+      expect(subject.peek).to be_nil
+    end
+  end
+
+  describe 'DUP' do
+    before do
+      subject.load([
+        VM::DUP,
+        VM::RETURN
+      ])
+      subject.push(5)
+    end
+
+    it 'duplicates the top value on the stack' do
+      subject.step
+      expect(subject.stack.compact).to eq([5, 5])
     end
   end
 
@@ -533,8 +594,8 @@ describe VM do
     context 'given first value greater than the second' do
       before do
         subject.load([
-          VM::PUSH, 1,
           VM::PUSH, 2,
+          VM::PUSH, 1,
           VM::GT,
           VM::RETURN
         ])
@@ -549,8 +610,8 @@ describe VM do
     context 'given first value not greater than the second' do
       before do
         subject.load([
-          VM::PUSH, 2,
           VM::PUSH, 1,
+          VM::PUSH, 2,
           VM::GT,
           VM::RETURN
         ])
@@ -567,8 +628,8 @@ describe VM do
     context 'given first value less than the second' do
       before do
         subject.load([
-          VM::PUSH, 2,
           VM::PUSH, 1,
+          VM::PUSH, 2,
           VM::LT,
           VM::RETURN
         ])
@@ -583,8 +644,8 @@ describe VM do
     context 'given first value not less than the second' do
       before do
         subject.load([
-          VM::PUSH, 1,
           VM::PUSH, 2,
+          VM::PUSH, 1,
           VM::LT,
           VM::RETURN
         ])
@@ -635,37 +696,64 @@ describe VM do
     end
   end
 
-  # describe 'fibonacci' do
-  #   # fib = [n] { if n < 2,
-  #   #                n,
-  #   #                { (fib n - 1) + (fib n - 2) } }
-  #   before do
-  #     subject.load([
-  #       VM::PUSH, 8, # TODO   
-  #       VM::PUSH, 0,
-  #       VM::ALLOC,
+  describe 'fibonacci' do
+    # fib = [n] { if n < 2,
+    #                n,
+    #                { (fib n - 1) + (fib n - 2) } }
+    before do
+      subject.load([
+        # fib
+        VM::PUSH, 0,
+        VM::FUNC,
+        VM::POP,     # discard the argument count
+        VM::DUP,
+        VM::PUSH, 1, # size
+        VM::PUSH, 1, # index
+        VM::ALLOC,
+        VM::PUSH, 1,
+        VM::ASSIGN,  # store argument in index 1
+        VM::PUSH, 2,
+        VM::LT,      # compare with 2
+        VM::NOT,
+        VM::JIF, 5,  # if arg1 >= 2, jump down
+        VM::PUSH, 1,
+        VM::RETR,    # put argument back on stack
+        VM::RETURN,  # else, return the passed in value
+        # reduce with n - 1
+        VM::PUSH, 1,
+        VM::RETR,    # put argument back on stack
+        VM::PUSH, 1,
+        VM::SUB,     # arg1 - 1
+        VM::PUSH, 1, # arg count
+        VM::PUSH, 0,
+        VM::CALL,    # call self
+        # reduce with n - 2
+        VM::PUSH, 1,
+        VM::RETR,    # put argument back on stack
+        VM::PUSH, 2,
+        VM::SUB,     # arg1 - 2
+        VM::PUSH, 1, # arg count
+        VM::PUSH, 0,
+        VM::CALL,    # call self
+        # add the two reductions
+        VM::ADD,
+        VM::RETURN,
+        VM::ENDF,
 
-  #       # fib
-  #       VM::PUSH, 0,
-  #       VM::LOAD, 8,
-  #       VM::PUSH, 2,
-  #       VM::RETR, 0, # arg1
-  #       VM::LT,
-  #       VM::NOT,
-  #       VM::JIF, 4,  # if arg1 >= 2, jump down
-  #       # return 2
-  #       VM::PUSH, 2,
-  #       VM::RETURN,
-  #       # reduce
-  #       VM::RETR, 0, # arg1
-  #       VM::PUSH, 1,
-  #       VM::SUB,     # arg1 - 1
-  #       # call self
-  #       VM::PUSH, 
-  #       VM::CALL, 
-  #     ])
-  #   end
-  # end
+        # call fib with value 8
+        VM::PUSH, 8,
+        VM::PUSH, 1,
+        VM::PUSH, 0,
+        VM::CALL,
+        VM::RETURN
+      ])
+    end
+
+    it 'returns 21' do
+      subject.execute
+      expect(subject.ret_val).to eq(21)
+    end
+  end
 
 end
 
