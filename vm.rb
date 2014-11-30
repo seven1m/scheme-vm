@@ -3,17 +3,18 @@ class VM
   STACK_SIZE = 128
   MEM_SIZE = 1024 * 1024 # 1 MiB
 
+  # all recognized op code names (leave room for extras later)
   INSTRUCTIONS = %w(
-    PUSH POP DUP PUTS
-    ADD SUB MULT DIV
-    EQ GT LT NOT JIF
-    ALLOC ASSIGN RETR
-    FUNC ENDF
-    CALL RETURN
+    NOOP  PUSH   POP  DUP  PUTS _ _
+    ADD   SUB    MULT DIV  _    _ _
+    EQ    GT     LT   NOT  JIF  _ _
+    ALLOC ASSIGN RETR _    _    _ _
+    FUNC  ENDF   _    _    _    _ _
+    CALL  RETURN _    _    _    _ _
   )
 
   INSTRUCTIONS.each_with_index do |name, index|
-    const_set(name.to_sym, index)
+    const_set(name.to_sym, index) unless name.start_with?('_')
   end
 
   Frame = Struct.new(:locals, :ret_addr)
@@ -69,6 +70,8 @@ class VM
     when nil
       p(ip: @ip, heap_up_to_ip: @heap[0..@ip])
       raise "trying to execute from invalid heap location"
+    when NOOP
+      # nothing
     when PUSH
       val = advance
       @debug_instr << val if debug
@@ -231,6 +234,19 @@ end
 require 'rspec'
 
 describe VM do
+
+  describe 'NOOP' do
+    before do
+      subject.load([
+        VM::NOOP,
+        VM::RETURN
+      ])
+    end
+
+    it 'does nothing' do
+      expect { subject.step }.not_to change { [subject.sp, subject.fp, subject.stack.compact, subject.heap.compact] }
+    end
+  end
 
   describe 'PUSH' do
     before do
