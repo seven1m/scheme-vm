@@ -24,59 +24,10 @@ class VM
 
   TYPE_INT = 0
 
-  class Frame
-    attr_reader :locals, :stack, :sp, :return
+  Frame = Struct.new(:locals, :ret_addr)
+  Closure = Struct.new(:function_addr, :locals)
 
-    def initialize(closure=nil, args=[], ret=nil)
-      @stack = Array.new(STACK_SIZE)        # stack for operations
-      @sp = @stack.size                     # stack pointer
-      if closure
-        @locals = closure.frame.locals.dup  # copy of variables from parent scope
-      else
-        @locals = Array.new(LOCALS_SIZE)    # empty set of variables
-      end
-      @args = args                          # arguments array
-      @return = ret                         # return address
-    end
-
-    def push(val)
-      @sp -= 1
-      @stack[@sp] = val
-    end
-
-    def pop
-      @stack[@sp].tap do
-        @sp += 1
-      end
-    end
-
-    def add_ref(index, addr)
-      @locals[index] = addr
-    end
-
-    def get_ref(index)
-      @locals[index]
-    end
-
-    def result
-      @stack[@sp]
-    end
-
-    def inspect
-      "<Frame locals=#{locals.compact.inspect} stack=#{stack.compact.inspect} return=#{@return.inspect}>"
-    end
-  end
-
-  class Closure
-    attr_reader :address, :frame
-
-    def initialize(address, frame)
-      @address = address
-      @frame = frame
-    end
-  end
-
-  attr_reader :frames, :heap, :fp, :free, :ip, :return
+  attr_reader :stack, :sp, :frames, :fp, :heap, :free, :ip, :ret_val
   attr_accessor :stdout, :stderr
 
   def initialize(program=nil)
@@ -86,16 +37,18 @@ class VM
   def load(program)
     @stdout = ""
     @stderr = ""
-    @frames = Array.new(STACK_SIZE)         # stack of frames
+    @stack = Array.new(STACK_SIZE)          # stack for operations and function calls
+    @sp = @stack.size - 1                   # stack pointer
+    @frames = Array.new(STACK_SIZE)         # stack for frames (function call context)
     @fp = @frames.size - 1                  # frame pointer
-    @frames[@fp] = Frame.new                # top-level (global) frame
+    @frames[@fp] = Frame.new([])            # top-level (global) frame
     @heap = Array.new(MEM_SIZE)             # the general heap
-    program.each_with_index do |val, index| # copy the program to the heap (this is probably a bad idea)
+    program.each_with_index do |val, index| # copy the program to the heap (not safe?)
       @heap[index] = val
     end
     @free = [program.size..MEM_SIZE]        # a list of free memory ranges
     @ip = 0                                 # instruction pointer
-    @return = nil                           # return value / if truthy, the current frame ends
+    @ret_val = nil                          # return value / if truthy, the current frame ends
   end
 
   def frame
@@ -103,7 +56,7 @@ class VM
   end
 
   def execute
-    step until @return
+    step until @ret_val
   end
 
   def step
@@ -115,98 +68,108 @@ class VM
       raise "trying to execute from invalid heap location"
     when PUSH
       val = advance
-      frame.push(val)
+      push(val)
     when PUTS
-      count = frame.pop
+      count = pop
       count.times do
-        @stdout << frame.pop.chr
+        @stdout << pop.chr
       end
     when ADD
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val1 + val2)
+      val1 = pop
+      val2 = pop
+      push(val1 + val2)
     when SUB
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val2 - val1)
+      val1 = pop
+      val2 = pop
+      push(val2 - val1)
     when MULT
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val1 * val2)
+      val1 = pop
+      val2 = pop
+      push(val1 * val2)
     when DIV
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val2 / val1)
+      val1 = pop
+      val2 = pop
+      push(val2 / val1)
     when EQ
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val2 == val1 ? 1 : 0)
+      val1 = pop
+      val2 = pop
+      push(val2 == val1 ? 1 : 0)
     when NOT
-      val = frame.pop
-      frame.push(val == 1 ? 0 : 1)
+      val = pop
+      push(val == 1 ? 0 : 1)
     when JIF
-      val = frame.pop
+      val = pop
       jump_count = advance
       if val == 1
         @ip += (jump_count - 1)
       end
     when GT
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val1 > val2 ? 1 : 0)
+      val1 = pop
+      val2 = pop
+      push(val1 > val2 ? 1 : 0)
     when LT
-      val1 = frame.pop
-      val2 = frame.pop
-      frame.push(val1 < val2 ? 1 : 0)
+      val1 = pop
+      val2 = pop
+      push(val1 < val2 ? 1 : 0)
     when ALLOC
-      index = frame.pop
-      size = frame.pop
+      index = pop
+      size = pop
       addr = alloc(size)
-      frame.add_ref(index, addr)
+      frame.locals[index] = addr
     when ASSIGN
-      index = frame.pop
-      value = frame.pop
-      addr = frame.get_ref(index)
+      index = pop
+      value = pop
+      addr = frame.locals[index]
       @heap[addr] = value
     when RETR
-      index = frame.pop
-      addr = frame.get_ref(index)
+      index = pop
+      addr = frame.locals[index]
       value = @heap[addr]
-      frame.push(value)
+      push(value)
     when FUNC
       addr = alloc(1)
-      index = frame.pop
-      frame.add_ref(index, addr)
-      heap[addr] = Closure.new(@ip, frame)
+      index = pop
+      frame.locals[index] = addr
+      heap[addr] = Closure.new(@ip, frame.locals)
       while advance != ENDF; end
     when CALL
-      index = frame.pop
-      arg_count = frame.pop
+      index = pop
       args = []
-      # TODO
-      # arg_count.times do
-      #   idx = frame.pop
-      #   args << frame.get_ref(idx)
-      # end
-      addr = frame.get_ref(index)
+      addr = frame.locals[index]
       closure = heap[addr]
       @fp -= 1
-      @frames[@fp] = Frame.new(closure, args, @ip)
-      @ip = closure.address
+      @frames[@fp] = Frame.new(closure.locals, @ip)
+      @ip = closure.function_addr
     when RETURN
-      value = frame.pop
+      value = pop
       assert !value.nil?, 'return value cannot be nil'
-      @ip = frame.return
+      @ip = frame.ret_addr
       @frames[@fp] = nil
       @fp += 1
       if frame
-        frame.push(value)
+        push(value)
       else
-        @return = value
+        @ret_val = value
       end
     else
       raise "unknown op: #{op}"
     end
+  end
+
+  def push(val)
+    @sp -= 1
+    @stack[@sp] = val
+  end
+
+  def pop
+    @stack[@sp].tap do
+      @stack[@sp] = nil
+      @sp += 1
+    end
+  end
+
+  def peek
+    @stack[@sp]
   end
 
   def step_frame
@@ -249,8 +212,8 @@ describe VM do
     end
 
     it 'pushes a value onto the stack' do
-      expect { subject.step }.to change(subject.frame, :sp).by(-1)
-      expect(subject.frame.result).to eq(1)
+      expect { subject.step }.to change(subject, :sp).by(-1)
+      expect(subject.peek).to eq(1)
     end
   end
 
@@ -300,11 +263,11 @@ describe VM do
         VM::ADD,
         VM::RETURN
       ])
-      subject.execute
+      subject.step_frame
     end
 
     it 'adds two values and pushes the result onto the stack' do
-      expect(subject.return).to eq(5)
+      expect(subject.peek).to eq(5)
     end
   end
 
@@ -316,11 +279,11 @@ describe VM do
         VM::SUB,
         VM::RETURN
       ])
-      subject.execute
+      subject.step_frame
     end
 
     it 'subtracts two values and pushes the result onto the stack' do
-      expect(subject.return).to eq(1)
+      expect(subject.peek).to eq(1)
     end
   end
 
@@ -332,11 +295,11 @@ describe VM do
         VM::MULT,
         VM::RETURN
       ])
-      subject.execute
+      subject.step_frame
     end
 
     it 'multiplies two values and pushes the result onto the stack' do
-      expect(subject.return).to eq(6)
+      expect(subject.peek).to eq(6)
     end
   end
 
@@ -348,11 +311,11 @@ describe VM do
         VM::DIV,
         VM::RETURN
       ])
-      subject.execute
+      subject.step_frame
     end
 
     it 'divides two values and pushes the result onto the stack' do
-      expect(subject.return).to eq(3)
+      expect(subject.peek).to eq(3)
     end
   end
 
@@ -411,7 +374,7 @@ describe VM do
     end
 
     it 'retrieves the value from the address represented by the local variable index and pushes it onto the stack' do
-      expect(subject.frame.result).to eq(11)
+      expect(subject.peek).to eq(11)
     end
   end
 
@@ -457,14 +420,14 @@ describe VM do
         VM::RETURN
       ])
       # manually load the instructions for a function
-      subject.heap[20..24] = [
+      subject.heap[20..27] = [
         VM::PUSH, 'x'.ord,
         VM::PUSH, 1,
         VM::PUTS,
         VM::PUSH, 0,
         VM::RETURN
       ]
-      subject.heap[40] = VM::Closure.new(20, subject.frame)
+      subject.heap[40] = VM::Closure.new(20, subject.frame.locals)
       subject.heap[100] = 'y'.ord
       subject.frame.locals[0] = 200 # location of top-level variable
       subject.frame.locals[1] = 40  # location of closure
@@ -476,7 +439,7 @@ describe VM do
       expect { subject.step }.to change(subject, :fp).by(-1)
       new_frame = subject.frame
       expect(new_frame).to be
-      expect(new_frame.return).to eq(7)
+      expect(subject.stack.compact).to eq([1, 2]) # arg count
       expect(new_frame.locals.compact).to eq([200, 40])
       expect(new_frame.locals.compact).to eq([200, 40])
     end
@@ -494,9 +457,9 @@ describe VM do
       subject.step       # step into function
       subject.step_frame # step through function
       subject.step       # step back up to parent frame
-      expect(subject.frame.result).to eq(0)
+      expect(subject.peek).to eq(0)
       subject.step       # process final return
-      expect(subject.return).to eq(0)
+      expect(subject.ret_val).to eq(0)
     end
   end
 
@@ -509,11 +472,11 @@ describe VM do
           VM::EQ,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.return).to eq(1)
+        expect(subject.peek).to eq(1)
       end
     end
 
@@ -525,11 +488,11 @@ describe VM do
           VM::EQ,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.return).to eq(0)
+        expect(subject.peek).to eq(0)
       end
     end
   end
@@ -542,11 +505,11 @@ describe VM do
           VM::NOT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.return).to eq(0)
+        expect(subject.peek).to eq(0)
       end
     end
 
@@ -557,11 +520,11 @@ describe VM do
           VM::NOT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.return).to eq(1)
+        expect(subject.peek).to eq(1)
       end
     end
   end
@@ -575,11 +538,11 @@ describe VM do
           VM::GT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.return).to eq(1)
+        expect(subject.peek).to eq(1)
       end
     end
 
@@ -591,11 +554,11 @@ describe VM do
           VM::GT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.return).to eq(0)
+        expect(subject.peek).to eq(0)
       end
     end
   end
@@ -609,11 +572,11 @@ describe VM do
           VM::LT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.return).to eq(1)
+        expect(subject.peek).to eq(1)
       end
     end
 
@@ -625,11 +588,11 @@ describe VM do
           VM::LT,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.return).to eq(0)
+        expect(subject.peek).to eq(0)
       end
     end
   end
@@ -645,11 +608,11 @@ describe VM do
           VM::PUSH, 20,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'jumps the number of instructions specified' do
-        expect(subject.return).to eq(20)
+        expect(subject.peek).to eq(20)
       end
     end
 
@@ -663,11 +626,11 @@ describe VM do
           VM::PUSH, 20,
           VM::RETURN
         ])
-        subject.execute
+        subject.step_frame
       end
 
       it 'does not jump' do
-        expect(subject.return).to eq(10)
+        expect(subject.peek).to eq(10)
       end
     end
   end
