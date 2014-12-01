@@ -41,7 +41,7 @@ class VM
     end
     @free = [program.size..MEM_SIZE]        # a list of free memory ranges
     @ip = 0                                 # instruction pointer
-    @ret_val = nil                          # return value / if truthy, the current frame ends
+    @ret_val = nil                          # return value / if truthy, the program ends
   end
 
   def frame
@@ -59,7 +59,7 @@ class VM
       @debug_instr = [INSTRUCTIONS[@heap[@ip]]]
       @debug_stack_args = []
       step(:debug)
-      puts "#{@debug_instr.inspect.ljust(30)} #{@debug_stack_args.inspect.ljust(30)} #{stack.compact.inspect.ljust(30)} #{128 - @fp}"
+      puts "#{@debug_instr.inspect.ljust(30)} #{@debug_stack_args.inspect.ljust(30)} #{stack.compact.inspect.ljust(30)} #{STACK_SIZE - @fp}"
     end
   end
 
