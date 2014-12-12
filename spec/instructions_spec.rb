@@ -1,5 +1,4 @@
-require 'rspec'
-require_relative './vm'
+require_relative '../vm'
 
 describe VM do
 
@@ -222,34 +221,63 @@ describe VM do
   end
 
   describe 'FUNC' do
-    before do
-      subject.load([
-        VM::PUSH, 0,
-        VM::FUNC,
-        VM::PUSH, 'y'.ord,
-        VM::PUSH, 1,
-        VM::PUTS,
-        VM::PUSH, 0,
-        VM::RETURN,
-        VM::ENDF,
+    context 'single function' do
+      before do
+        subject.load([
+          VM::PUSH, 0,
+          VM::FUNC,
+          VM::PUSH, 'y'.ord,
+          VM::PUSH, 1,
+          VM::PUTS,
+          VM::PUSH, 0,
+          VM::RETURN,
+          VM::ENDF,
 
-        VM::PUSH, 0,
-        VM::RETURN
-      ])
-      subject.step_frame
+          VM::PUSH, 0,
+          VM::RETURN
+        ])
+        subject.step_frame
+      end
+
+      it 'allocates space on the heap' do
+        expect(subject.frame.locals[0]).to eq(15)
+        expect(subject.free.size).to eq(1)
+        block = subject.free.first
+        expect(block.first).to eq(16)
+        expect(block.last).to eq(VM::MEM_SIZE)
+      end
+
+      it 'stores (pointer to) the function (struct) on the heap' do
+        addr = subject.frame.locals[0]
+        expect(subject.heap[addr]).to be_a(VM::Closure)
+      end
     end
 
-    it 'allocates space on the heap' do
-      expect(subject.frame.locals[0]).to eq(15)
-      expect(subject.free.size).to eq(1)
-      block = subject.free.first
-      expect(block.first).to eq(16)
-      expect(block.last).to eq(VM::MEM_SIZE)
-    end
+    context 'nested function' do
+      before do
+        subject.load([
+          VM::PUSH, 0,
+          VM::FUNC,    # top function
+          VM::PUSH, 1,
+          VM::FUNC,    # nested function
+          VM::PUSH, 1,
+          VM::RETURN,
+          VM::ENDF,    # end nested function
+          VM::PUSH, 2,
+          VM::RETURN,
+          VM::ENDF,    # end top function
 
-    it 'stores (pointer to) the function (struct) on the heap' do
-      addr = subject.frame.locals[0]
-      expect(subject.heap[addr]).to be_a(VM::Closure)
+          VM::PUSH, 3,
+          VM::RETURN
+        ])
+        subject.step_frame
+      end
+
+      it 'creates a single function' do
+        expect(subject.frame.locals[0]).to be_a(Fixnum)
+        expect(subject.frame.locals[1]).to be_nil
+        expect(subject.peek).to eq(3)
+      end
     end
   end
 
@@ -475,65 +503,6 @@ describe VM do
       it 'does not jump' do
         expect(subject.peek).to eq(10)
       end
-    end
-  end
-
-  describe 'fibonacci' do
-    # fib = [n] { if n < 2,
-    #                n,
-    #                { (fib n - 1) + (fib n - 2) } }
-    before do
-      subject.load([
-        # fib
-        VM::PUSH, 0,
-        VM::FUNC,
-        VM::POP,     # discard the argument count
-        VM::DUP,
-        VM::PUSH, 1, # size
-        VM::PUSH, 1, # index
-        VM::ALLOC,
-        VM::PUSH, 1,
-        VM::ASSIGN,  # store argument in index 1
-        VM::PUSH, 2,
-        VM::LT,      # compare with 2
-        VM::NOT,
-        VM::JIF, 5,  # if arg1 >= 2, jump down
-        VM::PUSH, 1,
-        VM::RETR,    # put argument back on stack
-        VM::RETURN,  # else, return the passed in value
-        # reduce with n - 1
-        VM::PUSH, 1,
-        VM::RETR,    # put argument back on stack
-        VM::PUSH, 1,
-        VM::SUB,     # arg1 - 1
-        VM::PUSH, 1, # arg count
-        VM::PUSH, 0,
-        VM::CALL,    # call self
-        # reduce with n - 2
-        VM::PUSH, 1,
-        VM::RETR,    # put argument back on stack
-        VM::PUSH, 2,
-        VM::SUB,     # arg1 - 2
-        VM::PUSH, 1, # arg count
-        VM::PUSH, 0,
-        VM::CALL,    # call self
-        # add the two reductions
-        VM::ADD,
-        VM::RETURN,
-        VM::ENDF,
-
-        # call fib with value 8
-        VM::PUSH, 8,
-        VM::PUSH, 1,
-        VM::PUSH, 0,
-        VM::CALL,
-        VM::RETURN
-      ])
-    end
-
-    it 'returns 21' do
-      subject.execute
-      expect(subject.ret_val).to eq(21)
     end
   end
 

@@ -161,7 +161,16 @@ class VM
       @debug_stack_args << index if debug
       frame.locals[index] = addr
       heap[addr] = Closure.new(@ip, frame.locals)
-      while advance != ENDF; end
+      nested = 0
+      loop do
+        case advance
+        when FUNC
+          nested += 1
+        when ENDF
+          break if nested <= 0
+          nested -= 1
+        end
+      end
     when CALL
       index = pop
       @debug_stack_args << index if debug

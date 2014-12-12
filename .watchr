@@ -1,1 +1,1 @@
-watch('.*') { |m| puts `rspec vm_spec.rb` }
+watch('.*') { |m| puts `rspec spec` }
