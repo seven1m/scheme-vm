@@ -9,37 +9,37 @@ describe VM do
     before do
       subject.load([
         # fib
-        VM::PUSH, 0,
+        VM::PUSHNUM, 0,
         VM::FUNC,
         VM::POP,     # discard the argument count
         VM::DUP,
-        VM::PUSH, 1, # size
-        VM::PUSH, 1, # index
+        VM::PUSHNUM, 1, # size
+        VM::PUSHNUM, 1, # index
         VM::ALLOC,
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::ASSIGN,  # store argument in index 1
-        VM::PUSH, 2,
+        VM::PUSHNUM, 2,
         VM::LT,      # compare with 2
         VM::NOT,
         VM::JIF, 5,  # if arg1 >= 2, jump down
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::RETR,    # put argument back on stack
         VM::RETURN,  # else, return the passed in value
         # reduce with n - 1
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::RETR,    # put argument back on stack
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::SUB,     # arg1 - 1
-        VM::PUSH, 1, # arg count
-        VM::PUSH, 0,
+        VM::PUSHNUM, 1, # arg count
+        VM::PUSHNUM, 0,
         VM::CALL,    # call self
         # reduce with n - 2
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::RETR,    # put argument back on stack
-        VM::PUSH, 2,
+        VM::PUSHNUM, 2,
         VM::SUB,     # arg1 - 2
-        VM::PUSH, 1, # arg count
-        VM::PUSH, 0,
+        VM::PUSHNUM, 1, # arg count
+        VM::PUSHNUM, 0,
         VM::CALL,    # call self
         # add the two reductions
         VM::ADD,
@@ -47,9 +47,9 @@ describe VM do
         VM::ENDF,
 
         # call fib with value 8
-        VM::PUSH, 8,
-        VM::PUSH, 1,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 8,
+        VM::PUSHNUM, 1,
+        VM::PUSHNUM, 0,
         VM::CALL,
         VM::RETURN
       ])
