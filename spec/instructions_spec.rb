@@ -15,15 +15,15 @@ describe VM do
     end
   end
 
-  describe 'PUSH' do
+  describe 'PUSHNUM' do
     before do
       subject.load([
-        VM::PUSH, 1,
+        VM::PUSHNUM, 1,
         VM::RETURN
       ])
     end
 
-    it 'pushes a value onto the stack' do
+    it 'pushes a number value onto the stack' do
       expect { subject.step }.to change(subject, :sp).by(-1)
       expect(subject.peek).to eq(1)
     end
@@ -63,10 +63,10 @@ describe VM do
     context 'with a single value' do
       before do
         subject.load([
-          VM::PUSH, 'x'.ord,
-          VM::PUSH, 1,
+          VM::PUSHNUM, 'x'.ord,
+          VM::PUSHNUM, 1,
           VM::PUTS,
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::RETURN
         ])
       end
@@ -80,12 +80,12 @@ describe VM do
     context 'with more than one value' do
       before do
         subject.load([
-          VM::PUSH, 'z'.ord,
-          VM::PUSH, 'y'.ord,
-          VM::PUSH, 'x'.ord,
-          VM::PUSH, 3,
+          VM::PUSHNUM, 'z'.ord,
+          VM::PUSHNUM, 'y'.ord,
+          VM::PUSHNUM, 'x'.ord,
+          VM::PUSHNUM, 3,
           VM::PUTS,
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::RETURN
         ])
       end
@@ -100,8 +100,8 @@ describe VM do
   describe 'ADD' do
     before do
       subject.load([
-        VM::PUSH, 3,
-        VM::PUSH, 2,
+        VM::PUSHNUM, 3,
+        VM::PUSHNUM, 2,
         VM::ADD,
         VM::RETURN
       ])
@@ -116,8 +116,8 @@ describe VM do
   describe 'SUB' do
     before do
       subject.load([
-        VM::PUSH, 3,
-        VM::PUSH, 2,
+        VM::PUSHNUM, 3,
+        VM::PUSHNUM, 2,
         VM::SUB,
         VM::RETURN
       ])
@@ -132,8 +132,8 @@ describe VM do
   describe 'MULT' do
     before do
       subject.load([
-        VM::PUSH, 3,
-        VM::PUSH, 2,
+        VM::PUSHNUM, 3,
+        VM::PUSHNUM, 2,
         VM::MULT,
         VM::RETURN
       ])
@@ -148,8 +148,8 @@ describe VM do
   describe 'DIV' do
     before do
       subject.load([
-        VM::PUSH, 6,
-        VM::PUSH, 2,
+        VM::PUSHNUM, 6,
+        VM::PUSHNUM, 2,
         VM::DIV,
         VM::RETURN
       ])
@@ -164,10 +164,10 @@ describe VM do
   describe 'ALLOC' do
     before do
       subject.load([
-        VM::PUSH, 3,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 3,
+        VM::PUSHNUM, 0,
         VM::ALLOC,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 0,
         VM::RETURN
       ])
       subject.step_frame
@@ -188,10 +188,10 @@ describe VM do
   describe 'ASSIGN' do
     before do
       subject.load([
-        VM::PUSH, 10,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 10,
+        VM::PUSHNUM, 0,
         VM::ASSIGN,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 0,
         VM::RETURN
       ])
       subject.frame.locals[0] = 6
@@ -206,7 +206,7 @@ describe VM do
   describe 'RETR' do
     before do
       subject.load([
-        VM::PUSH, 0,
+        VM::PUSHNUM, 0,
         VM::RETR,
         VM::RETURN
       ])
@@ -224,16 +224,16 @@ describe VM do
     context 'single function' do
       before do
         subject.load([
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::FUNC,
-          VM::PUSH, 'y'.ord,
-          VM::PUSH, 1,
+          VM::PUSHNUM, 'y'.ord,
+          VM::PUSHNUM, 1,
           VM::PUTS,
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::RETURN,
           VM::ENDF,
 
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::RETURN
         ])
         subject.step_frame
@@ -256,18 +256,18 @@ describe VM do
     context 'nested function' do
       before do
         subject.load([
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::FUNC,    # top function
-          VM::PUSH, 1,
+          VM::PUSHNUM, 1,
           VM::FUNC,    # nested function
-          VM::PUSH, 1,
+          VM::PUSHNUM, 1,
           VM::RETURN,
           VM::ENDF,    # end nested function
-          VM::PUSH, 2,
+          VM::PUSHNUM, 2,
           VM::RETURN,
           VM::ENDF,    # end top function
 
-          VM::PUSH, 3,
+          VM::PUSHNUM, 3,
           VM::RETURN
         ])
         subject.step_frame
@@ -284,18 +284,18 @@ describe VM do
   describe 'CALL' do
     before do
       subject.load([
-        VM::PUSH, 2, # arg1
-        VM::PUSH, 1, # arg count
-        VM::PUSH, 1, # index of function
+        VM::PUSHNUM, 2, # arg1
+        VM::PUSHNUM, 1, # arg count
+        VM::PUSHNUM, 1, # index of function
         VM::CALL,
         VM::RETURN
       ])
       # manually load the instructions for a function
       subject.heap[20..27] = [
-        VM::PUSH, 'x'.ord,
-        VM::PUSH, 1,
+        VM::PUSHNUM, 'x'.ord,
+        VM::PUSHNUM, 1,
         VM::PUTS,
-        VM::PUSH, 0,
+        VM::PUSHNUM, 0,
         VM::RETURN
       ]
       subject.heap[40] = VM::Closure.new(20, subject.frame.locals)
@@ -338,8 +338,8 @@ describe VM do
     context 'given two equal values' do
       before do
         subject.load([
-          VM::PUSH, 3,
-          VM::PUSH, 3,
+          VM::PUSHNUM, 3,
+          VM::PUSHNUM, 3,
           VM::EQ,
           VM::RETURN
         ])
@@ -354,8 +354,8 @@ describe VM do
     context 'given two values are not equal' do
       before do
         subject.load([
-          VM::PUSH, 3,
-          VM::PUSH, 2,
+          VM::PUSHNUM, 3,
+          VM::PUSHNUM, 2,
           VM::EQ,
           VM::RETURN
         ])
@@ -372,7 +372,7 @@ describe VM do
     context 'given a 1' do
       before do
         subject.load([
-          VM::PUSH, 1,
+          VM::PUSHNUM, 1,
           VM::NOT,
           VM::RETURN
         ])
@@ -380,14 +380,14 @@ describe VM do
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.peek).to eq(0)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 0))
       end
     end
 
     context 'given a 0' do
       before do
         subject.load([
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::NOT,
           VM::RETURN
         ])
@@ -395,7 +395,7 @@ describe VM do
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.peek).to eq(1)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 1))
       end
     end
   end
@@ -404,8 +404,8 @@ describe VM do
     context 'given first value greater than the second' do
       before do
         subject.load([
-          VM::PUSH, 2,
-          VM::PUSH, 1,
+          VM::PUSHNUM, 2,
+          VM::PUSHNUM, 1,
           VM::GT,
           VM::RETURN
         ])
@@ -413,15 +413,15 @@ describe VM do
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.peek).to eq(1)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 1))
       end
     end
 
     context 'given first value not greater than the second' do
       before do
         subject.load([
-          VM::PUSH, 1,
-          VM::PUSH, 2,
+          VM::PUSHNUM, 1,
+          VM::PUSHNUM, 2,
           VM::GT,
           VM::RETURN
         ])
@@ -429,7 +429,7 @@ describe VM do
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.peek).to eq(0)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 0))
       end
     end
   end
@@ -438,8 +438,8 @@ describe VM do
     context 'given first value less than the second' do
       before do
         subject.load([
-          VM::PUSH, 1,
-          VM::PUSH, 2,
+          VM::PUSHNUM, 1,
+          VM::PUSHNUM, 2,
           VM::LT,
           VM::RETURN
         ])
@@ -447,15 +447,15 @@ describe VM do
       end
 
       it 'pushes a 1 onto the stack' do
-        expect(subject.peek).to eq(1)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 1))
       end
     end
 
     context 'given first value not less than the second' do
       before do
         subject.load([
-          VM::PUSH, 2,
-          VM::PUSH, 1,
+          VM::PUSHNUM, 2,
+          VM::PUSHNUM, 1,
           VM::LT,
           VM::RETURN
         ])
@@ -463,7 +463,7 @@ describe VM do
       end
 
       it 'pushes a 0 onto the stack' do
-        expect(subject.peek).to eq(0)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 0))
       end
     end
   end
@@ -472,36 +472,36 @@ describe VM do
     context 'value on stack is 1' do
       before do
         subject.load([
-          VM::PUSH, 1,
+          VM::PUSHNUM, 1,
           VM::JIF, 4,
-          VM::PUSH, 10,
+          VM::PUSHNUM, 10,
           VM::RETURN,
-          VM::PUSH, 20,
+          VM::PUSHNUM, 20,
           VM::RETURN
         ])
         subject.step_frame
       end
 
       it 'jumps the number of instructions specified' do
-        expect(subject.peek).to eq(20)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 20))
       end
     end
 
     context 'value on stack is 0' do
       before do
         subject.load([
-          VM::PUSH, 0,
+          VM::PUSHNUM, 0,
           VM::JIF, 4,
-          VM::PUSH, 10,
+          VM::PUSHNUM, 10,
           VM::RETURN,
-          VM::PUSH, 20,
+          VM::PUSHNUM, 20,
           VM::RETURN
         ])
         subject.step_frame
       end
 
       it 'does not jump' do
-        expect(subject.peek).to eq(10)
+        expect(subject.peek).to eq(VM::Value.new(VM::NUM, 10))
       end
     end
   end
