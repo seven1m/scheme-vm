@@ -3,22 +3,32 @@ class VM
   STACK_SIZE = 128
   MEM_SIZE = 1024 * 1024 # 1 MiB
 
-  # all recognized op code names (leave room for extras later)
+  # all recognized op code names
   INSTRUCTIONS = %w(
-    NOOP  PUSH   POP  DUP  PUTS _ _
-    ADD   SUB    MULT DIV  _    _ _
-    EQ    GT     LT   NOT  JIF  _ _
-    ALLOC ASSIGN RETR _    _    _ _
-    FUNC  ENDF   _    _    _    _ _
-    CALL  RETURN _    _    _    _ _
+    NOOP POP DUP PUTS
+    PUSHNUM
+    ADD SUB MULT DIV
+    EQ GT LT NOT JIF
+    ALLOC ASSIGN RETR
+    FUNC ENDF
+    CALL RETURN
   )
 
   INSTRUCTIONS.each_with_index do |name, index|
-    const_set(name.to_sym, index) unless name.start_with?('_')
+    const_set(name.to_sym, index)
   end
 
-  Frame = Struct.new(:locals, :ret_addr)
+  TYPES = %w(
+    NUM
+  )
+
+  TYPES.each_with_index do |name, index|
+    const_set(name.to_sym, index)
+  end
+
+  Frame   = Struct.new(:locals, :ret_addr)
   Closure = Struct.new(:function_addr, :locals)
+  Value   = Struct.new(:type, :value)
 
   attr_reader :stack, :sp, :frames, :fp, :heap, :free, :ip, :ret_val
   attr_accessor :stdout, :stderr
@@ -72,8 +82,9 @@ class VM
       raise "trying to execute from invalid heap location"
     when NOOP
       # nothing
-    when PUSH
-      val = advance
+    when PUSHNUM
+      x = advance
+      val = Value.new(NUM, x)
       @debug_instr << val if debug
       push(val)
     when POP
@@ -85,8 +96,8 @@ class VM
     when PUTS
       count = pop
       @debug_stack_args << count if debug
-      count.times do
-        value = pop.chr
+      count.value.times do
+        value = pop.value.chr
         @debug_stack_args << value if debug
         @stdout << value
       end
@@ -118,25 +129,25 @@ class VM
     when NOT
       val = pop
       @debug_stack_args << val if debug
-      push(val == 1 ? 0 : 1)
+      push(Value.new(NUM, val.value == 1 ? 0 : 1))
     when JIF
       val = pop
       @debug_stack_args << val if debug
       jump_count = advance
       @debug_instr << jump_count if debug
-      if val == 1
+      if val.value == 1
         @ip += (jump_count - 1)
       end
     when GT
       val2 = pop
       val1 = pop
       @debug_stack_args += [val1, val2] if debug
-      push(val1 > val2 ? 1 : 0)
+      push(Value.new(NUM, val1.value > val2.value ? 1 : 0))
     when LT
       val2 = pop
       val1 = pop
       @debug_stack_args += [val1, val2] if debug
-      push(val1 < val2 ? 1 : 0)
+      push(Value.new(NUM, val1.value < val2.value ? 1 : 0))
     when ALLOC
       index = pop
       size = pop
@@ -175,7 +186,7 @@ class VM
       index = pop
       @debug_stack_args << index if debug
       args = []
-      addr = frame.locals[index]
+      addr = frame.locals[index.value]
       closure = heap[addr]
       @fp -= 1
       @frames[@fp] = Frame.new(closure.locals.dup, @ip)
