@@ -1,241 +1,154 @@
-class VM
-  LOCALS_SIZE = 32
-  STACK_SIZE = 128
-  MEM_SIZE = 1024 * 1024 # 1 MiB
+require_relative 'vm/int'
+require_relative 'vm/byte_array'
 
-  # all recognized op code names (leave room for extras later)
+class VM
   INSTRUCTIONS = %w(
-    NOOP  PUSH   POP  DUP  PUTS _ _
-    ADD   SUB    MULT DIV  _    _ _
-    EQ    GT     LT   NOT  JIF  _ _
-    ALLOC ASSIGN RETR _    _    _ _
-    FUNC  ENDF   _    _    _    _ _
-    CALL  RETURN _    _    _    _ _
+    PUSH_NUM
+    PUSH_STR
+    POP
+    ADD
+    CMP_GT
+    CMP_GTE
+    CMP_LT
+    CMP_LTE
+    DUP
+    INT
+    JUMP
+    JUMP_IF_TRUE
+    LABEL
+    CALL
+    RETURN
   )
 
   INSTRUCTIONS.each_with_index do |name, index|
-    const_set(name.to_sym, index) unless name.start_with?('_')
+    const_set(name.to_sym, index)
   end
 
-  Frame = Struct.new(:locals, :ret_addr)
-  Closure = Struct.new(:function_addr, :locals)
+  INT_PRINT_STACK_TOP        = 1
+  INT_PRINT_STACK_TOP_MEMORY = 2
 
-  attr_reader :stack, :sp, :frames, :fp, :heap, :free, :ip, :ret_val
-  attr_accessor :stdout, :stderr
+  attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(program=nil)
-    load(program) if program
+  def initialize(instructions = [], stdout: $stdout)
+    @ip = 0
+    @instructions = instructions
+    @stack = []
+    @call_stack = []
+    @heap = [] # simulate a heap - just store references to objects here
+               # an "address" is simply an index into this array
+    @labels = {}
+    @stdout = stdout
   end
 
-  def load(program)
-    @stdout = ""
-    @stderr = ""
-    @stack = Array.new(STACK_SIZE)          # stack for operations and function calls
-    @sp = @stack.size - 1                   # stack pointer
-    @frames = Array.new(STACK_SIZE)         # stack for frames (function call context)
-    @fp = @frames.size - 1                  # frame pointer
-    @frames[@fp] = Frame.new([])            # top-level (global) frame
-    @heap = Array.new(MEM_SIZE)             # the general heap
-    program.each_with_index do |val, index| # copy the program to the heap (not safe?)
-      @heap[index] = val
-    end
-    @free = [program.size..MEM_SIZE]        # a list of free memory ranges
-    @ip = 0                                 # instruction pointer
-    @ret_val = nil                          # return value / if truthy, the program ends
-  end
-
-  def frame
-    @frames[@fp]
-  end
-
-  def execute
-    step until @ret_val
-  end
-
-  def debug_execute
-    puts "\n#{'instructions'.ljust(30)} #{'stack arguments'.ljust(30)} #{'stack result'.ljust(30)} frames"
-    loop do
-      break if @ret_val
-      @debug_instr = [INSTRUCTIONS[@heap[@ip]]]
-      @debug_stack_args = []
-      step(:debug)
-      puts "#{@debug_instr.inspect.ljust(30)} #{@debug_stack_args.inspect.ljust(30)} #{stack.compact.inspect.ljust(30)} #{STACK_SIZE - @fp}"
-    end
-  end
-
-  def step(debug=false)
-    op = @heap[@ip]
-    @ip += 1
-    case op
-    when nil
-      p(ip: @ip, heap_up_to_ip: @heap[0..@ip])
-      raise "trying to execute from invalid heap location"
-    when NOOP
-      # nothing
-    when PUSH
-      val = advance
-      @debug_instr << val if debug
-      push(val)
-    when POP
-      pop
-    when DUP
-      val = peek
-      @debug_stack_args << val if debug
-      push(val)
-    when PUTS
-      count = pop
-      @debug_stack_args << count if debug
-      count.times do
-        value = pop.chr
-        @debug_stack_args << value if debug
-        @stdout << value
-      end
-    when ADD
-      val1 = pop
-      val2 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val1 + val2)
-    when SUB
-      val1 = pop
-      val2 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val2 - val1)
-    when MULT
-      val1 = pop
-      val2 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val1 * val2)
-    when DIV
-      val1 = pop
-      val2 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val2 / val1)
-    when EQ
-      val1 = pop
-      val2 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val2 == val1 ? 1 : 0)
-    when NOT
-      val = pop
-      @debug_stack_args << val if debug
-      push(val == 1 ? 0 : 1)
-    when JIF
-      val = pop
-      @debug_stack_args << val if debug
-      jump_count = advance
-      @debug_instr << jump_count if debug
-      if val == 1
-        @ip += (jump_count - 1)
-      end
-    when GT
-      val2 = pop
-      val1 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val1 > val2 ? 1 : 0)
-    when LT
-      val2 = pop
-      val1 = pop
-      @debug_stack_args += [val1, val2] if debug
-      push(val1 < val2 ? 1 : 0)
-    when ALLOC
-      index = pop
-      size = pop
-      @debug_stack_args += [index, size] if debug
-      addr = alloc(size)
-      frame.locals[index] = addr
-    when ASSIGN
-      index = pop
-      value = pop
-      @debug_stack_args += [index, value] if debug
-      addr = frame.locals[index]
-      @heap[addr] = value
-    when RETR
-      index = pop
-      @debug_stack_args << index if debug
-      addr = frame.locals[index]
-      value = @heap[addr]
-      push(value)
-    when FUNC
-      addr = alloc(1)
-      index = pop
-      @debug_stack_args << index if debug
-      frame.locals[index] = addr
-      heap[addr] = Closure.new(@ip, frame.locals)
-      nested = 0
-      loop do
-        case advance
-        when FUNC
-          nested += 1
-        when ENDF
-          break if nested <= 0
-          nested -= 1
+  def execute(instructions = nil, debug: false)
+    @instructions = instructions if instructions
+    build_labels
+    @ip = 0
+    while (instruction = fetch)
+      puts INSTRUCTIONS[instruction] if debug
+      case instruction
+      when PUSH_NUM
+        num = Int.new(fetch)
+        push(num)
+      when PUSH_STR
+        address = alloc
+        heap[address] = ByteArray.new(fetch)
+        push(address)
+      when POP
+        pop
+      when ADD
+        num1 = pop
+        num2 = pop
+        push(num1 + num2)
+      when CMP_GT
+        num1 = pop
+        num2 = pop
+        result = num1 > num2 ? 1 : 0
+        push(VM::Int.new(result))
+      when CMP_GTE
+        num1 = pop
+        num2 = pop
+        result = num1 >= num2 ? 1 : 0
+        push(VM::Int.new(result))
+      when CMP_LT
+        num1 = pop
+        num2 = pop
+        result = num1 < num2 ? 1 : 0
+        push(VM::Int.new(result))
+      when CMP_LTE
+        num1 = pop
+        num2 = pop
+        result = num1 <= num2 ? 1 : 0
+        push(VM::Int.new(result))
+      when DUP
+        val = peek
+        push(val)
+      when INT
+        func = fetch
+        case func
+        when INT_PRINT_STACK_TOP
+          val = peek
+          print(val)
+        when INT_PRINT_STACK_TOP_MEMORY
+          address = peek
+          val = @heap[address]
+          print(val)
         end
+      when JUMP
+        label = fetch
+        @ip = @labels[label]
+      when JUMP_IF_TRUE
+        val = pop
+        label = fetch
+        @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
+      when CALL
+        label = fetch
+        new_ip = @labels[label]
+        @call_stack.push(@ip)
+        @ip = new_ip
+      when RETURN
+        @ip = @call_stack.pop
+      when LABEL
+        fetch # noop
       end
-    when CALL
-      index = pop
-      @debug_stack_args << index if debug
-      args = []
-      addr = frame.locals[index]
-      closure = heap[addr]
-      @fp -= 1
-      @frames[@fp] = Frame.new(closure.locals.dup, @ip)
-      @ip = closure.function_addr
-    when RETURN
-      value = pop
-      @debug_stack_args << value if debug
-      assert !value.nil?, 'return value cannot be nil'
-      @ip = frame.ret_addr
-      @frames[@fp] = nil
-      @fp += 1
-      if frame
-        push(value)
-      else
-        @ret_val = value
-      end
-    else
-      raise "unknown op: #{op}"
     end
+  end
+
+  def fetch
+    instruction = @instructions[@ip]
+    @ip += 1
+    instruction
   end
 
   def push(val)
-    @sp -= 1
-    @stack[@sp] = val
+    @stack.push(val)
   end
 
   def pop
-    @stack[@sp].tap do
-      @stack[@sp] = nil
-      @sp += 1
-    end
+    @stack.pop
   end
 
   def peek
-    @stack[@sp]
+    @stack.last
   end
 
-  def step_frame
-    step until [CALL, RETURN].include?(@heap[@ip])
+  def alloc
+    free = @heap.each_with_index.detect { |(slot, _index)| slot.nil? }
+    return free[1] if free
+    @heap << nil
+    @heap.size - 1
   end
 
-  def advance
-    @heap[@ip].tap do
-      @ip += 1
-    end
+  def print(val)
+    stdout.print(val.to_s)
   end
 
-  def alloc(size)
-    (block, index) = @free.each_with_index.find { |block, _index| block.size >= size }
-    raise 'not enough heap' unless block
-    (start, stop) = [block.first, block.last]
-    @free[index] = (start + size)..stop
-    start
-  end
-
-  private
-
-  def assert(cond, message)
-    unless cond
-      raise message
+  def build_labels
+    @ip = 0
+    while (instruction = fetch)
+      next if instruction != LABEL
+      label = fetch
+      @labels[label] = @ip
     end
   end
 end
