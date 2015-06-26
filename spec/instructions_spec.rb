@@ -67,11 +67,11 @@ describe VM do
   end
 
   describe 'INT' do
-    context 'given arg of INT_PRINT_STACK_TOP' do
+    context 'given arg of INT_PRINT' do
       before do
         subject.execute([
           VM::PUSH_NUM, '123',
-          VM::INT, VM::INT_PRINT_STACK_TOP
+          VM::INT, VM::INT_PRINT
         ])
       end
 
@@ -81,11 +81,11 @@ describe VM do
       end
     end
 
-    context 'given arg of INT_PRINT_STACK_TOP_VAL' do
+    context 'given arg of INT_PRINT_VAL' do
       before do
         subject.execute([
           VM::PUSH_STR, 'hello world',
-          VM::INT, VM::INT_PRINT_STACK_TOP_VAL
+          VM::INT, VM::INT_PRINT_VAL
         ])
       end
 
@@ -119,7 +119,7 @@ describe VM do
         VM::JUMP, :main,
         VM::LABEL, :func,
         VM::PUSH_STR, 'yo',
-        VM::INT, VM::INT_PRINT_STACK_TOP_VAL,
+        VM::INT, VM::INT_PRINT_VAL,
         VM::RETURN,
         VM::LABEL, :main,
         VM::CALL, :func,
@@ -250,7 +250,7 @@ describe VM do
       subject.execute([
         VM::PUSH_NUM, '0',
         VM::LABEL, :loop,
-        VM::INT, VM::INT_PRINT_STACK_TOP_VAL,
+        VM::INT, VM::INT_PRINT_VAL,
         VM::PUSH_NUM, '1',
         VM::ADD,
         VM::DUP,

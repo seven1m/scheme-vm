@@ -24,8 +24,8 @@ class VM
     const_set(name.to_sym, index)
   end
 
-  INT_PRINT_STACK_TOP     = 1
-  INT_PRINT_STACK_TOP_VAL = 2
+  INT_PRINT     = 1
+  INT_PRINT_VAL = 2
 
   attr_reader :stack, :heap, :stdout, :ip
 
@@ -85,10 +85,10 @@ class VM
       when INT
         func = fetch
         case func
-        when INT_PRINT_STACK_TOP
+        when INT_PRINT
           val = peek
           print(val)
-        when INT_PRINT_STACK_TOP_VAL
+        when INT_PRINT_VAL
           address = peek
           val = @heap[address]
           print(val)
