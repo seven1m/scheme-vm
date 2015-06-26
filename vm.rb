@@ -2,45 +2,43 @@ require_relative 'vm/int'
 require_relative 'vm/byte_array'
 
 class VM
-  INSTRUCTIONS = %w(
-    PUSH_NUM
-    PUSH_STR
-    PUSH_LOCAL
-    POP
-    ADD
-    CMP_GT
-    CMP_GTE
-    CMP_LT
-    CMP_LTE
-    DUP
-    INT
-    JUMP
-    JUMP_IF_TRUE
-    LABEL
-    CALL
-    RETURN
-    SET_LOCAL
-  )
+  INSTRUCTIONS = [
+    ['PUSH_NUM',     1],
+    ['PUSH_STR',     1],
+    ['PUSH_LOCAL',   1],
+    ['POP',          0],
+    ['ADD',          0],
+    ['CMP_GT',       0],
+    ['CMP_GTE',      0],
+    ['CMP_LT',       0],
+    ['CMP_LTE',      0],
+    ['DUP',          0],
+    ['INT',          1],
+    ['JUMP',         1],
+    ['JUMP_IF_TRUE', 1],
+    ['LABEL',        1],
+    ['CALL',         1],
+    ['RETURN',       0],
+    ['SET_LOCAL',    1]
+  ]
 
-  INSTRUCTIONS.each_with_index do |name, index|
+  INSTRUCTIONS.each_with_index do |(name, _arity), index|
     const_set(name.to_sym, index)
   end
 
   INT_PRINT     = 1
   INT_PRINT_VAL = 2
 
-  attr_reader :stack, :heap, :stdout, :ip
+  attr_reader :stack, :heap, :stdout, :ip, :locals
 
   def initialize(instructions = [], stdout: $stdout)
     @ip = 0
     @instructions = instructions
-    @stack = []
-    @call_stack = [
-      { locals: [] }
-    ]
-    @heap = [] # simulate a heap - just store references to objects here
-               # an "address" is simply an index into this array
-    @labels = {}
+    @stack = []        # operand stack
+    @call_stack = []   # call frame stack -- only stores the return IP for now
+    @locals = []       # local variables, stored by index -- not per frame, because scoping is handled by the compiler
+    @heap = []         # a heap "address" is an index into this array
+    @labels = {}       # named labels -- a prepass over the code stores these and their associated IP
     @stdout = stdout
   end
 
@@ -49,7 +47,7 @@ class VM
     build_labels
     @ip = 0
     while (instruction = fetch)
-      puts INSTRUCTIONS[instruction] if debug
+      puts INSTRUCTIONS[instruction][0] if debug
       case instruction
       when PUSH_NUM
         num = fetch
@@ -167,14 +165,6 @@ class VM
     @heap.size - 1
   end
 
-  def context
-    @call_stack.last
-  end
-
-  def locals
-    context[:locals]
-  end
-
   def local_values
     locals.map do |address|
       @heap[address]
@@ -188,9 +178,13 @@ class VM
   def build_labels
     @ip = 0
     while (instruction = fetch)
-      next if instruction != LABEL # FIXME
-      label = fetch
-      @labels[label] = @ip
+      if instruction == LABEL
+        label = fetch
+        @labels[label] = @ip
+      else
+        (_name, arity) = INSTRUCTIONS[instruction]
+        arity.times { fetch } # skip args
+      end
     end
   end
 end
