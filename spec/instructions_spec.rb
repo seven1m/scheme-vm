@@ -17,8 +17,8 @@ describe VM do
       ])
     end
 
-    it 'pushes the given number onto the stack' do
-      expect(subject.stack).to eq([
+    it 'allocates memory, stores the number, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
         VM::Int.new(1)
       ])
     end
@@ -34,7 +34,7 @@ describe VM do
     end
 
     it 'adds the last 2 numbers on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(3)
       ])
     end
@@ -48,12 +48,9 @@ describe VM do
     end
 
     it 'allocates memory, stores the string, and pushes address onto the stack' do
-      expect(subject.stack.size).to eq(1)
-      address = subject.stack.first
-      expect(address).to be_a(Fixnum)
-      expect(subject.heap[address]).to eq(
+      expect(subject.stack_values).to eq([
         VM::ByteArray.new('hello world')
-      )
+      ])
     end
   end
 
@@ -78,17 +75,17 @@ describe VM do
         ])
       end
 
-      it 'prints the last item on the stack' do
+      it 'prints the address of the last item on the stack' do
         stdout.rewind
-        expect(stdout.read).to eq('123')
+        expect(stdout.read).to eq('0')
       end
     end
 
-    context 'given arg of INT_PRINT_STACK_TOP_MEMORY' do
+    context 'given arg of INT_PRINT_STACK_TOP_VAL' do
       before do
         subject.execute([
           VM::PUSH_STR, 'hello world',
-          VM::INT, VM::INT_PRINT_STACK_TOP_MEMORY
+          VM::INT, VM::INT_PRINT_STACK_TOP_VAL
         ])
       end
 
@@ -110,7 +107,7 @@ describe VM do
     end
 
     it 'skips over the intermediate code, to the given label' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(2)
       ])
     end
@@ -122,7 +119,7 @@ describe VM do
         VM::JUMP, :main,
         VM::LABEL, :func,
         VM::PUSH_STR, 'yo',
-        VM::INT, VM::INT_PRINT_STACK_TOP_MEMORY,
+        VM::INT, VM::INT_PRINT_STACK_TOP_VAL,
         VM::RETURN,
         VM::LABEL, :main,
         VM::CALL, :func,
@@ -152,7 +149,7 @@ describe VM do
     end
 
     it 'removes both values and puts a 1 or 0 on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(1),
         VM::Int.new(0),
         VM::Int.new(0)
@@ -176,7 +173,7 @@ describe VM do
     end
 
     it 'removes both values and puts a 1 or 0 on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(1),
         VM::Int.new(1),
         VM::Int.new(0)
@@ -200,7 +197,7 @@ describe VM do
     end
 
     it 'removes both values and puts a 1 or 0 on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(0),
         VM::Int.new(0),
         VM::Int.new(1)
@@ -224,7 +221,7 @@ describe VM do
     end
 
     it 'removes both values and puts a 1 or 0 on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(0),
         VM::Int.new(1),
         VM::Int.new(1)
@@ -241,7 +238,7 @@ describe VM do
     end
 
     it 'duplicates the last value on the stack' do
-      expect(subject.stack).to eq([
+      expect(subject.stack_values).to eq([
         VM::Int.new(1),
         VM::Int.new(1)
       ])
@@ -253,7 +250,7 @@ describe VM do
       subject.execute([
         VM::PUSH_NUM, '0',
         VM::LABEL, :loop,
-        VM::INT, VM::INT_PRINT_STACK_TOP,
+        VM::INT, VM::INT_PRINT_STACK_TOP_VAL,
         VM::PUSH_NUM, '1',
         VM::ADD,
         VM::DUP,

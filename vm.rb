@@ -24,8 +24,8 @@ class VM
     const_set(name.to_sym, index)
   end
 
-  INT_PRINT_STACK_TOP        = 1
-  INT_PRINT_STACK_TOP_MEMORY = 2
+  INT_PRINT_STACK_TOP     = 1
+  INT_PRINT_STACK_TOP_VAL = 2
 
   attr_reader :stack, :heap, :stdout, :ip
 
@@ -48,38 +48,37 @@ class VM
       puts INSTRUCTIONS[instruction] if debug
       case instruction
       when PUSH_NUM
-        num = Int.new(fetch)
-        push(num)
+        num = fetch
+        push_val(Int.new(num))
       when PUSH_STR
-        address = alloc
-        heap[address] = ByteArray.new(fetch)
-        push(address)
+        str = fetch
+        push_val(ByteArray.new(str))
       when POP
         pop
       when ADD
-        num1 = pop
-        num2 = pop
-        push(num1 + num2)
+        num1 = pop_val
+        num2 = pop_val
+        push_val(num1 + num2)
       when CMP_GT
-        num1 = pop
-        num2 = pop
+        num1 = pop_val
+        num2 = pop_val
         result = num1 > num2 ? 1 : 0
-        push(VM::Int.new(result))
+        push_val(VM::Int.new(result))
       when CMP_GTE
-        num1 = pop
-        num2 = pop
+        num1 = pop_val
+        num2 = pop_val
         result = num1 >= num2 ? 1 : 0
-        push(VM::Int.new(result))
+        push_val(VM::Int.new(result))
       when CMP_LT
-        num1 = pop
-        num2 = pop
+        num1 = pop_val
+        num2 = pop_val
         result = num1 < num2 ? 1 : 0
-        push(VM::Int.new(result))
+        push_val(VM::Int.new(result))
       when CMP_LTE
-        num1 = pop
-        num2 = pop
+        num1 = pop_val
+        num2 = pop_val
         result = num1 <= num2 ? 1 : 0
-        push(VM::Int.new(result))
+        push_val(VM::Int.new(result))
       when DUP
         val = peek
         push(val)
@@ -89,7 +88,7 @@ class VM
         when INT_PRINT_STACK_TOP
           val = peek
           print(val)
-        when INT_PRINT_STACK_TOP_MEMORY
+        when INT_PRINT_STACK_TOP_VAL
           address = peek
           val = @heap[address]
           print(val)
@@ -98,7 +97,7 @@ class VM
         label = fetch
         @ip = @labels[label]
       when JUMP_IF_TRUE
-        val = pop
+        val = pop_val
         label = fetch
         @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
       when CALL
@@ -120,16 +119,33 @@ class VM
     instruction
   end
 
-  def push(val)
-    @stack.push(val)
+  def push(address)
+    @stack.push(address)
+  end
+
+  def push_val(val)
+    address = alloc
+    @heap[address] = val
+    push(address)
   end
 
   def pop
     @stack.pop
   end
 
+  def pop_val
+    address = pop
+    @heap[address]
+  end
+
   def peek
     @stack.last
+  end
+
+  def stack_values
+    @stack.map do |address|
+      @heap[address]
+    end
   end
 
   def alloc
