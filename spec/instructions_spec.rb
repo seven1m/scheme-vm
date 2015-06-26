@@ -24,6 +24,37 @@ describe VM do
     end
   end
 
+  describe 'PUSH_STR' do
+    before do
+      subject.execute([
+        VM::PUSH_STR, 'hello world'
+      ])
+    end
+
+    it 'allocates memory, stores the string, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::ByteArray.new('hello world')
+      ])
+    end
+  end
+
+  describe 'PUSH_LOCAL' do
+    before do
+      address = subject.alloc
+      subject.heap[address] = VM::Int.new(9)
+      subject.locals[0] = address
+      subject.execute([
+        VM::PUSH_LOCAL, 0
+      ])
+    end
+
+    it 'pushes the address of the local variable onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(9)
+      ])
+    end
+  end
+
   describe 'ADD' do
     before do
       subject.execute([
@@ -36,20 +67,6 @@ describe VM do
     it 'adds the last 2 numbers on the stack' do
       expect(subject.stack_values).to eq([
         VM::Int.new(3)
-      ])
-    end
-  end
-
-  describe 'PUSH_STR' do
-    before do
-      subject.execute([
-        VM::PUSH_STR, 'hello world'
-      ])
-    end
-
-    it 'allocates memory, stores the string, and pushes address onto the stack' do
-      expect(subject.stack_values).to eq([
-        VM::ByteArray.new('hello world')
       ])
     end
   end
@@ -263,6 +280,21 @@ describe VM do
     it 'jumps to the label if the last value on the stack is truthy' do
       subject.stdout.rewind
       expect(subject.stdout.read).to eq('0123456789')
+    end
+  end
+
+  describe 'SET_LOCAL' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '10',
+        VM::SET_LOCAL, 0
+      ])
+    end
+
+    it 'stores the stack value in given variable index' do
+      expect(subject.local_values).to eq([
+        VM::Int.new(10)
+      ])
     end
   end
 end

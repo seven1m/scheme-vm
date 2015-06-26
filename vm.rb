@@ -5,6 +5,7 @@ class VM
   INSTRUCTIONS = %w(
     PUSH_NUM
     PUSH_STR
+    PUSH_LOCAL
     POP
     ADD
     CMP_GT
@@ -18,6 +19,7 @@ class VM
     LABEL
     CALL
     RETURN
+    SET_LOCAL
   )
 
   INSTRUCTIONS.each_with_index do |name, index|
@@ -33,7 +35,9 @@ class VM
     @ip = 0
     @instructions = instructions
     @stack = []
-    @call_stack = []
+    @call_stack = [
+      { locals: [] }
+    ]
     @heap = [] # simulate a heap - just store references to objects here
                # an "address" is simply an index into this array
     @labels = {}
@@ -53,6 +57,9 @@ class VM
       when PUSH_STR
         str = fetch
         push_val(ByteArray.new(str))
+      when PUSH_LOCAL
+        address = locals[fetch]
+        push(address)
       when POP
         pop
       when ADD
@@ -103,12 +110,17 @@ class VM
       when CALL
         label = fetch
         new_ip = @labels[label]
-        @call_stack.push(@ip)
+        @call_stack.push(
+          return: @ip
+        )
         @ip = new_ip
       when RETURN
-        @ip = @call_stack.pop
+        @ip = @call_stack.pop[:return]
       when LABEL
         fetch # noop
+      when SET_LOCAL
+        index = fetch
+        locals[index] = pop
       end
     end
   end
@@ -155,6 +167,20 @@ class VM
     @heap.size - 1
   end
 
+  def context
+    @call_stack.last
+  end
+
+  def locals
+    context[:locals]
+  end
+
+  def local_values
+    locals.map do |address|
+      @heap[address]
+    end
+  end
+
   def print(val)
     stdout.print(val.to_s)
   end
@@ -162,7 +188,7 @@ class VM
   def build_labels
     @ip = 0
     while (instruction = fetch)
-      next if instruction != LABEL
+      next if instruction != LABEL # FIXME
       label = fetch
       @labels[label] = @ip
     end
