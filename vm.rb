@@ -39,7 +39,6 @@ class VM
     @stack = []        # operand stack
     @call_stack = []   # call frame stack
     @call_stack << { locals: [] }
-    @locals = []       # local variables, stored by index -- not per frame, because scoping is handled by the compiler
     @heap = []         # a heap "address" is an index into this array
     @labels = {}       # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []    # used for next CALL
