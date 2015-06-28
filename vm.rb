@@ -19,7 +19,9 @@ class VM
     ['LABEL',        1],
     ['CALL',         1],
     ['RETURN',       0],
-    ['SET_LOCAL',    1]
+    ['SET_LOCAL',    1],
+    ['SET_ARGS',     0],
+    ['DEBUG',        0]
   ]
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
@@ -29,16 +31,18 @@ class VM
   INT_PRINT     = 1
   INT_PRINT_VAL = 2
 
-  attr_reader :stack, :heap, :stdout, :ip, :locals
+  attr_reader :stack, :heap, :stdout, :ip
 
   def initialize(instructions = [], stdout: $stdout)
     @ip = 0
     @instructions = instructions
     @stack = []        # operand stack
-    @call_stack = []   # call frame stack -- only stores the return IP for now
+    @call_stack = []   # call frame stack
+    @call_stack << { locals: [] }
     @locals = []       # local variables, stored by index -- not per frame, because scoping is handled by the compiler
     @heap = []         # a heap "address" is an index into this array
     @labels = {}       # named labels -- a prepass over the code stores these and their associated IP
+    @call_args = []    # used for next CALL
     @stdout = stdout
   end
 
@@ -91,12 +95,15 @@ class VM
         func = fetch
         case func
         when INT_PRINT
-          val = peek
-          print(val)
-        when INT_PRINT_VAL
           address = peek
-          val = @heap[address]
-          print(val)
+          print(address)
+        when INT_PRINT_VAL
+          if (address = peek)
+            val = resolve(address)
+            print(val)
+          else
+            print(nil)
+          end
         end
       when JUMP
         label = fetch
@@ -109,9 +116,11 @@ class VM
         label = fetch
         new_ip = @labels[label]
         @call_stack.push(
+          locals: @call_args,
           return: @ip
         )
         @ip = new_ip
+        @call_args = []
       when RETURN
         @ip = @call_stack.pop[:return]
       when LABEL
@@ -119,6 +128,11 @@ class VM
       when SET_LOCAL
         index = fetch
         locals[index] = pop
+      when SET_ARGS
+        count = pop_raw
+        @call_args = (0...count).map { pop }.reverse
+      when DEBUG
+        print_debug
       end
     end
   end
@@ -127,6 +141,11 @@ class VM
     instruction = @instructions[@ip]
     @ip += 1
     instruction
+  end
+
+  def resolve(address)
+    fail 'cannot lookup nil' if address.nil?
+    @heap[address] || fail('invalid address')
   end
 
   def push(address)
@@ -145,7 +164,14 @@ class VM
 
   def pop_val
     address = pop
-    @heap[address]
+    resolve(address)
+  end
+
+  def pop_raw
+    address = pop
+    val = resolve(address)
+    @heap[address] = nil
+    val.raw
   end
 
   def peek
@@ -154,7 +180,7 @@ class VM
 
   def stack_values
     @stack.map do |address|
-      @heap[address]
+      resolve(address)
     end
   end
 
@@ -165,9 +191,13 @@ class VM
     @heap.size - 1
   end
 
+  def locals
+    @call_stack.last[:locals]
+  end
+
   def local_values
     locals.map do |address|
-      @heap[address]
+      resolve(address)
     end
   end
 
@@ -185,6 +215,19 @@ class VM
         (_name, arity) = INSTRUCTIONS[instruction]
         arity.times { fetch } # skip args
       end
+    end
+  end
+
+  def print_debug
+    puts
+    puts 'op stack --------------------'
+    @stack.each do |address|
+      puts "#{address} => #{resolve(address) rescue 'error'}"
+    end
+    puts
+    puts 'call stack ------------------'
+    @call_stack.each do |frame|
+      p frame
     end
   end
 end

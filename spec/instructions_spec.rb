@@ -150,6 +150,40 @@ describe VM do
     end
   end
 
+  describe 'SET_ARGS' do
+    before do
+      subject.execute([
+        VM::JUMP, :main,
+        VM::LABEL, :func,
+        VM::PUSH_LOCAL, 0,
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_LOCAL, 1,
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::RETURN,
+        VM::LABEL, :main,
+        VM::PUSH_STR, 'arg1',
+        VM::PUSH_NUM, 1, # arg count
+        VM::SET_ARGS,
+        VM::CALL, :func,
+        VM::PUSH_STR, "\n",
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_STR, 'arg1',
+        VM::PUSH_STR, 'arg2',
+        VM::PUSH_NUM, 2, # arg count
+        VM::SET_ARGS,
+        VM::CALL, :func
+      ])
+    end
+
+    it 'passes arguments into call frame as locals' do
+      subject.stdout.rewind
+      expect(subject.stdout.read).to eq(
+        "arg1\n" \
+        "arg1arg2"
+      )
+    end
+  end
+
   describe 'CMP_GT' do
     before do
       subject.execute([
@@ -286,15 +320,32 @@ describe VM do
   describe 'SET_LOCAL' do
     before do
       subject.execute([
-        VM::PUSH_NUM, '10',
-        VM::SET_LOCAL, 0
+        VM::JUMP, :main,
+        VM::LABEL, :func,
+        VM::PUSH_STR, 'func.',
+        VM::SET_LOCAL, 0,
+        VM::PUSH_LOCAL, 0,
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::RETURN,
+        VM::LABEL, :main,
+        VM::CALL, :func,
+        VM::PUSH_STR, 'main.',
+        VM::SET_LOCAL, 0,
+        VM::PUSH_LOCAL, 0,
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::CALL, :func
       ])
     end
 
     it 'stores the stack value in given variable index' do
       expect(subject.local_values).to eq([
-        VM::Int.new(10)
+        VM::ByteArray.new('main.')
       ])
+    end
+
+    it 'keeps locals from different call frames separate' do
+      subject.stdout.rewind
+      expect(subject.stdout.read).to eq('func.main.func.')
     end
   end
 end
