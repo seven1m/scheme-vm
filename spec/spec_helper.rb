@@ -1,4 +1,5 @@
 require_relative '../vm'
+require_relative '../compiler'
 
 RSpec.configure do |c|
   c.filter_run focus: true
