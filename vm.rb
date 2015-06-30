@@ -6,6 +6,7 @@ class VM
     ['PUSH_NUM',     1],
     ['PUSH_STR',     1],
     ['PUSH_LOCAL',   1],
+    ['PUSH_FUNC',   -1], # determined by ENDF
     ['POP',          0],
     ['ADD',          0],
     ['CMP_GT',       0],
@@ -13,14 +14,16 @@ class VM
     ['CMP_LT',       0],
     ['CMP_LTE',      0],
     ['DUP',          0],
+    ['ENDF',         0],
     ['INT',          1],
     ['JUMP',         1],
     ['JUMP_IF_TRUE', 1],
     ['LABEL',        1],
-    ['CALL',         1],
+    ['CALL',         0],
     ['RETURN',       0],
     ['SET_LOCAL',    1],
     ['SET_ARGS',     0],
+    ['HALT',         0],
     ['DEBUG',        0]
   ]
 
@@ -35,22 +38,25 @@ class VM
 
   def initialize(instructions = [], stdout: $stdout)
     @ip = 0
-    @instructions = instructions
-    @stack = []        # operand stack
-    @call_stack = []   # call frame stack
+    @stack = []          # operand stack
+    @call_stack = []     # call frame stack
     @call_stack << { locals: [] }
-    @heap = []         # a heap "address" is an index into this array
-    @labels = {}       # named labels -- a prepass over the code stores these and their associated IP
-    @call_args = []    # used for next CALL
+    @heap = instructions # a heap "address" is an index into this array
+    @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
+    @call_args = []      # used for next CALL
     @stdout = stdout
   end
 
   def execute(instructions = nil, debug: false)
-    @instructions = instructions if instructions
+    if instructions
+      @ip = @heap.size
+      @heap += instructions
+    else
+      @ip = 0
+    end
     build_labels
-    @ip = 0
     while (instruction = fetch)
-      puts INSTRUCTIONS[instruction][0] if debug
+      puts "#{(@ip - 1).to_s.ljust(10)} #{INSTRUCTIONS[instruction][0]}" if debug
       case instruction
       when PUSH_NUM
         num = fetch
@@ -61,6 +67,9 @@ class VM
       when PUSH_LOCAL
         address = locals[fetch]
         push(address)
+      when PUSH_FUNC
+        push(@ip)
+        fetch_func_body # discard
       when POP
         pop
       when ADD
@@ -112,14 +121,8 @@ class VM
         label = fetch
         @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
       when CALL
-        label = fetch
-        new_ip = @labels[label]
-        @call_stack.push(
-          locals: @call_args,
-          return: @ip
-        )
-        @ip = new_ip
-        @call_args = []
+        @call_stack << { return: @ip, locals: @call_args }
+        @ip = pop
       when RETURN
         @ip = @call_stack.pop[:return]
       when LABEL
@@ -130,6 +133,8 @@ class VM
       when SET_ARGS
         count = pop_raw
         @call_args = (0...count).map { pop }.reverse
+      when HALT
+        return
       when DEBUG
         print_debug
       end
@@ -137,7 +142,7 @@ class VM
   end
 
   def fetch
-    instruction = @instructions[@ip]
+    instruction = @heap[@ip]
     @ip += 1
     instruction
   end
@@ -204,8 +209,20 @@ class VM
     stdout.print(val.to_s)
   end
 
+  # TODO: does this ever need to return anything, or just burn through the function body?
+  def fetch_func_body
+    body = []
+    while (instruction = fetch) != ENDF
+      (_name, arity) = INSTRUCTIONS[instruction]
+      body << instruction
+      body << fetch_func_body + [ENDF] if instruction == PUSH_FUNC
+      arity.times { body << fetch } # skip args
+    end
+    body.flatten
+  end
+
   def build_labels
-    @ip = 0
+    ip_was = @ip
     while (instruction = fetch)
       if instruction == LABEL
         label = fetch
@@ -215,6 +232,7 @@ class VM
         arity.times { fetch } # skip args
       end
     end
+    @ip = ip_was
   end
 
   def print_debug

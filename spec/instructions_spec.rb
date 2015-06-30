@@ -13,7 +13,8 @@ describe VM do
   describe 'PUSH_NUM' do
     before do
       subject.execute([
-        VM::PUSH_NUM, '1'
+        VM::PUSH_NUM, '1',
+        VM::HALT
       ])
     end
 
@@ -27,7 +28,8 @@ describe VM do
   describe 'PUSH_STR' do
     before do
       subject.execute([
-        VM::PUSH_STR, 'hello world'
+        VM::PUSH_STR, 'hello world',
+        VM::HALT
       ])
     end
 
@@ -44,7 +46,8 @@ describe VM do
       subject.heap[address] = VM::Int.new(9)
       subject.locals[0] = address
       subject.execute([
-        VM::PUSH_LOCAL, 0
+        VM::PUSH_LOCAL, 0,
+        VM::HALT
       ])
     end
 
@@ -55,12 +58,54 @@ describe VM do
     end
   end
 
+  describe 'PUSH_FUNC and ENDF' do
+    context 'given a single function' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_NUM, '1',
+          VM::RETURN,
+          VM::ENDF,
+          VM::HALT
+        ])
+      end
+
+      it 'pushes the function address onto the stack' do
+        expect(subject.stack).to eq([
+          1
+        ])
+      end
+    end
+
+    context 'given a function within a function' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_NUM, '1',
+          VM::PUSH_FUNC,
+          VM::RETURN,
+          VM::ENDF,
+          VM::RETURN,
+          VM::ENDF,
+          VM::HALT
+        ])
+      end
+
+      it 'pushes the function address onto the stack' do
+        expect(subject.stack).to eq([
+          1
+        ])
+      end
+    end
+  end
+
   describe 'ADD' do
     before do
       subject.execute([
         VM::PUSH_NUM, '1',
         VM::PUSH_NUM, '2',
-        VM::ADD
+        VM::ADD,
+        VM::HALT
       ])
     end
 
@@ -74,7 +119,8 @@ describe VM do
   describe 'POP' do
     before do
       subject.execute([
-        VM::POP
+        VM::POP,
+        VM::HALT
       ])
     end
 
@@ -88,13 +134,14 @@ describe VM do
       before do
         subject.execute([
           VM::PUSH_NUM, '123',
-          VM::INT, VM::INT_PRINT
+          VM::INT, VM::INT_PRINT,
+          VM::HALT
         ])
       end
 
       it 'prints the address of the last item on the stack' do
         stdout.rewind
-        expect(stdout.read).to eq('0')
+        expect(stdout.read).to eq('5') # length_of_program + 1
       end
     end
 
@@ -102,7 +149,8 @@ describe VM do
       before do
         subject.execute([
           VM::PUSH_STR, 'hello world',
-          VM::INT, VM::INT_PRINT_VAL
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::HALT
         ])
       end
 
@@ -119,7 +167,8 @@ describe VM do
         VM::JUMP, :skip,
         VM::PUSH_NUM, 1,
         VM::LABEL, :skip,
-        VM::PUSH_NUM, 2
+        VM::PUSH_NUM, 2,
+        VM::HALT
       ])
     end
 
@@ -130,21 +179,23 @@ describe VM do
     end
   end
 
-  describe 'CALL and RETURN' do
+  describe 'CALL' do
     before do
       subject.execute([
-        VM::JUMP, :main,
-        VM::LABEL, :func,
+        VM::PUSH_FUNC,
         VM::PUSH_STR, 'yo',
         VM::INT, VM::INT_PRINT_VAL,
+        VM::POP,
         VM::RETURN,
-        VM::LABEL, :main,
-        VM::CALL, :func,
-        VM::CALL, :func
+        VM::ENDF,
+        VM::DUP,
+        VM::CALL,
+        VM::CALL,
+        VM::HALT
       ])
     end
 
-    it 'jumps to the label and returns' do
+    it 'calls the function' do
       subject.stdout.rewind
       expect(subject.stdout.read).to eq('yoyo')
     end
@@ -153,25 +204,29 @@ describe VM do
   describe 'SET_ARGS' do
     before do
       subject.execute([
-        VM::JUMP, :main,
-        VM::LABEL, :func,
+        VM::PUSH_FUNC,
         VM::PUSH_LOCAL, 0,
         VM::INT, VM::INT_PRINT_VAL,
         VM::PUSH_LOCAL, 1,
         VM::INT, VM::INT_PRINT_VAL,
         VM::RETURN,
-        VM::LABEL, :main,
+        VM::ENDF,
+        VM::SET_LOCAL, 0,
+
         VM::PUSH_STR, 'arg1',
         VM::PUSH_NUM, 1, # arg count
         VM::SET_ARGS,
-        VM::CALL, :func,
+        VM::PUSH_LOCAL, 0,
+        VM::CALL,
         VM::PUSH_STR, "\n",
         VM::INT, VM::INT_PRINT_VAL,
         VM::PUSH_STR, 'arg1',
         VM::PUSH_STR, 'arg2',
         VM::PUSH_NUM, 2, # arg count
         VM::SET_ARGS,
-        VM::CALL, :func
+        VM::PUSH_LOCAL, 0,
+        VM::CALL,
+        VM::HALT
       ])
     end
 
@@ -195,7 +250,8 @@ describe VM do
         VM::CMP_GT,
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, '2',
-        VM::CMP_GT
+        VM::CMP_GT,
+        VM::HALT
       ])
     end
 
@@ -219,7 +275,8 @@ describe VM do
         VM::CMP_GTE,
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, '2',
-        VM::CMP_GTE
+        VM::CMP_GTE,
+        VM::HALT
       ])
     end
 
@@ -243,7 +300,8 @@ describe VM do
         VM::CMP_LT,
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, '2',
-        VM::CMP_LT
+        VM::CMP_LT,
+        VM::HALT
       ])
     end
 
@@ -267,7 +325,8 @@ describe VM do
         VM::CMP_LTE,
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, '2',
-        VM::CMP_LTE
+        VM::CMP_LTE,
+        VM::HALT
       ])
     end
 
@@ -284,7 +343,8 @@ describe VM do
     before do
       subject.execute([
         VM::PUSH_NUM, '1',
-        VM::DUP
+        VM::DUP,
+        VM::HALT
       ])
     end
 
@@ -307,7 +367,8 @@ describe VM do
         VM::DUP,
         VM::PUSH_NUM, '10',
         VM::CMP_GT,
-        VM::JUMP_IF_TRUE, :loop
+        VM::JUMP_IF_TRUE, :loop,
+        VM::HALT
       ])
     end
 
@@ -320,27 +381,36 @@ describe VM do
   describe 'SET_LOCAL' do
     before do
       subject.execute([
-        VM::JUMP, :main,
-        VM::LABEL, :func,
+        VM::PUSH_FUNC,
         VM::PUSH_STR, 'func.',
         VM::SET_LOCAL, 0,
         VM::PUSH_LOCAL, 0,
         VM::INT, VM::INT_PRINT_VAL,
+        VM::POP,
         VM::RETURN,
-        VM::LABEL, :main,
-        VM::CALL, :func,
+        VM::ENDF,
+        VM::SET_LOCAL, 1,
+
+        VM::PUSH_LOCAL, 1,
+        VM::CALL,
+
         VM::PUSH_STR, 'main.',
         VM::SET_LOCAL, 0,
         VM::PUSH_LOCAL, 0,
         VM::INT, VM::INT_PRINT_VAL,
-        VM::CALL, :func
+        VM::POP,
+
+        VM::PUSH_LOCAL, 1,
+        VM::CALL,
+
+        VM::HALT
       ])
     end
 
     it 'stores the stack value in given variable index' do
-      expect(subject.local_values).to eq([
+      expect(subject.local_values[0]).to eq(
         VM::ByteArray.new('main.')
-      ])
+      )
     end
 
     it 'keeps locals from different call frames separate' do
