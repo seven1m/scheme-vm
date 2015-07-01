@@ -50,7 +50,7 @@ describe Compiler do
       context 'not storing in a variable or passing to a function' do
         before do
           @result = subject.compile([
-            ['fn',
+            ['fn', [],
               ['def', 'x', '1']]
           ])
         end
@@ -70,8 +70,8 @@ describe Compiler do
       context 'storing in a variable' do
         before do
           @result = subject.compile([
-            ['def', 'fn',
-              ['fn',
+            ['def', 'myfn',
+              ['fn', [],
                 ['def', 'x', '1']]]
           ])
         end
@@ -92,11 +92,11 @@ describe Compiler do
         before do
           @result = subject.compile([
             ['def', 'one',
-              ['fn',
-                ['fn', '1'],
+              ['fn', [],
+                ['fn', [], '1'],
                 ['def', 'two',
-                  ['fn', '2']],
-                ['fn', '3']]]
+                  ['fn', [], '2']],
+                ['fn', [], '3']]]
           ])
         end
 
@@ -134,7 +134,7 @@ describe Compiler do
         before do
           @result = subject.compile([
             ['def', 'x',
-              ['fn',
+              ['fn', [],
                 '1']],
             ['x']
           ])
@@ -152,6 +152,52 @@ describe Compiler do
             'VM::CALL'
           ])
         end
+      end
+
+      context 'with args' do
+        before do
+          @result = subject.compile([
+            ['def', 'x',
+              ['fn', ['y'],
+                ['def', 'z', 'y']]],
+            ['x', '2']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARG', 0,
+            'VM::SET_LOCAL', 0,
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 0,
+
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', 1,
+            'VM::SET_ARGS',
+            'VM::PUSH_LOCAL', 0,
+            'VM::CALL'
+          ])
+        end
+      end
+    end
+
+    context 'list' do
+      before do
+        @result = subject.compile([
+          ['list', '1', '2']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', 2, # arg count
+          'VM::PUSH_LIST',
+          'VM::POP'
+        ])
       end
     end
   end

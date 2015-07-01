@@ -1,58 +1,84 @@
 class Compiler
-  def initialize(sexps = nil)
+  def initialize(sexps = nil, arguments: {})
     @sexps = sexps
     @locals = {}
+    @arguments = arguments
   end
 
-  def compile(sexps = @sexps, locals: @locals)
+  def compile(sexps = @sexps, locals: @locals, arguments: @arguments)
     sexps.flat_map do |sexp|
-      compile_sexp(sexp, locals: locals)
+      compile_sexp(sexp, locals: locals, arguments: arguments)
     end.flatten.compact
   end
 
   private
 
-  def compile_sexp(sexp, locals: {}, use: false)
-    return compile_literal(sexp, use: use) unless sexp.is_a?(Array)
+  def compile_sexp(sexp, options = { locals: {}, arguments: {}, use: false })
+    return compile_literal(sexp, options) unless sexp.is_a?(Array)
     (name, *args) = sexp
-    if (var_num = locals[name])
-      call(var_num, args, locals: locals, use: use)
+    if options[:locals][name] || options[:arguments][name]
+      call(sexp, options)
     else
-      send(name, args, locals: locals, use: use)
+      send(name, args, options)
     end
   end
 
-  def compile_literal(literal, use: false)
-    [
-      VM::PUSH_NUM,
-      literal,
-      use ? nil : VM::POP
-    ]
+  def compile_literal(literal, options = { use: false })
+    if literal =~ /\A[a-z]/
+      local_num = options[:locals][literal]
+      arg_num = options[:arguments][literal]
+      fail "cannot find #{literal}" unless local_num || arg_num
+      [
+        local_num ? [VM::PUSH_LOCAL, local_num] : [VM::PUSH_ARG, arg_num],
+        options[:use] ? nil : VM::POP
+      ]
+    else
+      [
+        VM::PUSH_NUM,
+        literal,
+        options[:use] ? nil : VM::POP
+      ]
+    end
   end
 
-  def def((name, val), locals:, use:)
-    index = locals[name] || locals[name] = locals.values.size
+  def def((name, val), options)
+    index = options[:locals][name] || options[:locals][name] = options[:locals].values.size
     [
-      compile_sexp(val, use: true),
+      compile_sexp(val, options.merge(use: true)),
       VM::SET_LOCAL, index
     ]
   end
 
-  def fn(body, locals:, use:)
-    body = compile(body, locals: {})
+  def fn((args, *body), options)
+    args = args.each_with_index.each_with_object({}) { |(a, i), h| h[a] = i }
+    body = compile(body, locals: {}, arguments: args)
     [
       VM::PUSH_FUNC,
       body,
       VM::RETURN,
       VM::ENDF,
-      use ? nil : VM::POP
+      options[:use] ? nil : VM::POP
     ]
   end
 
-  def call(var_num, args, locals:, use:)
+  def call((name, *args), options)
+    local_num = options[:locals][name]
+    arg_num = options[:arguments][name]
+    fail "cannot find #{literal}" unless local_num || arg_num
     [
-      VM::PUSH_LOCAL, var_num,
+      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+      args.any? ? [VM::PUSH_NUM, args.size, VM::SET_ARGS] : nil,
+      local_num ? [VM::PUSH_LOCAL, local_num] : [VM::PUSH_ARG, arg_num],
       VM::CALL
+    ]
+  end
+
+  def list(args, options)
+    [
+      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+      VM::PUSH_NUM, args.size,
+      VM::PUSH_LIST,
+      options[:use] ? nil : VM::POP
     ]
   end
 end

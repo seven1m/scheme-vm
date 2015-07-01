@@ -1,12 +1,15 @@
 require_relative 'vm/int'
 require_relative 'vm/byte_array'
+require_relative 'vm/list_node'
 
 class VM
   INSTRUCTIONS = [
     ['PUSH_NUM',     1],
     ['PUSH_STR',     1],
+    ['PUSH_LIST',    0],
     ['PUSH_LOCAL',   1],
     ['PUSH_FUNC',   -1], # determined by ENDF
+    ['PUSH_ARG',     1],
     ['POP',          0],
     ['ADD',          0],
     ['CMP_GT',       0],
@@ -40,7 +43,7 @@ class VM
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
-    @call_stack << { locals: [] }
+    @call_stack << { locals: [], args: [] }
     @heap = instructions # a heap "address" is an index into this array
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
@@ -64,12 +67,26 @@ class VM
       when PUSH_STR
         str = fetch
         push_val(ByteArray.new(str))
+      when PUSH_LIST
+        count = pop_raw
+        last = nil
+        address = nil
+        count.times do
+          arg = pop
+          address = alloc
+          @heap[address] = ListNode.new(arg, next_node: last, heap: @heap)
+          last = address
+        end
+        push(address)
       when PUSH_LOCAL
         address = locals[fetch]
         push(address)
       when PUSH_FUNC
         push(@ip)
         fetch_func_body # discard
+      when PUSH_ARG
+        address = args[fetch]
+        push(address)
       when POP
         pop
       when ADD
@@ -121,7 +138,7 @@ class VM
         label = fetch
         @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
       when CALL
-        @call_stack << { return: @ip, locals: @call_args }
+        @call_stack << { return: @ip, locals: {}, args: @call_args }
         @ip = pop
       when RETURN
         @ip = @call_stack.pop[:return]
@@ -197,6 +214,10 @@ class VM
 
   def locals
     @call_stack.last[:locals]
+  end
+
+  def args
+    @call_stack.last[:args]
   end
 
   def local_values

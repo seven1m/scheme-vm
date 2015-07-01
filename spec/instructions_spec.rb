@@ -40,6 +40,26 @@ describe VM do
     end
   end
 
+  describe 'PUSH_LIST' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, 5,
+        VM::PUSH_NUM, 7,
+        VM::PUSH_NUM, 9,
+        VM::PUSH_NUM, 3,
+        VM::PUSH_LIST,
+        VM::HALT
+      ])
+    end
+
+    it 'creates a linked-list and pushes the first node address onto the stack' do
+      expect(subject.stack_values.size).to eq(1)
+      node = subject.stack_values.first
+      expect(node).to be_a(VM::ListNode)
+      expect(node.to_s).to eq('[5, 7, 9]')
+    end
+  end
+
   describe 'PUSH_LOCAL' do
     before do
       address = subject.alloc
@@ -55,6 +75,37 @@ describe VM do
       expect(subject.stack_values).to eq([
         VM::Int.new(9)
       ])
+    end
+  end
+
+  describe 'SET_ARGS and PUSH_ARG' do
+    before do
+      address = subject.alloc
+      subject.heap[address] = VM::Int.new(9)
+      subject.locals[0] = address
+      subject.execute([
+        VM::PUSH_FUNC,
+        VM::PUSH_ARG, 0,             # first arg
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_ARG, 1,             # second arg
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::RETURN,
+        VM::ENDF,
+        VM::SET_LOCAL, 0,
+
+        VM::PUSH_NUM, 2,             # first arg
+        VM::PUSH_NUM, 3,             # second arg
+        VM::PUSH_NUM, 2,             # arg count
+        VM::SET_ARGS,
+        VM::PUSH_LOCAL, 0,
+        VM::CALL,
+        VM::HALT
+      ])
+    end
+
+    it 'pushes the address of the argument onto the stack' do
+      stdout.rewind
+      expect(stdout.read).to eq('23')
     end
   end
 
@@ -198,44 +249,6 @@ describe VM do
     it 'calls the function' do
       subject.stdout.rewind
       expect(subject.stdout.read).to eq('yoyo')
-    end
-  end
-
-  describe 'SET_ARGS' do
-    before do
-      subject.execute([
-        VM::PUSH_FUNC,
-        VM::PUSH_LOCAL, 0,
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_LOCAL, 1,
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::RETURN,
-        VM::ENDF,
-        VM::SET_LOCAL, 0,
-
-        VM::PUSH_STR, 'arg1',
-        VM::PUSH_NUM, 1, # arg count
-        VM::SET_ARGS,
-        VM::PUSH_LOCAL, 0,
-        VM::CALL,
-        VM::PUSH_STR, "\n",
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_STR, 'arg1',
-        VM::PUSH_STR, 'arg2',
-        VM::PUSH_NUM, 2, # arg count
-        VM::SET_ARGS,
-        VM::PUSH_LOCAL, 0,
-        VM::CALL,
-        VM::HALT
-      ])
-    end
-
-    it 'passes arguments into call frame as locals' do
-      subject.stdout.rewind
-      expect(subject.stdout.read).to eq(
-        "arg1\n" \
-        "arg1arg2"
-      )
     end
   end
 
