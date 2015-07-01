@@ -25,11 +25,8 @@ class Compiler
 
   def compile_literal(literal, options = { use: false })
     if literal =~ /\A[a-z]/
-      local_num = options[:locals][literal]
-      arg_num = options[:arguments][literal]
-      fail "cannot find #{literal}" unless local_num || arg_num
       [
-        local_num ? [VM::PUSH_LOCAL, local_num] : [VM::PUSH_ARG, arg_num],
+        push_var(literal, options),
         options[:use] ? nil : VM::POP
       ]
     else
@@ -62,13 +59,10 @@ class Compiler
   end
 
   def call((name, *args), options)
-    local_num = options[:locals][name]
-    arg_num = options[:arguments][name]
-    fail "cannot find #{literal}" unless local_num || arg_num
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
       args.any? ? [VM::PUSH_NUM, args.size, VM::SET_ARGS] : nil,
-      local_num ? [VM::PUSH_LOCAL, local_num] : [VM::PUSH_ARG, arg_num],
+      push_var(name, options),
       VM::CALL
     ]
   end
@@ -80,5 +74,16 @@ class Compiler
       VM::PUSH_LIST,
       options[:use] ? nil : VM::POP
     ]
+  end
+
+  def push_var(name, options)
+    local_num = options[:locals][name]
+    arg_num = options[:arguments][name]
+    fail "cannot find #{name}" unless local_num || arg_num
+    if local_num
+      [VM::PUSH_LOCAL, local_num]
+    else
+      [VM::PUSH_ARG, arg_num]
+    end
   end
 end
