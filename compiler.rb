@@ -27,13 +27,13 @@ class Compiler
     if literal =~ /\A[a-z]/
       [
         push_var(literal, options),
-        options[:use] ? nil : VM::POP
+        pop_maybe(options)
       ]
     else
       [
         VM::PUSH_NUM,
         literal,
-        options[:use] ? nil : VM::POP
+        pop_maybe(options)
       ]
     end
   end
@@ -54,7 +54,7 @@ class Compiler
       body,
       VM::RETURN,
       VM::ENDF,
-      options[:use] ? nil : VM::POP
+      pop_maybe(options)
     ]
   end
 
@@ -72,7 +72,7 @@ class Compiler
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
       VM::PUSH_NUM, args.size,
       VM::PUSH_LIST,
-      options[:use] ? nil : VM::POP
+      pop_maybe(options)
     ]
   end
 
@@ -85,5 +85,9 @@ class Compiler
     else
       [VM::PUSH_ARG, arg_num]
     end
+  end
+
+  def pop_maybe(options)
+    return VM::POP unless options[:use]
   end
 end
