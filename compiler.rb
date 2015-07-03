@@ -1,3 +1,5 @@
+require_relative 'vm'
+
 class Compiler
   def initialize(sexps = nil, arguments: {})
     @sexps = sexps
@@ -5,21 +7,23 @@ class Compiler
     @arguments = arguments
   end
 
-  def compile(sexps = @sexps, locals: @locals, arguments: @arguments)
+  attr_reader :locals, :arguments
+
+  def compile(sexps = @sexps)
     sexps.flat_map do |sexp|
-      compile_sexp(sexp, locals: locals, arguments: arguments)
+      compile_sexp(sexp)
     end.flatten.compact
   end
 
   private
 
-  def compile_sexp(sexp, options = { locals: {}, arguments: {}, use: false })
+  def compile_sexp(sexp, options = { use: false })
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     (name, *args) = sexp
-    if options[:locals][name] || options[:arguments][name]
-      call(sexp, options)
-    else
+    if respond_to?(name, :include_private)
       send(name, args, options)
+    else
+      call(sexp, options)
     end
   end
 
@@ -39,7 +43,7 @@ class Compiler
   end
 
   def def((name, val), options)
-    index = options[:locals][name] || options[:locals][name] = options[:locals].values.size
+    index = local_num(name)
     [
       compile_sexp(val, options.merge(use: true)),
       VM::SET_LOCAL, index
@@ -48,7 +52,7 @@ class Compiler
 
   def fn((args, *body), options)
     args = args.each_with_index.each_with_object({}) { |(a, i), h| h[a] = i }
-    body = compile(body, locals: {}, arguments: args)
+    body = compile(body)
     [
       VM::PUSH_FUNC,
       body,
@@ -76,18 +80,51 @@ class Compiler
     ]
   end
 
-  def push_var(name, options)
-    local_num = options[:locals][name]
-    arg_num = options[:arguments][name]
-    fail "cannot find #{name}" unless local_num || arg_num
-    if local_num
-      [VM::PUSH_LOCAL, local_num]
-    else
-      [VM::PUSH_ARG, arg_num]
+  def if((condition, true_body, false_body), options)
+    [
+      compile_sexp(condition, options.merge(use: true)),
+      VM::JUMP_IF_TRUE, :if_0_true,
+      VM::JUMP, :if_0_false,
+      VM::LABEL, :if_0_true,
+      compile_sexp(true_body, options.merge(use: true)),
+      VM::LABEL, :if_0_false,
+      compile_sexp(false_body, options.merge(use: true)),
+      pop_maybe(options)
+    ]
+  end
+
+  {
+    '>'  => VM::CMP_GT,
+    '>=' => VM::CMP_GTE,
+    '<'  => VM::CMP_LT,
+    '<=' => VM::CMP_LTE,
+    '==' => VM::CMP_EQ,
+    '+'  => VM::ADD
+  }.each do |name, instruction|
+    define_method(name) do |args, options|
+      compare(instruction, args, options)
     end
+  end
+
+  def compare(instruction, (arg1, arg2), options)
+    [
+      compile_sexp(arg1, options.merge(use: true)),
+      compile_sexp(arg2, options.merge(use: true)),
+      instruction,
+      pop_maybe(options)
+    ]
+  end
+
+  def push_var(name, _options)
+    num = local_num(name)
+    [VM::PUSH_LOCAL, num]
   end
 
   def pop_maybe(options)
     return VM::POP unless options[:use]
+  end
+
+  def local_num(name)
+    locals[name] || locals[name] = locals.values.size
   end
 end

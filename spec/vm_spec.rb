@@ -352,6 +352,27 @@ describe VM do
     end
   end
 
+  describe 'CMP_EQ' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '1',
+        VM::CMP_EQ,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::CMP_EQ,
+        VM::HALT
+      ])
+    end
+
+    it 'removes both values and puts a 1 or 0 on the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(1),
+        VM::Int.new(0)
+      ])
+    end
+  end
+
   describe 'DUP' do
     before do
       subject.execute([

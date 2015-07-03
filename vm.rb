@@ -16,6 +16,7 @@ class VM
     ['CMP_GTE',      0],
     ['CMP_LT',       0],
     ['CMP_LTE',      0],
+    ['CMP_EQ',       0],
     ['DUP',          0],
     ['ENDF',         0],
     ['INT',          1],
@@ -112,6 +113,11 @@ class VM
         num1 = pop_val
         num2 = pop_val
         result = num1 <= num2 ? 1 : 0
+        push_val(VM::Int.new(result))
+      when CMP_EQ
+        num1 = pop_val
+        num2 = pop_val
+        result = num1 == num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when DUP
         val = peek

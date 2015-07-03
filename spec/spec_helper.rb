@@ -1,3 +1,4 @@
+require_relative '../program'
 require_relative '../vm'
 require_relative '../compiler'
 require_relative '../parser'
