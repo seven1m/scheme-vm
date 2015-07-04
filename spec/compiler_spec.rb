@@ -2,17 +2,7 @@ require_relative './spec_helper'
 
 describe Compiler do
   def d(instructions)
-    [].tap do |pretty|
-      while instructions.any?
-        if (instruction = instructions.shift)
-          (name, arity) = VM::INSTRUCTIONS[instruction]
-          pretty << "VM::#{name}"
-          arity.times { pretty << instructions.shift }
-        else
-          pretty << nil
-        end
-      end
-    end
+    subject.pretty_format(instructions)
   end
 
   describe '#compile' do
@@ -26,7 +16,22 @@ describe Compiler do
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
-          'VM::POP'
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'variable' do
+      before do
+        @result = subject.compile([
+          'n'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_LOCAL', 0,
+          'VM::HALT'
         ])
       end
     end
@@ -41,7 +46,24 @@ describe Compiler do
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
-          'VM::SET_LOCAL', 0
+          'VM::SET_LOCAL', 0,
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'print' do
+      before do
+        @result = subject.compile([
+          ['print', '1']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::INT', VM::INT_PRINT_VAL,
+          'VM::HALT'
         ])
       end
     end
@@ -62,7 +84,7 @@ describe Compiler do
             'VM::SET_LOCAL', 0,
             'VM::RETURN',
             'VM::ENDF',
-            'VM::POP'
+            'VM::HALT'
           ])
         end
       end
@@ -83,7 +105,8 @@ describe Compiler do
             'VM::SET_LOCAL', 1,
             'VM::RETURN',
             'VM::ENDF',
-            'VM::SET_LOCAL', 0
+            'VM::SET_LOCAL', 0,
+            'VM::HALT'
           ])
         end
       end
@@ -105,25 +128,47 @@ describe Compiler do
             'VM::PUSH_FUNC',       # (fn
             'VM::PUSH_FUNC',       #   (fn
             'VM::PUSH_NUM', '1',   #     1
-            'VM::POP',             #   <pop 1>
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
             'VM::POP',             #   <pop (fn 1)>
             'VM::PUSH_FUNC',       #   (fn
             'VM::PUSH_NUM', '2',   #     2
-            'VM::POP',             #   <pop 2>
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
             'VM::SET_LOCAL', 1,    #   (def two ...)
             'VM::PUSH_FUNC',       #   (fn
             'VM::PUSH_NUM', '3',   #     3
-            'VM::POP',             #   <pop 3>
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
-            'VM::POP',             #   <pop (fn 3)>
             'VM::RETURN',          # <return>
             'VM::ENDF',            # )
-            'VM::SET_LOCAL', 0     # (def one ...)
+            'VM::SET_LOCAL', 0,    # (def one ...)
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'return value' do
+        before do
+          @result = subject.compile([
+            ['def', 'one',
+              ['fn', [],
+                '1']],
+            ['print', ['one']]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_NUM', '1',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 0,
+            'VM::PUSH_LOCAL', 0,
+            'VM::CALL',
+            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::HALT'
           ])
         end
       end
@@ -144,12 +189,12 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
-            'VM::POP',
             'VM::RETURN',
             'VM::ENDF',
             'VM::SET_LOCAL', 0,
             'VM::PUSH_LOCAL', 0,
-            'VM::CALL'
+            'VM::CALL',
+            'VM::HALT'
           ])
         end
       end
@@ -158,26 +203,29 @@ describe Compiler do
         before do
           @result = subject.compile([
             ['def', 'x',
-              ['fn', ['y'],
-                ['def', 'z', 'y']]],
-            ['x', '2']
+              ['fn', ['y', 'z'], []]],
+            ['x', '2', '4']
           ])
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
-            'VM::PUSH_LOCAL', 2,
+            'VM::PUSH_ARG',
             'VM::SET_LOCAL', 1,
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 2,
             'VM::RETURN',
             'VM::ENDF',
             'VM::SET_LOCAL', 0,
 
             'VM::PUSH_NUM', '2',
-            'VM::PUSH_NUM', 1,
+            'VM::PUSH_NUM', '4',
+            'VM::PUSH_NUM', 2,    # arg count
             'VM::SET_ARGS',
             'VM::PUSH_LOCAL', 0,
-            'VM::CALL'
+            'VM::CALL',
+            'VM::HALT'
           ])
         end
       end
@@ -198,7 +246,8 @@ describe Compiler do
             'VM::CALL',
             'VM::RETURN',
             'VM::ENDF',
-            'VM::SET_LOCAL', 0
+            'VM::SET_LOCAL', 0,
+            'VM::HALT'
           ])
         end
       end
@@ -217,7 +266,7 @@ describe Compiler do
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', 2, # arg count
           'VM::PUSH_LIST',
-          'VM::POP'
+          'VM::HALT'
         ])
       end
     end
@@ -234,7 +283,7 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '1',
           'VM::CMP_EQ',
-          'VM::POP'
+          'VM::HALT'
         ])
       end
     end
@@ -242,7 +291,8 @@ describe Compiler do
     context 'if' do
       before do
         @result = subject.compile([
-          ['if', ['==', '1', '1'], '2', '3']
+          ['if', ['==', '1', '1'], '2', '3'],
+          ['if', ['==', '1', '2'], '2', '3']
         ])
       end
 
@@ -251,13 +301,27 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '1',
           'VM::CMP_EQ',
-          'VM::JUMP_IF_TRUE', :if_0_true,
-          'VM::JUMP', :if_0_false,
-          'VM::LABEL', :if_0_true,
+          'VM::JUMP_IF_TRUE', :if_1_true,
+          'VM::JUMP', :if_1_false,
+          'VM::LABEL', :if_1_true,
           'VM::PUSH_NUM', '2',
-          'VM::LABEL', :if_0_false,
+          'VM::JUMP', :if_1_end,
+          'VM::LABEL', :if_1_false,
           'VM::PUSH_NUM', '3',
-          'VM::POP'
+          'VM::LABEL', :if_1_end,
+          'VM::POP',
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::CMP_EQ',
+          'VM::JUMP_IF_TRUE', :if_2_true,
+          'VM::JUMP', :if_2_false,
+          'VM::LABEL', :if_2_true,
+          'VM::PUSH_NUM', '2',
+          'VM::JUMP', :if_2_end,
+          'VM::LABEL', :if_2_false,
+          'VM::PUSH_NUM', '3',
+          'VM::LABEL', :if_2_end,
+          'VM::HALT'
         ])
       end
     end

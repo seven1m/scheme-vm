@@ -3,15 +3,18 @@ require_relative 'vm/byte_array'
 require_relative 'vm/list_node'
 
 class VM
+  class CallStackTooDeep < StandardError; end
+
   INSTRUCTIONS = [
     ['PUSH_NUM',     1],
     ['PUSH_STR',     1],
     ['PUSH_LIST',    0],
     ['PUSH_LOCAL',   1],
-    ['PUSH_FUNC',   -1], # determined by ENDF
-    ['PUSH_ARG',     1],
+    ['PUSH_ARG',     0],
+    ['PUSH_FUNC',    0],
     ['POP',          0],
     ['ADD',          0],
+    ['SUB',          0],
     ['CMP_GT',       0],
     ['CMP_GTE',      0],
     ['CMP_LT',       0],
@@ -44,14 +47,15 @@ class VM
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
-    @call_stack << { locals: [], args: [] }
+    @call_stack << { locals: {}, args: [] }
     @heap = instructions # a heap "address" is an index into this array
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
+    @last_local = nil    # store the name of the just-pushed local (use by CALL)
   end
 
-  def execute(instructions = nil, debug: false)
+  def execute(instructions = nil, debug: 0)
     if instructions
       @ip = @heap.size
       @heap += instructions
@@ -60,7 +64,6 @@ class VM
     end
     build_labels
     while (instruction = fetch)
-      puts "#{(@ip - 1).to_s.ljust(10)} #{INSTRUCTIONS[instruction][0]}" if debug
       case instruction
       when PUSH_NUM
         num = fetch
@@ -80,43 +83,48 @@ class VM
         end
         push(address)
       when PUSH_LOCAL
-        address = locals[fetch]
+        @last_local = name = fetch
+        address = locals[name]
+        push(address)
+      when PUSH_ARG
+        address = args.shift
         push(address)
       when PUSH_FUNC
         push(@ip)
         fetch_func_body # discard
-      when PUSH_ARG
-        address = args[fetch]
-        push(address)
       when POP
         pop
       when ADD
-        num1 = pop_val
         num2 = pop_val
+        num1 = pop_val
         push_val(num1 + num2)
-      when CMP_GT
-        num1 = pop_val
+      when SUB
         num2 = pop_val
+        num1 = pop_val
+        push_val(num1 - num2)
+      when CMP_GT
+        num2 = pop_val
+        num1 = pop_val
         result = num1 > num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when CMP_GTE
-        num1 = pop_val
         num2 = pop_val
+        num1 = pop_val
         result = num1 >= num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when CMP_LT
-        num1 = pop_val
         num2 = pop_val
+        num1 = pop_val
         result = num1 < num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when CMP_LTE
-        num1 = pop_val
         num2 = pop_val
+        num1 = pop_val
         result = num1 <= num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when CMP_EQ
-        num1 = pop_val
         num2 = pop_val
+        num1 = pop_val
         result = num1 == num2 ? 1 : 0
         push_val(VM::Int.new(result))
       when DUP
@@ -127,13 +135,13 @@ class VM
         case func
         when INT_PRINT
           address = peek
-          print(address)
+          stdout_print(address)
         when INT_PRINT_VAL
           if (address = peek)
             val = resolve(address)
-            print(val)
+            stdout_print(val)
           else
-            print(nil)
+            stdout_print(nil)
           end
         end
       when JUMP
@@ -144,7 +152,9 @@ class VM
         label = fetch
         @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
       when CALL
-        @call_stack << { return: @ip, locals: {}, args: @call_args }
+        call_locals = @last_local ? { @last_local => locals[@last_local] } : {}
+        @call_stack << { return: @ip, locals: call_locals, args: @call_args }
+        fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > 1000
         @ip = pop
       when RETURN
         @ip = @call_stack.pop[:return]
@@ -160,6 +170,25 @@ class VM
         return
       when DEBUG
         print_debug
+      end
+      if debug > 0
+        print((@ip - 1).to_s.ljust(5))
+        (name, _arg_count) = INSTRUCTIONS[instruction]
+        print name.ljust(15)
+        case name
+        when 'SET_ARGS'
+          print 'args:   '
+          p @call_args.each_with_object({}) { |a, h| h[a] = resolve(a) }
+        when 'SET_LOCAL'
+          print 'locals: '
+          p locals.each_with_object({}) { |(n, a), h| h[n] = resolve(a) }
+        when /^JUMP/
+          print 'ip:     '
+          p @ip
+        else
+          print 'stack:  '
+          p @stack.each_with_object({}) { |a, h| h[a] = resolve(a) }
+        end
       end
     end
   end
@@ -227,12 +256,12 @@ class VM
   end
 
   def local_values
-    locals.map do |address|
-      resolve(address)
+    locals.each_with_object({}) do |(name, address), hash|
+      hash[name] = resolve(address)
     end
   end
 
-  def print(val)
+  def stdout_print(val)
     stdout.print(val.to_s)
   end
 
@@ -273,5 +302,6 @@ class VM
     @call_stack.each do |frame|
       p frame
     end
+    puts
   end
 end

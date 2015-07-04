@@ -22,6 +22,10 @@ class VM
       Int.new(raw + other.raw)
     end
 
+    def -(other)
+      Int.new(raw - other.raw)
+    end
+
     def to_s
       raw.to_s
     end

@@ -13,6 +13,7 @@ class VM
     end
 
     def ==(other)
+      fail "#{other.inspect} is not a ByteArray" unless other.is_a?(ByteArray)
       raw == other.raw
     end
 

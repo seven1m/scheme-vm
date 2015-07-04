@@ -3,12 +3,12 @@ require_relative './spec_helper'
 describe Parser do
   describe '#parse' do
     before do
-      @result = subject.parse('(foo (bar (baz quz)))')
+      @result = subject.parse('(if (< 1 2)) n (foo (bar (baz quz)))')
     end
 
     it 'parses s-expressions' do
       expect(@result).to eq([
-        ['foo', ['bar', ['baz', 'quz']]]
+        ['if', ['<', '1', '2']], 'n', ['foo', ['bar', ['baz', 'quz']]]
       ])
     end
   end

@@ -61,20 +61,42 @@ describe VM do
   end
 
   describe 'PUSH_LOCAL' do
-    before do
-      address = subject.alloc
-      subject.heap[address] = VM::Int.new(9)
-      subject.locals[0] = address
-      subject.execute([
-        VM::PUSH_LOCAL, 0,
-        VM::HALT
-      ])
+    context do
+      before do
+        address = subject.alloc
+        subject.heap[address] = VM::Int.new(9)
+        subject.locals[0] = address
+        subject.execute([
+          VM::PUSH_LOCAL, 0,
+          VM::HALT
+        ])
+      end
+
+      it 'pushes the address of the local variable onto the stack' do
+        expect(subject.stack_values).to eq([
+          VM::Int.new(9)
+        ])
+      end
     end
 
-    it 'pushes the address of the local variable onto the stack' do
-      expect(subject.stack_values).to eq([
-        VM::Int.new(9)
-      ])
+    context 'pushing self' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_LOCAL, 0,  # my_func
+          VM::INT, VM::INT_PRINT,
+          VM::RETURN,
+          VM::ENDF,
+          VM::SET_LOCAL, 0,   # my_func
+          VM::PUSH_LOCAL, 0,
+          VM::CALL
+        ])
+      end
+
+      it 'pushes the address of the current function onto the stack' do
+        stdout.rewind
+        expect(stdout.read).to eq('1')
+      end
     end
   end
 
@@ -85,9 +107,13 @@ describe VM do
       subject.locals[0] = address
       subject.execute([
         VM::PUSH_FUNC,
-        VM::PUSH_ARG, 0,             # first arg
+        VM::PUSH_ARG,
+        VM::SET_LOCAL, 1,            # first arg
+        VM::PUSH_ARG,
+        VM::SET_LOCAL, 2,            # second arg
+        VM::PUSH_LOCAL, 1,
         VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_ARG, 1,             # second arg
+        VM::PUSH_LOCAL, 2,
         VM::INT, VM::INT_PRINT_VAL,
         VM::RETURN,
         VM::ENDF,
@@ -103,7 +129,7 @@ describe VM do
       ])
     end
 
-    it 'pushes the address of the argument onto the stack' do
+    it 'sets the arguments as locals inside the function' do
       stdout.rewind
       expect(stdout.read).to eq('23')
     end
@@ -163,6 +189,23 @@ describe VM do
     it 'adds the last 2 numbers on the stack' do
       expect(subject.stack_values).to eq([
         VM::Int.new(3)
+      ])
+    end
+  end
+
+  describe 'SUB' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, '2',
+        VM::SUB,
+        VM::HALT
+      ])
+    end
+
+    it 'subtracts the last number from the next-to-last number on the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(1)
       ])
     end
   end
@@ -270,9 +313,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(1),
         VM::Int.new(0),
-        VM::Int.new(0)
+        VM::Int.new(0),
+        VM::Int.new(1)
       ])
     end
   end
@@ -295,9 +338,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
+        VM::Int.new(0),
         VM::Int.new(1),
-        VM::Int.new(1),
-        VM::Int.new(0)
+        VM::Int.new(1)
       ])
     end
   end
@@ -320,9 +363,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
+        VM::Int.new(1),
         VM::Int.new(0),
-        VM::Int.new(0),
-        VM::Int.new(1)
+        VM::Int.new(0)
       ])
     end
   end
@@ -345,9 +388,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(0),
         VM::Int.new(1),
-        VM::Int.new(1)
+        VM::Int.new(1),
+        VM::Int.new(0)
       ])
     end
   end
@@ -400,7 +443,7 @@ describe VM do
         VM::ADD,
         VM::DUP,
         VM::PUSH_NUM, '10',
-        VM::CMP_GT,
+        VM::CMP_LT,
         VM::JUMP_IF_TRUE, :loop,
         VM::HALT
       ])
