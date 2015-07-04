@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require_relative '../program'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = 'Usage: kai [options] path'
+
+  opts.on('-d', '--debug', 'Output debugging information') do
+    options[:debug] = true
+  end
+end.parse!
+
+path = ARGV.shift
+args = ARGV
+
+program = Program.new(File.read(path))
+program.run(debug: options[:debug] ? 2 : 0)
