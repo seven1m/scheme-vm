@@ -24,13 +24,20 @@ describe Compiler do
     context 'local variable' do
       before do
         @result = subject.compile([
+          ['def', 'n', '10'],
+          ['def', 'x', '11'],
           'n'
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_REMOTE', 0,
+          'VM::VAR_NAMES', 'n x',
+          'VM::PUSH_NUM', '10',
+          'VM::SET_LOCAL', 0,
+          'VM::PUSH_NUM', '11',
+          'VM::SET_LOCAL', 1,
+          'VM::PUSH_LOCAL', 0,
           'VM::HALT'
         ])
       end
@@ -47,6 +54,7 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::VAR_NAMES', 'n',
           'VM::PUSH_NUM', '10',
           'VM::SET_LOCAL', 0,
           'VM::PUSH_FUNC',
@@ -67,6 +75,7 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::VAR_NAMES', 'x',
           'VM::PUSH_NUM', '1',
           'VM::SET_LOCAL', 0,
           'VM::HALT'
@@ -101,6 +110,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x',
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
             'VM::SET_LOCAL', 0,
@@ -122,6 +132,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'myfn x',
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
             'VM::SET_LOCAL', 1,
@@ -147,6 +158,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'one two',
             'VM::PUSH_FUNC',       # (fn
             'VM::PUSH_FUNC',       #   (fn
             'VM::PUSH_NUM', '1',   #     1
@@ -182,6 +194,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'one',
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
             'VM::RETURN',
@@ -209,6 +222,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x',
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
             'VM::RETURN',
@@ -232,6 +246,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x y z',
             'VM::PUSH_FUNC',
             'VM::PUSH_ARG',
             'VM::SET_LOCAL', 1,
@@ -263,6 +278,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x',
             'VM::PUSH_FUNC',
             'VM::PUSH_REMOTE', 0,
             'VM::CALL',

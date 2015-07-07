@@ -11,7 +11,10 @@ class Compiler
   attr_reader :variables, :arguments
 
   def compile(sexps = @sexps)
-    compile_sexps(sexps) + [VM::HALT]
+    instructions = compile_sexps(sexps)
+    (@variables.any? ? [VM::VAR_NAMES, @variables.keys.join(' ')] : []) + \
+    instructions + \
+    [VM::HALT]
   end
 
   def pretty_format(instructions, grouped: false, ip: false)

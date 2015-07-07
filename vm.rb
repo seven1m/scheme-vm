@@ -4,6 +4,7 @@ require_relative 'vm/list_node'
 
 class VM
   class CallStackTooDeep < StandardError; end
+  class VariableUndefined < StandardError; end
 
   INSTRUCTIONS = [
     ['PUSH_NUM',     1],
@@ -32,7 +33,8 @@ class VM
     ['SET_LOCAL',    1],
     ['SET_ARGS',     0],
     ['HALT',         0],
-    ['DEBUG',        0]
+    ['DEBUG',        0],
+    ['VAR_NAMES',    1]
   ]
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
@@ -53,6 +55,7 @@ class VM
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
+    @var_names = []
   end
 
   def execute(instructions = nil, debug: 0)
@@ -83,13 +86,15 @@ class VM
         end
         push(address)
       when PUSH_LOCAL
-        name = fetch
-        address = locals.fetch(name)
+        var_num = fetch
+        address = locals[var_num]
+        fail VariableUndefined, "#{@var_names[var_num.to_i]} is not defined" unless address
         push(address)
       when PUSH_REMOTE
-        name = fetch
-        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-        address = frame_locals.fetch(name)
+        var_num = fetch
+        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[var_num] }
+        fail VariableUndefined, "#{@var_names[var_num.to_i]} is not defined" unless frame_locals
+        address = frame_locals.fetch(var_num)
         push(address)
       when PUSH_ARG
         address = args.shift
@@ -174,6 +179,8 @@ class VM
         return
       when DEBUG
         print_debug
+      when VAR_NAMES
+        @var_names = fetch.split
       end
       if debug > 0
         print((@ip - 1).to_s.ljust(5))
