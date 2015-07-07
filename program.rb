@@ -2,9 +2,10 @@ require_relative 'parser'
 require_relative 'compiler'
 
 class Program
-  def initialize(code, stdout: $stdout)
+  def initialize(code, args: [], stdout: $stdout)
     @sexps = Parser.new(code).parse
     @instr = compiler.compile
+    @args = args
     @stdout = stdout
   end
 
@@ -20,6 +21,6 @@ class Program
   end
 
   def vm
-    @vm ||= VM.new(@instr, stdout: @stdout)
+    @vm ||= VM.new(@instr, stdout: @stdout, args: @args)
   end
 end

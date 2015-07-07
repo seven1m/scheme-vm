@@ -83,19 +83,47 @@ describe VM do
       before do
         subject.execute([
           VM::PUSH_FUNC,
-          VM::PUSH_LOCAL, 0,  # my_func
+          VM::PUSH_REMOTE, 0,  # my_func
           VM::INT, VM::INT_PRINT,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 0,   # my_func
           VM::PUSH_LOCAL, 0,
-          VM::CALL
+          VM::CALL,
+          VM::HALT
         ])
       end
 
       it 'pushes the address of the current function onto the stack' do
         stdout.rewind
         expect(stdout.read).to eq('1')
+      end
+    end
+  end
+
+  describe 'PUSH_REMOTE' do
+    context 'pushing a local defined prior to this function (closure)' do
+      before do
+        subject.execute([
+          VM::PUSH_NUM, 10,
+          VM::SET_LOCAL, 0, # x
+
+          VM::PUSH_FUNC,
+          VM::PUSH_REMOTE, 0, # x
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::RETURN,
+          VM::ENDF,
+          VM::SET_LOCAL, 1, # my_func
+
+          VM::PUSH_LOCAL, 1,
+          VM::CALL,
+          VM::HALT
+        ])
+      end
+
+      it 'pushes the address of the variable defined outside this function onto the stack' do
+        stdout.rewind
+        expect(stdout.read).to eq('10')
       end
     end
   end

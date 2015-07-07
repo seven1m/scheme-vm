@@ -10,6 +10,7 @@ class VM
     ['PUSH_STR',     1],
     ['PUSH_LIST',    0],
     ['PUSH_LOCAL',   1],
+    ['PUSH_REMOTE',  1],
     ['PUSH_ARG',     0],
     ['PUSH_FUNC',    0],
     ['POP',          0],
@@ -43,16 +44,15 @@ class VM
 
   attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(instructions = [], stdout: $stdout)
+  def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
-    @call_stack << { locals: {}, args: [] }
+    @call_stack << { locals: {}, args: args }
     @heap = instructions # a heap "address" is an index into this array
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
-    @last_local = nil    # store the name of the just-pushed local (use by CALL)
   end
 
   def execute(instructions = nil, debug: 0)
@@ -83,8 +83,13 @@ class VM
         end
         push(address)
       when PUSH_LOCAL
-        @last_local = name = fetch
-        address = locals[name]
+        name = fetch
+        address = locals.fetch(name)
+        push(address)
+      when PUSH_REMOTE
+        name = fetch
+        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
+        address = frame_locals.fetch(name)
         push(address)
       when PUSH_ARG
         address = args.shift
@@ -146,18 +151,17 @@ class VM
         end
       when JUMP
         label = fetch
-        @ip = @labels[label]
+        @ip = @labels.fetch(label)
       when JUMP_IF_TRUE
         val = pop_val
         label = fetch
-        @ip = @labels[label] if val.is_a?(ByteArray) || val.raw == 1
+        @ip = @labels.fetch(label) if val.is_a?(ByteArray) || val.raw == 1
       when CALL
-        call_locals = @last_local ? { @last_local => locals[@last_local] } : {}
-        @call_stack << { return: @ip, locals: call_locals, args: @call_args }
+        @call_stack << { return: @ip, locals: {}, args: @call_args }
         fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > 1000
         @ip = pop
       when RETURN
-        @ip = @call_stack.pop[:return]
+        @ip = @call_stack.pop.fetch(:return)
       when LABEL
         fetch # noop
       when SET_LOCAL
@@ -173,7 +177,7 @@ class VM
       end
       if debug > 0
         print((@ip - 1).to_s.ljust(5))
-        (name, _arg_count) = INSTRUCTIONS[instruction]
+        (name, _arg_count) = INSTRUCTIONS.fetch(instruction)
         print name.ljust(15)
         case name
         when 'SET_ARGS'
@@ -241,10 +245,7 @@ class VM
   end
 
   def alloc
-    free = @heap.each_with_index.detect { |(slot, _index)| slot.nil? }
-    return free[1] if free
-    @heap << nil
-    @heap.size - 1
+    @heap.index(nil) || @heap.size
   end
 
   def locals

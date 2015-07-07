@@ -15,5 +15,5 @@ end.parse!
 path = ARGV.shift
 args = ARGV
 
-program = Program.new(File.read(path))
+program = Program.new(File.read(path), args: args)
 program.run(debug: options[:debug] ? 2 : 0)

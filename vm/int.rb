@@ -15,6 +15,7 @@ class VM
     end
 
     def ==(other)
+      return false unless other.is_a?(Int)
       raw == other.raw
     end
 

@@ -21,7 +21,7 @@ describe Compiler do
       end
     end
 
-    context 'variable' do
+    context 'local variable' do
       before do
         @result = subject.compile([
           'n'
@@ -30,7 +30,29 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_LOCAL', 0,
+          'VM::PUSH_REMOTE', 0,
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'remote variable' do
+      before do
+        @result = subject.compile([
+          ['def', 'n', '10'],
+          ['fn', [],
+            'n']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '10',
+          'VM::SET_LOCAL', 0,
+          'VM::PUSH_FUNC',
+          'VM::PUSH_REMOTE', 0,
+          'VM::RETURN',
+          'VM::ENDF',
           'VM::HALT'
         ])
       end
@@ -242,7 +264,7 @@ describe Compiler do
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
-            'VM::PUSH_LOCAL', 0,
+            'VM::PUSH_REMOTE', 0,
             'VM::CALL',
             'VM::RETURN',
             'VM::ENDF',

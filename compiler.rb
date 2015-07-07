@@ -4,11 +4,11 @@ require 'pp'
 class Compiler
   def initialize(sexps = nil, arguments: {})
     @sexps = sexps
-    @locals = {}
+    @variables = {}
     @arguments = arguments
   end
 
-  attr_reader :locals, :arguments
+  attr_reader :variables, :arguments
 
   def compile(sexps = @sexps)
     compile_sexps(sexps) + [VM::HALT]
@@ -41,12 +41,13 @@ class Compiler
   private
 
   def compile_sexps(sexps)
+    locals = {}
     sexps.each_with_index.flat_map do |sexp, index|
-      compile_sexp(sexp, use: index == sexps.size - 1)
+      compile_sexp(sexp, use: index == sexps.size - 1, locals: locals)
     end.flatten.compact
   end
 
-  def compile_sexp(sexp, options = { use: false })
+  def compile_sexp(sexp, options = { use: false, locals: {} })
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty?
     (name, *args) = sexp
@@ -57,7 +58,7 @@ class Compiler
     end
   end
 
-  def compile_literal(literal, options = { use: false })
+  def compile_literal(literal, options = { use: false, locals: {} })
     if literal =~ /\A[a-z]/
       [
         push_var(literal, options),
@@ -73,7 +74,8 @@ class Compiler
   end
 
   def def((name, val), options)
-    index = local_num(name)
+    index = var_num(name)
+    options[:locals][index] = true
     [
       compile_sexp(val, options.merge(use: true)),
       VM::SET_LOCAL, index
@@ -84,7 +86,7 @@ class Compiler
     args = args.map do |name|
       [
         VM::PUSH_ARG,
-        VM::SET_LOCAL, local_num(name)
+        VM::SET_LOCAL, var_num(name)
       ]
     end
     [
@@ -165,16 +167,19 @@ class Compiler
     ]
   end
 
-  def push_var(name, _options)
-    num = local_num(name)
-    [VM::PUSH_LOCAL, num]
+  def push_var(name, options)
+    num = var_num(name)
+    [
+      options[:locals][num] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
+      num
+    ]
   end
 
   def pop_maybe(options)
     return VM::POP unless options[:use]
   end
 
-  def local_num(name)
-    locals[name] || locals[name] = locals.values.size
+  def var_num(name)
+    variables[name] || variables[name] = variables.values.size
   end
 end
