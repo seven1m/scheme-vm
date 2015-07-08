@@ -323,7 +323,6 @@ describe VM do
         VM::PUSH_FUNC,
         VM::PUSH_STR, 'yo',
         VM::INT, VM::INT_PRINT_VAL,
-        VM::POP,
         VM::RETURN,
         VM::ENDF,
         VM::DUP,
@@ -482,6 +481,7 @@ describe VM do
       subject.execute([
         VM::PUSH_NUM, '0',
         VM::LABEL, :loop,
+        VM::DUP,
         VM::INT, VM::INT_PRINT_VAL,
         VM::PUSH_NUM, '1',
         VM::ADD,

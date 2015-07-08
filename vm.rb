@@ -147,7 +147,7 @@ class VM
           address = peek
           stdout_print(address)
         when INT_PRINT_VAL
-          if (address = peek)
+          if (address = pop)
             val = resolve(address)
             stdout_print(val)
           else
