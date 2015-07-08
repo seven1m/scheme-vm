@@ -19,12 +19,12 @@ class VM
 
     def to_a
       current = self
-      all = [@heap[current.address]]
-      while (next_address = current.next_node)
-        current = @heap[next_address]
-        all << @heap[current.address]
+      [@heap[current.address]].tap do |all|
+        while (next_address = current.next_node)
+          current = @heap[next_address]
+          all << @heap[current.address]
+        end
       end
-      all
     end
   end
 end
