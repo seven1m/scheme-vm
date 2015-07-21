@@ -54,8 +54,8 @@ describe Compiler do
     context 'local variable' do
       before do
         @result = subject.compile([
-          ['def', 'n', '10'],
-          ['def', 'x', '11'],
+          ['define', 'n', '10'],
+          ['define', 'x', '11'],
           'n'
         ])
       end
@@ -76,8 +76,8 @@ describe Compiler do
     context 'remote variable' do
       before do
         @result = subject.compile([
-          ['def', 'n', '10'],
-          ['fn', [],
+          ['define', 'n', '10'],
+          ['lambda', [],
             'n']
         ])
       end
@@ -202,10 +202,10 @@ describe Compiler do
       end
     end
 
-    context 'def' do
+    context 'define' do
       before do
         @result = subject.compile([
-          ['def', 'x', '1']
+          ['define', 'x', '1']
         ])
       end
 
@@ -235,12 +235,12 @@ describe Compiler do
       end
     end
 
-    context 'fn' do
+    context 'lambda' do
       context 'not storing in a variable or passing to a function' do
         before do
           @result = subject.compile([
-            ['fn', [],
-              ['def', 'x', '1']]
+            ['lambda', [],
+              ['define', 'x', '1']]
           ])
         end
 
@@ -260,9 +260,9 @@ describe Compiler do
       context 'storing in a variable' do
         before do
           @result = subject.compile([
-            ['def', 'myfn',
-              ['fn', [],
-                ['def', 'x', '1']]]
+            ['define', 'myfn',
+              ['lambda', [],
+                ['define', 'x', '1']]]
           ])
         end
 
@@ -283,30 +283,30 @@ describe Compiler do
       context 'mixed variable storage' do
         before do
           @result = subject.compile([
-            ['def', 'one',
-              ['fn', [],
-                ['fn', [], '1'],
-                ['def', 'two',
-                  ['fn', [], '2']],
-                ['fn', [], '3']]]
+            ['define', 'one',
+              ['lambda', [],
+                ['lambda', [], '1'],
+                ['define', 'two',
+                  ['lambda', [], '2']],
+                ['lambda', [], '3']]]
           ])
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::VAR_NAMES', 'one two',
-            'VM::PUSH_FUNC',       # (fn
-            'VM::PUSH_FUNC',       #   (fn
+            'VM::PUSH_FUNC',       # (lambda
+            'VM::PUSH_FUNC',       #   (lambda
             'VM::PUSH_NUM', '1',   #     1
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
-            'VM::POP',             #   <pop (fn 1)>
-            'VM::PUSH_FUNC',       #   (fn
+            'VM::POP',             #   <pop (lambda 1)>
+            'VM::PUSH_FUNC',       #   (lambda
             'VM::PUSH_NUM', '2',   #     2
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
             'VM::SET_LOCAL', 1,    #   (def two ...)
-            'VM::PUSH_FUNC',       #   (fn
+            'VM::PUSH_FUNC',       #   (lambda
             'VM::PUSH_NUM', '3',   #     3
             'VM::RETURN',          #   <return>
             'VM::ENDF',            #   )
@@ -321,8 +321,8 @@ describe Compiler do
       context 'return value' do
         before do
           @result = subject.compile([
-            ['def', 'one',
-              ['fn', [],
+            ['define', 'one',
+              ['lambda', [],
                 '1']],
             ['print', ['one']]
           ])
@@ -349,8 +349,8 @@ describe Compiler do
       context 'without args' do
         before do
           @result = subject.compile([
-            ['def', 'x',
-              ['fn', [],
+            ['define', 'x',
+              ['lambda', [],
                 '1']],
             ['x']
           ])
@@ -374,8 +374,8 @@ describe Compiler do
       context 'with args' do
         before do
           @result = subject.compile([
-            ['def', 'x',
-              ['fn', ['y', 'z'], []]],
+            ['define', 'x',
+              ['lambda', ['y', 'z'], []]],
             ['x', '2', '4']
           ])
         end
@@ -406,8 +406,8 @@ describe Compiler do
       context 'calling self' do
         before do
           @result = subject.compile([
-            ['def', 'x',
-              ['fn', [],
+            ['define', 'x',
+              ['lambda', [],
                 ['x']]]
           ])
         end

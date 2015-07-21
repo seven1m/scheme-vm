@@ -10,8 +10,8 @@ describe 'Fib' do
   context 'recursive version' do
     let(:code) do
       <<-END
-        (def fib
-          (fn (n)
+        (define fib
+          (lambda (n)
             (if (< n 2)
                 n
                 (+
@@ -30,10 +30,10 @@ describe 'Fib' do
   context 'recursive, tail-call version' do
     let(:code) do
       <<-END
-        (def fib
-          (fn (n)
-            (def f
-              (fn (i c n)
+        (define fib
+          (lambda (n)
+            (define f
+              (lambda (i c n)
                 (if (== i 0)
                     c
                     (f (- i 1) n (+ c n)))))

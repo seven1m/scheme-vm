@@ -116,7 +116,7 @@ class Compiler
     end
   end
 
-  def def((name, val), options)
+  def define((name, val), options)
     index = var_num(name)
     options[:locals][index] = true
     [
@@ -125,7 +125,7 @@ class Compiler
     ]
   end
 
-  def fn((args, *body), options)
+  def lambda((args, *body), options)
     args = args.map do |name|
       [
         VM::PUSH_ARG,
