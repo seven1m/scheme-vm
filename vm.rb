@@ -1,3 +1,4 @@
+require_relative 'vm/atom'
 require_relative 'vm/int'
 require_relative 'vm/byte_array'
 require_relative 'vm/list_node'
@@ -7,6 +8,7 @@ class VM
   class VariableUndefined < StandardError; end
 
   INSTRUCTIONS = [
+    ['PUSH_ATOM',    1],
     ['PUSH_NUM',     1],
     ['PUSH_STR',     1],
     ['PUSH_LIST',    0],
@@ -34,7 +36,8 @@ class VM
     ['SET_ARGS',     0],
     ['HALT',         0],
     ['DEBUG',        0],
-    ['VAR_NAMES',    1]
+    ['VAR_NAMES',    1],
+    ['UNQUOTE',      0]
   ]
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
@@ -56,6 +59,7 @@ class VM
     @call_args = []      # used for next CALL
     @stdout = stdout
     @var_names = []
+    @unquote = 0
   end
 
   def execute(instructions = nil, debug: 0)
@@ -68,6 +72,9 @@ class VM
     build_labels
     while (instruction = fetch)
       case instruction
+      when PUSH_ATOM
+        name = fetch
+        push_val(Atom.new(name))
       when PUSH_NUM
         num = fetch
         push_val(Int.new(num))
@@ -181,6 +188,14 @@ class VM
         print_debug
       when VAR_NAMES
         @var_names = fetch.split
+      when UNQUOTE
+        @unquote += 1
+        label = "unquote_#{@unquote}".to_sym
+        instr = Compiler.new(pop_val).compile(jump: label)
+        new_ip = @heap.size
+        @heap.concat(instr)
+        @labels[label] = @ip
+        @ip = new_ip
       end
       if debug > 0
         print((@ip - 1).to_s.ljust(5))

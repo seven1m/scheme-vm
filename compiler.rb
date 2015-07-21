@@ -10,11 +10,11 @@ class Compiler
 
   attr_reader :variables, :arguments
 
-  def compile(sexps = @sexps)
+  def compile(sexps = @sexps, jump: nil)
     instructions = compile_sexps(sexps)
     (@variables.any? ? [VM::VAR_NAMES, @variables.keys.join(' ')] : []) + \
     instructions + \
-    [VM::HALT]
+    (jump ? [VM::JUMP, jump] : [VM::HALT])
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
@@ -54,25 +54,52 @@ class Compiler
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty?
     (name, *args) = sexp
-    if respond_to?(name, :include_private)
+    if options[:quote] || options[:quasiquote]
+      if name == 'unquote' && options[:quasiquote]
+        compile_sexp(args.first, options.merge(quasiquote: false))
+      else
+        list(sexp, options)
+      end
+    elsif respond_to?(name, :include_private)
       send(name, args, options)
     else
       call(sexp, options)
     end
   end
 
+  # TODO rename this
   def compile_literal(literal, options = { use: false, locals: {} })
     if literal =~ /\A[a-z]/
-      [
-        push_var(literal, options),
-        pop_maybe(options)
-      ]
+      if options[:quote] || options[:quasiquote]
+        [VM::PUSH_ATOM, literal]
+      else
+        [
+          push_var(literal, options),
+          pop_maybe(options)
+        ]
+      end
     else
       [
         VM::PUSH_NUM,
         literal,
         pop_maybe(options)
       ]
+    end
+  end
+
+  def quote((arg, *_rest), options)
+    if arg.is_a?(Array)
+      list(arg, options.merge(quote: true))
+    else
+      compile_literal(arg, options.merge(quote: true))
+    end
+  end
+
+  def quasiquote((arg, *_rest), options)
+    if arg.is_a?(Array)
+      list(arg, options.merge(quasiquote: true))
+    else
+      compile_literal(arg, options.merge(quote: true))
     end
   end
 

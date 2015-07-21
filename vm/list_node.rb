@@ -1,5 +1,7 @@
 class VM
   class ListNode
+    include Enumerable
+
     attr_reader :address
     attr_accessor :next_node
 
@@ -17,14 +19,21 @@ class VM
       raw.map(&:raw).to_s
     end
 
-    def to_a
+    def each
       current = self
-      [@heap[current.address]].tap do |all|
-        while (next_address = current.next_node)
-          current = @heap[next_address]
-          all << @heap[current.address]
-        end
+      yield @heap[current.address]
+      while (next_address = current.next_node)
+        current = @heap[next_address]
+        yield @heap[current.address]
       end
+    end
+
+    def size
+      @size ||= to_a.size
+    end
+
+    def inspect
+      "#<VM::ListNode @address=#{@address}, @next_node=#{@next_node}, @value=#{@heap[@address].inspect}>"
     end
   end
 end

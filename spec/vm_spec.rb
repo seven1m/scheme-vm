@@ -10,6 +10,21 @@ describe VM do
     )
   end
 
+  describe 'PUSH_ATOM' do
+    before do
+      subject.execute([
+        VM::PUSH_ATOM, 'foo',
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the number, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Atom.new('foo')
+      ])
+    end
+  end
+
   describe 'PUSH_NUM' do
     before do
       subject.execute([

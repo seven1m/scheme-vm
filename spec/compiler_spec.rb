@@ -66,6 +66,92 @@ describe Compiler do
       end
     end
 
+    context 'quote' do
+      context 'given a list' do
+        before do
+          @result = subject.compile([
+            ['quote', ['foo', '2', '3', ['print', '4']]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_ATOM', 'foo',
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '3',
+            'VM::PUSH_ATOM', 'print',
+            'VM::PUSH_NUM', '4',
+            'VM::PUSH_NUM', 2, # arg count
+            'VM::PUSH_LIST',
+            'VM::PUSH_NUM', 4, # arg count
+            'VM::PUSH_LIST',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'given an atom' do
+        before do
+          @result = subject.compile([
+            ['quote', 'foo']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_ATOM', 'foo',
+            'VM::HALT'
+          ])
+        end
+      end
+    end
+
+    context 'quasiquote' do
+      context 'given a simple list' do
+        before do
+          @result = subject.compile([
+            ['quasiquote', ['foo', '2', '3', ['print', '4']]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_ATOM', 'foo',
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '3',
+            'VM::PUSH_ATOM', 'print',
+            'VM::PUSH_NUM', '4',
+            'VM::PUSH_NUM', 2, # arg count
+            'VM::PUSH_LIST',
+            'VM::PUSH_NUM', 4, # arg count
+            'VM::PUSH_LIST',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'given a list containing an unquote expression' do
+        before do
+          @result = subject.compile([
+            ['quasiquote', ['list', '1', ['unquote', ['+', '2', '3']]]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_ATOM', 'list',
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '3',
+            'VM::ADD',
+            'VM::PUSH_NUM', 3,   # arg count
+            'VM::PUSH_LIST',     # ['list', '1', '5']
+            'VM::HALT'
+          ])
+        end
+      end
+    end
+
     context 'def' do
       before do
         @result = subject.compile([
