@@ -55,12 +55,20 @@ class Compiler
     return [] if sexp.empty?
     (name, *args) = sexp
     if options[:quote] || options[:quasiquote]
-      if name == 'unquote' && options[:quasiquote]
-        compile_sexp(args.first, options.merge(quasiquote: false))
+      if name =~ /unquote(\-splicing)?/ && options[:quasiquote]
+        expr = compile_sexp(args.first, options.merge(quasiquote: false))
+        if name == 'unquote-splicing'
+          fail "can only use unquote-splicing with a list" if expr.compact.last != VM::PUSH_LIST
+          ['splice', expr.first]
+        else
+          expr
+        end
       else
         list(sexp, options)
       end
-    elsif respond_to?(name, :include_private)
+    elsif name.is_a?(Array)
+      fail "#{name} is not a lambda"
+    elsif respond_to?(name.gsub(/[a-z]-/, '$1_'), :include_private)
       send(name, args, options)
     else
       call(sexp, options)
@@ -69,7 +77,8 @@ class Compiler
 
   # TODO rename this
   def compile_literal(literal, options = { use: false, locals: {} })
-    if literal =~ /\A[a-z]/
+    case literal
+    when /\A[a-z]/
       if options[:quote] || options[:quasiquote]
         [VM::PUSH_ATOM, literal]
       else
@@ -78,6 +87,10 @@ class Compiler
           pop_maybe(options)
         ]
       end
+    when /\A#t/
+      [VM::PUSH_TRUE, pop_maybe(options)]
+    when /\A#f/
+      [VM::PUSH_FALSE, pop_maybe(options)]
     else
       [
         VM::PUSH_NUM,
@@ -89,7 +102,7 @@ class Compiler
 
   def quote((arg, *_rest), options)
     if arg.is_a?(Array)
-      list(arg, options.merge(quote: true))
+      compile_sexp(arg, options.merge(quote: true))
     else
       compile_literal(arg, options.merge(quote: true))
     end
@@ -97,9 +110,9 @@ class Compiler
 
   def quasiquote((arg, *_rest), options)
     if arg.is_a?(Array)
-      list(arg, options.merge(quasiquote: true))
+      compile_sexp(arg, options.merge(quasiquote: true))
     else
-      compile_literal(arg, options.merge(quote: true))
+      compile_literal(arg, options.merge(quasiquote: true))
     end
   end
 
@@ -139,9 +152,17 @@ class Compiler
   end
 
   def list(args, options)
+    members = args.flat_map do |arg|
+      expr = compile_sexp(arg, options.merge(use: true))
+      if expr.first == 'splice'
+        expr.last
+      else
+        [expr]
+      end
+    end
     [
-      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
-      VM::PUSH_NUM, args.size,
+      members,
+      VM::PUSH_NUM, members.size,
       VM::PUSH_LIST,
       pop_maybe(options)
     ]

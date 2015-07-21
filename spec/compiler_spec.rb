@@ -21,6 +21,36 @@ describe Compiler do
       end
     end
 
+    context '#t' do
+      before do
+        @result = subject.compile([
+          '#t'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_TRUE',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context '#f' do
+      before do
+        @result = subject.compile([
+          '#f'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_FALSE',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'local variable' do
       before do
         @result = subject.compile([
@@ -146,6 +176,26 @@ describe Compiler do
             'VM::ADD',
             'VM::PUSH_NUM', 3,   # arg count
             'VM::PUSH_LIST',     # ['list', '1', '5']
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'given a list containing an unquote-splicing expression' do
+        before do
+          @result = subject.compile([
+            ['quasiquote', ['list', '1', ['unquote-splicing', ['list', '2', '3']]]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_ATOM', 'list',
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '3',
+            'VM::PUSH_NUM', 4,   # arg count
+            'VM::PUSH_LIST',     # ['list', '1', '2', '3']
             'VM::HALT'
           ])
         end

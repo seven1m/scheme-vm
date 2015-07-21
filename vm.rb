@@ -2,6 +2,8 @@ require_relative 'vm/atom'
 require_relative 'vm/int'
 require_relative 'vm/byte_array'
 require_relative 'vm/list_node'
+require_relative 'vm/bool_true'
+require_relative 'vm/bool_false'
 
 class VM
   class CallStackTooDeep < StandardError; end
@@ -11,6 +13,8 @@ class VM
     ['PUSH_ATOM',    1],
     ['PUSH_NUM',     1],
     ['PUSH_STR',     1],
+    ['PUSH_TRUE',    0],
+    ['PUSH_FALSE',   0],
     ['PUSH_LIST',    0],
     ['PUSH_LOCAL',   1],
     ['PUSH_REMOTE',  1],
@@ -81,6 +85,10 @@ class VM
       when PUSH_STR
         str = fetch
         push_val(ByteArray.new(str))
+      when PUSH_TRUE
+        push_true
+      when PUSH_FALSE
+        push_false
       when PUSH_LIST
         count = pop_raw
         last = nil
@@ -122,28 +130,23 @@ class VM
       when CMP_GT
         num2 = pop_val
         num1 = pop_val
-        result = num1 > num2 ? 1 : 0
-        push_val(VM::Int.new(result))
+        num1 > num2 ? push_true : push_false
       when CMP_GTE
         num2 = pop_val
         num1 = pop_val
-        result = num1 >= num2 ? 1 : 0
-        push_val(VM::Int.new(result))
+        num1 >= num2 ? push_true : push_false
       when CMP_LT
         num2 = pop_val
         num1 = pop_val
-        result = num1 < num2 ? 1 : 0
-        push_val(VM::Int.new(result))
+        num1 < num2 ? push_true : push_false
       when CMP_LTE
         num2 = pop_val
         num1 = pop_val
-        result = num1 <= num2 ? 1 : 0
-        push_val(VM::Int.new(result))
+        num1 <= num2 ? push_true : push_false
       when CMP_EQ
         num2 = pop_val
         num1 = pop_val
-        result = num1 == num2 ? 1 : 0
-        push_val(VM::Int.new(result))
+        num1 == num2 ? push_true : push_false
       when DUP
         val = peek
         push(val)
@@ -167,7 +170,7 @@ class VM
       when JUMP_IF_TRUE
         val = pop_val
         label = fetch
-        @ip = @labels.fetch(label) if val.is_a?(ByteArray) || val.raw == 1
+        @ip = @labels.fetch(label) if val != bool_false
       when CALL
         @call_stack << { return: @ip, locals: {}, args: @call_args }
         fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > 1000
@@ -238,6 +241,32 @@ class VM
     address = alloc
     @heap[address] = val
     push(address)
+  end
+
+  def bool_true
+    BoolTrue.instance
+  end
+
+  def push_true
+    @true_address ||= begin
+      address = alloc
+      @heap[address] = bool_true
+      address
+    end
+    push(@true_address)
+  end
+
+  def bool_false
+    BoolFalse.instance
+  end
+
+  def push_false
+    @false_address ||= begin
+      address = alloc
+      @heap[address] = bool_false
+      address
+    end
+    push(@false_address)
   end
 
   def pop

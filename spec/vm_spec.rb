@@ -18,7 +18,7 @@ describe VM do
       ])
     end
 
-    it 'allocates memory, stores the number, and pushes address onto the stack' do
+    it 'allocates memory, stores the atom, and pushes address onto the stack' do
       expect(subject.stack_values).to eq([
         VM::Atom.new('foo')
       ])
@@ -51,6 +51,36 @@ describe VM do
     it 'allocates memory, stores the string, and pushes address onto the stack' do
       expect(subject.stack_values).to eq([
         VM::ByteArray.new('hello world')
+      ])
+    end
+  end
+
+  describe 'PUSH_TRUE' do
+    before do
+      subject.execute([
+        VM::PUSH_TRUE,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the boolean, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::BoolTrue.instance
+      ])
+    end
+  end
+
+  describe 'PUSH_FALSE' do
+    before do
+      subject.execute([
+        VM::PUSH_FALSE,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the boolean, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::BoolFalse.instance
       ])
     end
   end
@@ -371,9 +401,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(0),
-        VM::Int.new(0),
-        VM::Int.new(1)
+        VM::BoolFalse.instance,
+        VM::BoolFalse.instance,
+        VM::BoolTrue.instance
       ])
     end
   end
@@ -396,9 +426,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(0),
-        VM::Int.new(1),
-        VM::Int.new(1)
+        VM::BoolFalse.instance,
+        VM::BoolTrue.instance,
+        VM::BoolTrue.instance
       ])
     end
   end
@@ -421,9 +451,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(1),
-        VM::Int.new(0),
-        VM::Int.new(0)
+        VM::BoolTrue.instance,
+        VM::BoolFalse.instance,
+        VM::BoolFalse.instance
       ])
     end
   end
@@ -446,9 +476,9 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(1),
-        VM::Int.new(1),
-        VM::Int.new(0)
+        VM::BoolTrue.instance,
+        VM::BoolTrue.instance,
+        VM::BoolFalse.instance
       ])
     end
   end
@@ -468,8 +498,8 @@ describe VM do
 
     it 'removes both values and puts a 1 or 0 on the stack' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(1),
-        VM::Int.new(0)
+        VM::BoolTrue.instance,
+        VM::BoolFalse.instance
       ])
     end
   end
