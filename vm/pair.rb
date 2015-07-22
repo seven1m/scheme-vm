@@ -1,11 +1,11 @@
 class VM
-  class ListNode
+  class Pair
     include Enumerable
 
     attr_reader :address
     attr_accessor :next_node
 
-    def initialize(address, heap:, next_node: nil)
+    def initialize(address, next_node, heap:)
       @address = address
       @next_node = next_node
       @heap = heap
@@ -16,7 +16,7 @@ class VM
     end
 
     def to_s
-      raw.map(&:raw).to_s
+      "(#{raw.map(&:raw).join(' ')})"
     end
 
     def each
@@ -24,6 +24,7 @@ class VM
       yield @heap[current.address]
       while (next_address = current.next_node)
         current = @heap[next_address]
+        break if current == EmptyList.instance
         yield @heap[current.address]
       end
     end
@@ -33,7 +34,7 @@ class VM
     end
 
     def inspect
-      "#<VM::ListNode @address=#{@address}, @next_node=#{@next_node}, @value=#{@heap[@address].inspect}>"
+      "#<VM::Pair @address=#{@address}, @next_node=#{@next_node}, @value=#{@heap[@address].inspect}>"
     end
   end
 end

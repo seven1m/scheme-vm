@@ -85,6 +85,69 @@ describe VM do
     end
   end
 
+  describe 'PUSH_CAR' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, 3,
+        VM::PUSH_LIST,
+        VM::PUSH_CAR,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the first element from the pair, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new('1')
+      ])
+    end
+  end
+
+  describe 'PUSH_CDR' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, 3,
+        VM::PUSH_LIST,
+        VM::PUSH_CDR,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the first element from the pair, and pushes address onto the stack' do
+      expect(subject.stack_values.first.to_a).to eq([
+        VM::Int.new(2),
+        VM::Int.new(3)
+      ])
+    end
+  end
+
+  describe 'PUSH_CONS' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_CONS,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, creates a new pair with the two stack arguments, and pushes the address onto the stack' do
+      expect(subject.stack_values.first.to_a).to eq([
+        VM::Int.new(1),
+        VM::Int.new(2),
+        VM::Int.new(3)
+      ])
+    end
+  end
+
   describe 'PUSH_LIST' do
     before do
       subject.execute([
@@ -97,11 +160,11 @@ describe VM do
       ])
     end
 
-    it 'creates a linked-list and pushes the first node address onto the stack' do
+    it 'creates a list and pushes the first node address onto the stack' do
       expect(subject.stack_values.size).to eq(1)
       node = subject.stack_values.first
-      expect(node).to be_a(VM::ListNode)
-      expect(node.to_s).to eq('[5, 7, 9]')
+      expect(node).to be_a(VM::Pair)
+      expect(node.to_s).to eq('(5 7 9)')
     end
   end
 
@@ -189,7 +252,7 @@ describe VM do
     end
   end
 
-  describe 'SET_ARGS and PUSH_ARG' do
+  describe 'SET_ARGS and PUSH_ARG and PUSH_ARGS' do
     before do
       address = subject.alloc
       subject.heap[address] = VM::Int.new(9)
@@ -200,9 +263,13 @@ describe VM do
         VM::SET_LOCAL, 1,            # first arg
         VM::PUSH_ARG,
         VM::SET_LOCAL, 2,            # second arg
+        VM::PUSH_ARGS,
+        VM::SET_LOCAL, 3,            # list containing third and fourth args
         VM::PUSH_LOCAL, 1,
         VM::INT, VM::INT_PRINT_VAL,
         VM::PUSH_LOCAL, 2,
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_LOCAL, 3,
         VM::INT, VM::INT_PRINT_VAL,
         VM::RETURN,
         VM::ENDF,
@@ -210,7 +277,9 @@ describe VM do
 
         VM::PUSH_NUM, 2,             # first arg
         VM::PUSH_NUM, 3,             # second arg
-        VM::PUSH_NUM, 2,             # arg count
+        VM::PUSH_NUM, 4,             # third arg
+        VM::PUSH_NUM, 5,             # fourth arg
+        VM::PUSH_NUM, 4,             # arg count
         VM::SET_ARGS,
         VM::PUSH_LOCAL, 0,
         VM::CALL,
@@ -220,7 +289,7 @@ describe VM do
 
     it 'sets the arguments as locals inside the function' do
       stdout.rewind
-      expect(stdout.read).to eq('23')
+      expect(stdout.read).to eq('23(4 5)')
     end
   end
 

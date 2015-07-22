@@ -100,6 +100,31 @@ class Compiler
     end
   end
 
+  def car((arg, *_rest), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::PUSH_CAR,
+      pop_maybe(options)
+    ]
+  end
+
+  def cdr((arg, *_rest), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::PUSH_CDR,
+      pop_maybe(options)
+    ]
+  end
+
+  def cons(args, options)
+    fail 'cons expects exactly 2 arguments' if args.size != 2
+    [
+      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+      VM::PUSH_CONS,
+      pop_maybe(options)
+    ]
+  end
+
   def quote((arg, *_rest), options)
     if arg.is_a?(Array)
       compile_sexp(arg, options.merge(quote: true))
@@ -126,11 +151,15 @@ class Compiler
   end
 
   def lambda((args, *body), options)
-    args = args.map do |name|
-      [
-        VM::PUSH_ARG,
-        VM::SET_LOCAL, var_num(name)
-      ]
+    if args.is_a?(Array)
+      if args.include?('.')
+        (named, _dot, rest) = args.slice_when { |i, j| [i, j].include?('.') }.to_a
+        args = named.map { |name| push_arg(name) } + push_all_args(rest.first)
+      else
+        args = args.map { |name| push_arg(name) }
+      end
+    else
+      args = push_all_args(args)
     end
     [
       VM::PUSH_FUNC,
@@ -223,6 +252,20 @@ class Compiler
     [
       options[:locals][num] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
       num
+    ]
+  end
+
+  def push_arg(name, _options = {})
+    [
+      VM::PUSH_ARG,
+      VM::SET_LOCAL, var_num(name)
+    ]
+  end
+
+  def push_all_args(name, _options = {})
+    [
+      VM::PUSH_ARGS,
+      VM::SET_LOCAL, var_num(name)
     ]
   end
 

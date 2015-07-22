@@ -51,6 +51,66 @@ describe Compiler do
       end
     end
 
+    context 'car' do
+      before do
+        @result = subject.compile([
+          ['car', ['list', '1', '2', '3']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', '3',
+          'VM::PUSH_NUM', 3,
+          'VM::PUSH_LIST',
+          'VM::PUSH_CAR',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'cdr' do
+      before do
+        @result = subject.compile([
+          ['cdr', ['list', '1', '2', '3']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', '3',
+          'VM::PUSH_NUM', 3,
+          'VM::PUSH_LIST',
+          'VM::PUSH_CDR',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'cons' do
+      before do
+        @result = subject.compile([
+          ['cons', '1', ['list', '2', '3']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', '3',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+          'VM::PUSH_CONS',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'local variable' do
       before do
         @result = subject.compile([
@@ -395,6 +455,72 @@ describe Compiler do
             'VM::PUSH_NUM', '2',
             'VM::PUSH_NUM', '4',
             'VM::PUSH_NUM', 2,    # arg count
+            'VM::SET_ARGS',
+            'VM::PUSH_LOCAL', 0,
+            'VM::CALL',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'with variable args' do
+        before do
+          @result = subject.compile([
+            ['define', 'x',
+              ['lambda', 'args', []]],
+            ['x', '2', '4']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x args',
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARGS',
+            'VM::SET_LOCAL', 1,
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 0,
+
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '4',
+            'VM::PUSH_NUM', 2,    # arg count
+            'VM::SET_ARGS',
+            'VM::PUSH_LOCAL', 0,
+            'VM::CALL',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'with destructuring args' do
+        before do
+          @result = subject.compile([
+            ['define', 'x',
+              ['lambda', ['first', 'second', '.', 'rest'], []]],
+            ['x', '2', '3', '4', '5']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::VAR_NAMES', 'x first second rest',
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 1,
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 2,
+            'VM::PUSH_ARGS',
+            'VM::SET_LOCAL', 3,
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 0,
+
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', '3',
+            'VM::PUSH_NUM', '4',
+            'VM::PUSH_NUM', '5',
+            'VM::PUSH_NUM', 4,    # arg count
             'VM::SET_ARGS',
             'VM::PUSH_LOCAL', 0,
             'VM::CALL',

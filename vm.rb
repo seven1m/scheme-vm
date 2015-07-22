@@ -1,7 +1,8 @@
 require_relative 'vm/atom'
 require_relative 'vm/int'
 require_relative 'vm/byte_array'
-require_relative 'vm/list_node'
+require_relative 'vm/pair'
+require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
 
@@ -15,10 +16,14 @@ class VM
     ['PUSH_STR',     1],
     ['PUSH_TRUE',    0],
     ['PUSH_FALSE',   0],
+    ['PUSH_CAR',     0],
+    ['PUSH_CDR',     0],
+    ['PUSH_CONS',    0],
     ['PUSH_LIST',    0],
     ['PUSH_LOCAL',   1],
     ['PUSH_REMOTE',  1],
     ['PUSH_ARG',     0],
+    ['PUSH_ARGS',    0],
     ['PUSH_FUNC',    0],
     ['POP',          0],
     ['ADD',          0],
@@ -89,14 +94,25 @@ class VM
         push_true
       when PUSH_FALSE
         push_false
+      when PUSH_CAR
+        pair = pop_val
+        push(pair.address)
+      when PUSH_CDR
+        pair = pop_val
+        push(pair.next_node)
+      when PUSH_CONS
+        cdr = pop
+        car = pop
+        pair = build_pair(car, cdr)
+        push_val(pair)
       when PUSH_LIST
         count = pop_raw
-        last = nil
+        last = store_empty_list
         address = nil
         count.times do
           arg = pop
           address = alloc
-          @heap[address] = ListNode.new(arg, next_node: last, heap: @heap)
+          @heap[address] = build_pair(arg, last)
           last = address
         end
         push(address)
@@ -113,6 +129,15 @@ class VM
         push(address)
       when PUSH_ARG
         address = args.shift
+        push(address)
+      when PUSH_ARGS
+        last = store_empty_list
+        address = nil
+        while arg = args.pop
+          address = alloc
+          @heap[address] = build_pair(arg, last)
+          last = address
+        end
         push(address)
       when PUSH_FUNC
         push(@ip)
@@ -269,6 +294,18 @@ class VM
     push(@false_address)
   end
 
+  def empty_list
+    EmptyList.instance
+  end
+
+  def store_empty_list
+    @empty_list_address ||= begin
+      address = alloc
+      @heap[address] = empty_list
+      address
+    end
+  end
+
   def pop
     @stack.pop
   end
@@ -305,6 +342,10 @@ class VM
 
   def args
     @call_stack.last[:args]
+  end
+
+  def build_pair(car, cdr)
+    Pair.new(car, cdr, heap: @heap)
   end
 
   def local_values
