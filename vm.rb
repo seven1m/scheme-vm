@@ -107,7 +107,7 @@ class VM
         push_val(pair)
       when PUSH_LIST
         count = pop_raw
-        last = store_empty_list
+        last = empty_list
         address = nil
         count.times do
           arg = pop
@@ -131,7 +131,7 @@ class VM
         address = args.shift
         push(address)
       when PUSH_ARGS
-        last = store_empty_list
+        last = empty_list
         address = nil
         while arg = args.pop
           address = alloc
@@ -193,7 +193,7 @@ class VM
         label = fetch
         @ip = @labels.fetch(label)
       when JUMP_IF_TRUE
-        val = pop_val
+        val = pop
         label = fetch
         @ip = @labels.fetch(label) if val != bool_false
       when CALL
@@ -269,39 +269,33 @@ class VM
   end
 
   def bool_true
-    BoolTrue.instance
+    @true_address ||= begin
+      address = alloc
+      @heap[address] = BoolTrue.instance
+      address
+    end
   end
 
   def push_true
-    @true_address ||= begin
-      address = alloc
-      @heap[address] = bool_true
-      address
-    end
-    push(@true_address)
+    push(bool_true)
   end
 
   def bool_false
-    BoolFalse.instance
+    @false_address ||= begin
+      address = alloc
+      @heap[address] = BoolFalse.instance
+      address
+    end
   end
 
   def push_false
-    @false_address ||= begin
-      address = alloc
-      @heap[address] = bool_false
-      address
-    end
-    push(@false_address)
+    push(bool_false)
   end
 
   def empty_list
-    EmptyList.instance
-  end
-
-  def store_empty_list
     @empty_list_address ||= begin
       address = alloc
-      @heap[address] = empty_list
+      @heap[address] = EmptyList.instance
       address
     end
   end
