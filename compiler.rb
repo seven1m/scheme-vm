@@ -125,6 +125,14 @@ class Compiler
     ]
   end
 
+  def null?((arg, *_rest), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::CMP_NULL,
+      pop_maybe(options)
+    ]
+  end
+
   def quote((arg, *_rest), options)
     if arg.is_a?(Array)
       compile_sexp(arg, options.merge(quote: true))

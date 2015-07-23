@@ -9,7 +9,7 @@ class VM
     end
 
     def to_s
-      raw.to_s
+      '#t'
     end
   end
 end

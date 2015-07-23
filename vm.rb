@@ -33,6 +33,7 @@ class VM
     ['CMP_LT',       0],
     ['CMP_LTE',      0],
     ['CMP_EQ',       0],
+    ['CMP_NULL',     0],
     ['DUP',          0],
     ['ENDF',         0],
     ['INT',          1],
@@ -107,8 +108,7 @@ class VM
         push_val(pair)
       when PUSH_LIST
         count = pop_raw
-        last = empty_list
-        address = nil
+        address = last = empty_list
         count.times do
           arg = pop
           address = alloc
@@ -172,6 +172,9 @@ class VM
         num2 = pop_val
         num1 = pop_val
         num1 == num2 ? push_true : push_false
+      when CMP_NULL
+        val = pop_val
+        val == EmptyList.instance ? push_true : push_false
       when DUP
         val = peek
         push(val)

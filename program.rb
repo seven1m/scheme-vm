@@ -17,10 +17,23 @@ class Program
   private
 
   def compiler
-    @compiler ||= Compiler.new(@sexps)
+    @compiler ||= Compiler.new(lib_sexps + @sexps)
   end
 
   def vm
     @vm ||= VM.new(@instr, stdout: @stdout, args: @args)
+  end
+
+  def lib_sexps
+    libs = [
+      lib_code('list.scm')
+    ]
+    Parser.new(libs.join).parse
+  end
+
+  ROOT_PATH = File.expand_path("..", __FILE__)
+
+  def lib_code(filename)
+    File.read(File.join(ROOT_PATH, 'lib', filename))
   end
 end

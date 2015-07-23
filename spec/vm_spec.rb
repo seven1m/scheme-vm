@@ -468,7 +468,7 @@ describe VM do
       ])
     end
 
-    it 'removes both values and puts a 1 or 0 on the stack' do
+    it 'removes both values and puts a #t or #f on the stack' do
       expect(subject.stack_values).to eq([
         VM::BoolFalse.instance,
         VM::BoolFalse.instance,
@@ -493,7 +493,7 @@ describe VM do
       ])
     end
 
-    it 'removes both values and puts a 1 or 0 on the stack' do
+    it 'removes both values and puts a #t or #f on the stack' do
       expect(subject.stack_values).to eq([
         VM::BoolFalse.instance,
         VM::BoolTrue.instance,
@@ -518,7 +518,7 @@ describe VM do
       ])
     end
 
-    it 'removes both values and puts a 1 or 0 on the stack' do
+    it 'removes both values and puts a #t or #f on the stack' do
       expect(subject.stack_values).to eq([
         VM::BoolTrue.instance,
         VM::BoolFalse.instance,
@@ -543,7 +543,7 @@ describe VM do
       ])
     end
 
-    it 'removes both values and puts a 1 or 0 on the stack' do
+    it 'removes both values and puts a #t or #f on the stack' do
       expect(subject.stack_values).to eq([
         VM::BoolTrue.instance,
         VM::BoolTrue.instance,
@@ -565,7 +565,30 @@ describe VM do
       ])
     end
 
-    it 'removes both values and puts a 1 or 0 on the stack' do
+    it 'removes both values and puts a #t or #f on the stack' do
+      expect(subject.stack_values).to eq([
+        VM::BoolTrue.instance,
+        VM::BoolFalse.instance
+      ])
+    end
+  end
+
+  describe 'CMP_NULL' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, 0,
+        VM::PUSH_LIST,
+        VM::CMP_NULL,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::CMP_NULL,
+        VM::HALT
+      ])
+    end
+
+    it 'removes the value and puts a #t or #f on the stack' do
       expect(subject.stack_values).to eq([
         VM::BoolTrue.instance,
         VM::BoolFalse.instance

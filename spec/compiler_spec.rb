@@ -111,6 +111,23 @@ describe Compiler do
       end
     end
 
+    context 'null?' do
+      before do
+        @result = subject.compile([
+          ['null?', ['list']],
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', 0,
+          'VM::PUSH_LIST',
+          'VM::CMP_NULL',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'local variable' do
       before do
         @result = subject.compile([
