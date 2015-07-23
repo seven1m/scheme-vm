@@ -230,7 +230,7 @@ class Compiler
     '>=' => VM::CMP_GTE,
     '<'  => VM::CMP_LT,
     '<=' => VM::CMP_LTE,
-    '==' => VM::CMP_EQ,
+    '='  => VM::CMP_EQ,
     '+'  => VM::ADD,
     '-'  => VM::SUB
   }.each do |name, instruction|

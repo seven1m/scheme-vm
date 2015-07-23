@@ -34,7 +34,7 @@ describe 'Fib' do
           (lambda (n)
             (define f
               (lambda (i c n)
-                (if (== i 0)
+                (if (= i 0)
                     c
                     (f (- i 1) n (+ c n)))))
             (f n 0 1)))

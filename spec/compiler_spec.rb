@@ -588,10 +588,10 @@ describe Compiler do
       end
     end
 
-    context '==' do
+    context '=' do
       before do
         @result = subject.compile([
-          ['==', '1', '1']
+          ['=', '1', '1']
         ])
       end
 
@@ -608,8 +608,8 @@ describe Compiler do
     context 'if' do
       before do
         @result = subject.compile([
-          ['if', ['==', '1', '1'], '2', '3'],
-          ['if', ['==', '1', '2'], '2', '3']
+          ['if', ['=', '1', '1'], '2', '3'],
+          ['if', ['=', '1', '2'], '2', '3']
         ])
       end
 
