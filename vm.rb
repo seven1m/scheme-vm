@@ -10,6 +10,8 @@ class VM
   class CallStackTooDeep < StandardError; end
   class VariableUndefined < StandardError; end
 
+  MAX_CALL_DEPTH = 1000
+
   INSTRUCTIONS = [
     ['PUSH_ATOM',    1],
     ['PUSH_NUM',     1],
@@ -41,6 +43,7 @@ class VM
     ['JUMP_IF_TRUE', 1],
     ['LABEL',        1],
     ['CALL',         0],
+    ['APPLY',        0],
     ['RETURN',       0],
     ['SET_LOCAL',    1],
     ['SET_ARGS',     0],
@@ -205,7 +208,16 @@ class VM
         @ip = @labels.fetch(label) if val != bool_false
       when CALL
         @call_stack << { return: @ip, locals: {}, args: @call_args }
-        fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > 1000
+        fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
+        @ip = pop
+      when APPLY
+        pair = resolve(@call_args.pop)
+        while pair != EmptyList.instance
+          @call_args.push(pair.address)
+          pair = @heap[pair.next_node]
+        end
+        @call_stack << { return: @ip, locals: {}, args: @call_args }
+        fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
         @ip = pop
       when RETURN
         @ip = @call_stack.pop.fetch(:return)

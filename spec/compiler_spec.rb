@@ -582,6 +582,28 @@ describe Compiler do
       end
     end
 
+    context 'apply' do
+      before do
+        @result = subject.compile([
+          ['apply', 'foo', ['list', '1', '2']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', 2, # arg count
+          'VM::PUSH_LIST',
+          'VM::PUSH_NUM', 1, # arg count
+          'VM::SET_ARGS',
+          'VM::PUSH_REMOTE', 'foo',
+          'VM::APPLY',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'list' do
       before do
         @result = subject.compile([

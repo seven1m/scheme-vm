@@ -452,6 +452,47 @@ describe VM do
     end
   end
 
+  describe 'APPLY' do
+    before do
+      subject.execute([
+        VM::PUSH_FUNC,
+        VM::PUSH_ARG,
+        VM::SET_LOCAL, 'x',
+        VM::PUSH_ARG,
+        VM::SET_LOCAL, 'y',
+        VM::PUSH_ARG,
+        VM::SET_LOCAL, 'z',
+        VM::PUSH_LOCAL, 'x',
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_LOCAL, 'z',
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::PUSH_LOCAL, 'y',
+        VM::INT, VM::INT_PRINT_VAL,
+        VM::RETURN,
+        VM::ENDF,
+        VM::SET_LOCAL, 'foo',
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, '4',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, 2, # arg count
+        VM::SET_ARGS,
+        VM::PUSH_LOCAL, 'foo',
+        VM::APPLY,
+        VM::HALT
+      ])
+    end
+
+    it 'calls the function, applying the list as arguments' do
+      subject.stdout.rewind
+      expect(subject.stdout.read).to eq('(1 2)43')
+    end
+  end
+
   describe 'CMP_GT' do
     before do
       subject.execute([
