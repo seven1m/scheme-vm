@@ -42,10 +42,10 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps)
-    locals = {}
+  def compile_sexps(sexps, options = {})
+    options[:locals] ||= {}
     sexps.each_with_index.flat_map do |sexp, index|
-      compile_sexp(sexp, use: index == sexps.size - 1, locals: locals)
+      compile_sexp(sexp, options.merge(use: index == sexps.size - 1))
     end.flatten.compact
   end
 
@@ -66,7 +66,7 @@ class Compiler
         list(sexp, options)
       end
     elsif name.is_a?(Array)
-      fail "#{name} is not a lambda"
+      call(sexp, options)
     elsif respond_to?(name.gsub(/[a-z]-/, '$1_'), :include_private)
       send(name, args, options)
     else
@@ -157,31 +157,35 @@ class Compiler
   end
 
   def lambda((args, *body), options)
+    arg_locals = {}
     if args.is_a?(Array)
       if args.include?('.')
         (named, _dot, rest) = args.slice_when { |i, j| [i, j].include?('.') }.to_a
+        arg_locals = (named + rest).each_with_object({}) { |arg, hash| hash[arg] = true }
         args = named.map { |name| push_arg(name) } + push_all_args(rest.first)
       else
+        arg_locals = args.each_with_object({}) { |arg, hash| hash[arg] = true }
         args = args.map { |name| push_arg(name) }
       end
     else
+      arg_locals = { args => true }
       args = push_all_args(args)
     end
     [
       VM::PUSH_FUNC,
       args,
-      compile_sexps(body),
+      compile_sexps(body, locals: arg_locals),
       VM::RETURN,
       VM::ENDF,
       pop_maybe(options)
     ]
   end
 
-  def call((name, *args), options)
+  def call((lambda, *args), options)
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
       args.any? ? [VM::PUSH_NUM, args.size, VM::SET_ARGS] : nil,
-      push_var(name, options),
+      compile_sexp(lambda, options.merge(use: true)),
       VM::CALL
     ]
   end

@@ -535,6 +535,30 @@ describe Compiler do
         end
       end
 
+      context 'calling immediately' do
+        before do
+          @result = subject.compile([
+            [['lambda', ['x'], 'x'], '1']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', 1,
+            'VM::SET_ARGS',
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 'x',
+            'VM::PUSH_LOCAL', 'x',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::CALL',
+            'VM::HALT'
+          ])
+        end
+      end
+
       context 'calling self' do
         before do
           @result = subject.compile([
