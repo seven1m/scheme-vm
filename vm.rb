@@ -230,7 +230,7 @@ class VM
         count = pop_raw
         @call_args = (0...count).map { pop }.reverse
       when HALT
-        return
+        break
       when DEBUG
         print_debug
       when UNQUOTE
