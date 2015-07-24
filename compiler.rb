@@ -10,11 +10,10 @@ class Compiler
 
   attr_reader :variables, :arguments
 
-  def compile(sexps = @sexps, jump: nil)
+  def compile(sexps = @sexps, halt: true)
     instructions = compile_sexps(sexps)
-    (@variables.any? ? [VM::VAR_NAMES, @variables.keys.join(' ')] : []) + \
     instructions + \
-    (jump ? [VM::JUMP, jump] : [VM::HALT])
+    (halt ? [VM::HALT] : [])
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
@@ -150,11 +149,10 @@ class Compiler
   end
 
   def define((name, val), options)
-    index = var_num(name)
-    options[:locals][index] = true
+    options[:locals][name] = true
     [
       compile_sexp(val, options.merge(use: true)),
-      VM::SET_LOCAL, index
+      VM::SET_LOCAL, name
     ]
   end
 
@@ -256,32 +254,27 @@ class Compiler
   end
 
   def push_var(name, options)
-    num = var_num(name)
     [
-      options[:locals][num] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
-      num
+      options[:locals][name] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
+      name
     ]
   end
 
   def push_arg(name, _options = {})
     [
       VM::PUSH_ARG,
-      VM::SET_LOCAL, var_num(name)
+      VM::SET_LOCAL, name
     ]
   end
 
   def push_all_args(name, _options = {})
     [
       VM::PUSH_ARGS,
-      VM::SET_LOCAL, var_num(name)
+      VM::SET_LOCAL, name
     ]
   end
 
   def pop_maybe(options)
     return VM::POP unless options[:use]
-  end
-
-  def var_num(name)
-    variables[name] || variables[name] = variables.values.size
   end
 end

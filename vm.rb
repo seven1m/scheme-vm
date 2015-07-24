@@ -59,15 +59,19 @@ class VM
 
   attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(instructions = [], args: [], stdout: $stdout)
+  def initialize(instructions = [], args: [], stdout: $stdout, libraries: {})
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
     @call_stack << { locals: {}, args: args }
-    @heap = instructions # a heap "address" is an index into this array
+    @heap = []           # a heap "address" is an index into this array
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
+    libraries.each do |_name, code|
+      load_code(code, execute: true)
+    end
+    load_code(instructions)
     @var_names = []
     @unquote = 0
   end
@@ -117,15 +121,15 @@ class VM
         end
         push(address)
       when PUSH_LOCAL
-        var_num = fetch
-        address = locals[var_num]
-        fail VariableUndefined, "#{@var_names[var_num.to_i]} is not defined" unless address
+        var = fetch
+        address = locals[var]
+        fail VariableUndefined, "#{var} is not defined" unless address
         push(address)
       when PUSH_REMOTE
-        var_num = fetch
-        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[var_num] }
-        fail VariableUndefined, "#{@var_names[var_num.to_i]} is not defined" unless frame_locals
-        address = frame_locals.fetch(var_num)
+        var = fetch
+        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[var] }
+        fail VariableUndefined, "#{var} is not defined" unless frame_locals
+        address = frame_locals.fetch(var)
         push(address)
       when PUSH_ARG
         address = args.shift
@@ -217,8 +221,6 @@ class VM
         return
       when DEBUG
         print_debug
-      when VAR_NAMES
-        @var_names = fetch.split
       when UNQUOTE
         @unquote += 1
         label = "unquote_#{@unquote}".to_sym
@@ -365,6 +367,14 @@ class VM
       arity.times { body << fetch } # skip args
     end
     body.flatten
+  end
+
+  def load_code(instructions, execute: false)
+    ip_was = @ip
+    @ip = @heap.size
+    @heap += instructions
+    self.execute if execute
+    @ip = ip_was
   end
 
   def build_labels
