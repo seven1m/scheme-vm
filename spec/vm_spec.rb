@@ -188,23 +188,29 @@ describe VM do
     end
 
     context 'pushing self' do
-      before do
-        subject.execute([
+      let(:instructions) do
+        [
           VM::PUSH_FUNC,
-          VM::PUSH_REMOTE, 0,  # my_func
+          VM::PUSH_REMOTE, 'my_func',
           VM::INT, VM::INT_PRINT,
           VM::RETURN,
           VM::ENDF,
-          VM::SET_LOCAL, 0,   # my_func
-          VM::PUSH_LOCAL, 0,
+          VM::SET_LOCAL, 'my_func',
+          VM::PUSH_LOCAL, 'my_func',
           VM::CALL,
           VM::HALT
-        ])
+        ]
+      end
+
+      before do
+        subject.execute(instructions)
       end
 
       it 'pushes the address of the current function onto the stack' do
         stdout.rewind
-        expect(stdout.read).to eq('1')
+        expect(stdout.read.to_i).to eq(
+          subject.heap.size - instructions.size + 1
+        )
       end
     end
 
@@ -295,26 +301,30 @@ describe VM do
 
   describe 'PUSH_FUNC and ENDF' do
     context 'given a single function' do
-      before do
-        subject.execute([
+      let(:instructions) do
+        [
           VM::PUSH_FUNC,
           VM::PUSH_NUM, '1',
           VM::RETURN,
           VM::ENDF,
           VM::HALT
-        ])
+        ]
+      end
+
+      before do
+        subject.execute(instructions)
       end
 
       it 'pushes the function address onto the stack' do
         expect(subject.stack).to eq([
-          1
+          subject.heap.size - instructions.size + 1
         ])
       end
     end
 
     context 'given a function within a function' do
-      before do
-        subject.execute([
+      let(:instructions) do
+        [
           VM::PUSH_FUNC,
           VM::PUSH_NUM, '1',
           VM::PUSH_FUNC,
@@ -323,12 +333,16 @@ describe VM do
           VM::RETURN,
           VM::ENDF,
           VM::HALT
-        ])
+        ]
+      end
+
+      before do
+        subject.execute(instructions)
       end
 
       it 'pushes the function address onto the stack' do
         expect(subject.stack).to eq([
-          1
+          subject.heap.size - instructions.size + 1
         ])
       end
     end
@@ -393,7 +407,9 @@ describe VM do
 
       it 'prints the address of the last item on the stack' do
         stdout.rewind
-        expect(stdout.read).to eq('5') # length_of_program + 1
+        address = stdout.read.to_i
+        value = subject.resolve(address)
+        expect(value).to eq(VM::Int.new(123))
       end
     end
 

@@ -5,6 +5,8 @@ require_relative 'vm/pair'
 require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
+require_relative 'parser'
+require_relative 'compiler'
 
 class VM
   class CallStackTooDeep < StandardError; end
@@ -62,7 +64,7 @@ class VM
 
   attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(instructions = [], args: [], stdout: $stdout, libraries: {})
+  def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
@@ -71,9 +73,7 @@ class VM
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
-    libraries.each do |_name, code|
-      load_code(code, execute: true)
-    end
+    load_libraries
     load_code(instructions)
     @var_names = []
     @unquote = 0
@@ -387,6 +387,30 @@ class VM
     @heap += instructions
     self.execute if execute
     @ip = ip_was
+  end
+
+  def load_libraries
+    libraries.each do |name, code|
+      load_code(code, execute: true)
+    end
+  end
+
+  def libraries
+    {
+      'list'  => Compiler.new(lib_sexps('list.scm')).compile(halt: false),
+      # 'logic' => Compiler.new(lib_sexps('logic.scm')).compile(halt: false)
+    }
+  end
+
+  def lib_sexps(lib)
+    code = lib_code(lib)
+    Parser.new(code).parse
+  end
+
+  ROOT_PATH = File.expand_path('..', __FILE__)
+
+  def lib_code(filename)
+    File.read(File.join(ROOT_PATH, 'lib', filename))
   end
 
   def build_labels

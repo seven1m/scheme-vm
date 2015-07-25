@@ -21,23 +21,6 @@ class Program
   end
 
   def vm
-    @vm ||= VM.new(@instr, stdout: @stdout, args: @args, libraries: libraries)
-  end
-
-  def libraries
-    {
-      'list' => Compiler.new(lib_sexps('list.scm')).compile(halt: false)
-    }
-  end
-
-  def lib_sexps(lib)
-    code = lib_code(lib)
-    Parser.new(code).parse
-  end
-
-  ROOT_PATH = File.expand_path("..", __FILE__)
-
-  def lib_code(filename)
-    File.read(File.join(ROOT_PATH, 'lib', filename))
+    @vm ||= VM.new(@instr, stdout: @stdout, args: @args)
   end
 end

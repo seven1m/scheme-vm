@@ -17,7 +17,7 @@ class Compiler
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
-    instructions = instructions.dup
+    instructions = instructions.dup.flatten.compact
     count = 0
     [].tap do |pretty|
       while instructions.any?
@@ -54,7 +54,7 @@ class Compiler
     return [] if sexp.empty?
     (name, *args) = sexp
     if options[:quote] || options[:quasiquote]
-      if name =~ /unquote(\-splicing)?/ && options[:quasiquote]
+      if name =~ /unquote(\-splicing)?/ && options[:quasiquote] # FIXME move to a method
         expr = compile_sexp(args.first, options.merge(quasiquote: false))
         if name == 'unquote-splicing'
           fail "can only use unquote-splicing with a list" if expr.compact.last != VM::PUSH_LIST
