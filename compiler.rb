@@ -44,6 +44,7 @@ class Compiler
 
   def compile_sexps(sexps, options = {})
     options[:locals] ||= {}
+    options[:syntax] ||= {}
     sexps.each_with_index.flat_map do |sexp, index|
       compile_sexp(sexp, options.merge(use: index == sexps.size - 1))
     end.flatten.compact
@@ -67,8 +68,13 @@ class Compiler
       end
     elsif name.is_a?(Array)
       call(sexp, options)
-    elsif respond_to?(name.gsub(/[a-z]-/, '$1_'), :include_private)
-      send(name, args, options)
+    elsif respond_to?((underscored_name = name.gsub(/([a-z])-/, '\1_')), :include_private)
+      send(underscored_name, args, options)
+    elsif (transformer = options[:syntax][name])
+      macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
+      vm = VM.new(macro.flatten.compact)
+      vm.execute
+      compile_sexp(vm.pop_val, options.merge(use: true))
     else
       call(sexp, options)
     end
@@ -76,6 +82,7 @@ class Compiler
 
   # TODO rename this
   def compile_literal(literal, options = { use: false, locals: {} })
+    literal = literal.to_s
     case literal
     when /\A[a-z]/
       if options[:quote] || options[:quasiquote]
@@ -86,9 +93,9 @@ class Compiler
           pop_maybe(options)
         ]
       end
-    when /\A#t/
+    when '#t'
       [VM::PUSH_TRUE, pop_maybe(options)]
-    when /\A#f/
+    when '#f'
       [VM::PUSH_FALSE, pop_maybe(options)]
     else
       [
@@ -216,6 +223,35 @@ class Compiler
       VM::PUSH_LIST,
       pop_maybe(options)
     ]
+  end
+
+  def define_syntax((name, transformer), options)
+    transformer.shift
+    options[:syntax][name] = syntax_rules(transformer, options)
+    []
+  end
+
+  # TODO: identifiers
+  # TODO: bindings isolated from current scope
+  def syntax_rules((_identifiers, *rules), options)
+    last = []
+    while (rule = rules.pop)
+      (pattern, template) = rule
+      names = pattern[1..-1]
+      template = quote_names_in_template(template, names)
+      last = ['if', ['=', ['length', ['quote', pattern]], ['length', 'expr']],
+               ['apply', ['lambda', names, ['quasiquote', template]], ['cdr', 'expr']],
+               last]
+    end
+    ['lambda', ['expr'], last]
+  end
+
+  def quote_names_in_template(template, names)
+    return ['unquote', template] if names.include?(template)
+    return template unless template.is_a?(Array)
+    template.each do |part|
+      quote_names_in_template(part, names)
+    end
   end
 
   def if((condition, true_body, false_body), options)

@@ -686,5 +686,45 @@ describe Compiler do
         end
       end
     end
+
+    context 'define-syntax and syntax-rules' do
+      context 'given an empty template' do
+        before do
+          @result = subject.compile([
+            ['define-syntax', 'and',
+              ['syntax-rules', [],
+                [['and'], '#t']]],
+            ['and']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_TRUE',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'given a template with one argument' do
+        before do
+          @result = subject.compile([
+            ['define-syntax', 'and',
+              ['syntax-rules', [],
+                [['and', 'test'], 'test']]],
+            ['and', '10'],
+            ['and', '#f']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '10',
+            'VM::PUSH_FALSE',
+            'VM::HALT'
+          ])
+        end
+      end
+    end
   end
 end
