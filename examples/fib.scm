@@ -1,5 +1,5 @@
-(def fib
-  (fn (n)
+(define fib
+  (lambda (n)
     (if (< n 2)
         n
         (+
