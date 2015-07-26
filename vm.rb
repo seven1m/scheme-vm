@@ -50,9 +50,7 @@ class VM
     ['SET_LOCAL',    1],
     ['SET_ARGS',     0],
     ['HALT',         0],
-    ['DEBUG',        0],
-    ['VAR_NAMES',    1],
-    ['UNQUOTE',      0]
+    ['DEBUG',        0]
   ]
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
@@ -75,8 +73,6 @@ class VM
     @stdout = stdout
     load_libraries
     load_code(instructions)
-    @var_names = []
-    @unquote = 0
   end
 
   def execute(instructions = nil, debug: 0)
@@ -233,14 +229,6 @@ class VM
         break
       when DEBUG
         print_debug
-      when UNQUOTE
-        @unquote += 1
-        label = "unquote_#{@unquote}".to_sym
-        instr = Compiler.new(pop_val).compile(jump: label)
-        new_ip = @heap.size
-        @heap.concat(instr)
-        @labels[label] = @ip
-        @ip = new_ip
       end
       if debug > 0
         print((@ip - 1).to_s.ljust(5))
