@@ -640,40 +640,50 @@ describe Compiler do
     end
 
     context 'if' do
-      before do
-        @result = subject.compile([
-          ['if', ['=', '1', '1'], '2', '3'],
-          ['if', ['=', '1', '2'], '2', '3']
-        ])
+      context 'given value is not used' do
+        before do
+          @result = subject.compile([
+            ['if', ['=', '1', '1'], '2', '3'],
+            '0'
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', '1',
+            'VM::CMP_EQ',
+            'VM::JUMP_IF_FALSE', 5,
+            'VM::PUSH_NUM', '2',
+            'VM::JUMP', 3,
+            'VM::PUSH_NUM', '3',
+            'VM::POP',
+            'VM::PUSH_NUM', '0',
+            'VM::HALT'
+          ])
+        end
       end
 
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '1',
-          'VM::PUSH_NUM', '1',
-          'VM::CMP_EQ',
-          'VM::JUMP_IF_TRUE', :if_1_true,
-          'VM::JUMP', :if_1_false,
-          'VM::LABEL', :if_1_true,
-          'VM::PUSH_NUM', '2',
-          'VM::JUMP', :if_1_end,
-          'VM::LABEL', :if_1_false,
-          'VM::PUSH_NUM', '3',
-          'VM::LABEL', :if_1_end,
-          'VM::POP',
-          'VM::PUSH_NUM', '1',
-          'VM::PUSH_NUM', '2',
-          'VM::CMP_EQ',
-          'VM::JUMP_IF_TRUE', :if_2_true,
-          'VM::JUMP', :if_2_false,
-          'VM::LABEL', :if_2_true,
-          'VM::PUSH_NUM', '2',
-          'VM::JUMP', :if_2_end,
-          'VM::LABEL', :if_2_false,
-          'VM::PUSH_NUM', '3',
-          'VM::LABEL', :if_2_end,
-          'VM::HALT'
-        ])
+      context 'given value is used' do
+        before do
+          @result = subject.compile([
+            ['print', ['if', ['=', '1', '1'], '2', '3']]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', '1',
+            'VM::CMP_EQ',
+            'VM::JUMP_IF_FALSE', 5,
+            'VM::PUSH_NUM', '2',
+            'VM::JUMP', 3,
+            'VM::PUSH_NUM', '3',
+            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::HALT'
+          ])
+        end
       end
     end
   end

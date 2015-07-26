@@ -15,42 +15,42 @@ class VM
   MAX_CALL_DEPTH = 1000
 
   INSTRUCTIONS = [
-    ['PUSH_ATOM',    1],
-    ['PUSH_NUM',     1],
-    ['PUSH_STR',     1],
-    ['PUSH_TRUE',    0],
-    ['PUSH_FALSE',   0],
-    ['PUSH_CAR',     0],
-    ['PUSH_CDR',     0],
-    ['PUSH_CONS',    0],
-    ['PUSH_LIST',    0],
-    ['PUSH_LOCAL',   1],
-    ['PUSH_REMOTE',  1],
-    ['PUSH_ARG',     0],
-    ['PUSH_ARGS',    0],
-    ['PUSH_FUNC',    0],
-    ['POP',          0],
-    ['ADD',          0],
-    ['SUB',          0],
-    ['CMP_GT',       0],
-    ['CMP_GTE',      0],
-    ['CMP_LT',       0],
-    ['CMP_LTE',      0],
-    ['CMP_EQ',       0],
-    ['CMP_NULL',     0],
-    ['DUP',          0],
-    ['ENDF',         0],
-    ['INT',          1],
-    ['JUMP',         1],
-    ['JUMP_IF_TRUE', 1],
-    ['LABEL',        1],
-    ['CALL',         0],
-    ['APPLY',        0],
-    ['RETURN',       0],
-    ['SET_LOCAL',    1],
-    ['SET_ARGS',     0],
-    ['HALT',         0],
-    ['DEBUG',        0]
+    ['PUSH_ATOM',     1],
+    ['PUSH_NUM',      1],
+    ['PUSH_STR',      1],
+    ['PUSH_TRUE',     0],
+    ['PUSH_FALSE',    0],
+    ['PUSH_CAR',      0],
+    ['PUSH_CDR',      0],
+    ['PUSH_CONS',     0],
+    ['PUSH_LIST',     0],
+    ['PUSH_LOCAL',    1],
+    ['PUSH_REMOTE',   1],
+    ['PUSH_ARG',      0],
+    ['PUSH_ARGS',     0],
+    ['PUSH_FUNC',     0],
+    ['POP',           0],
+    ['ADD',           0],
+    ['SUB',           0],
+    ['CMP_GT',        0],
+    ['CMP_GTE',       0],
+    ['CMP_LT',        0],
+    ['CMP_LTE',       0],
+    ['CMP_EQ',        0],
+    ['CMP_NULL',      0],
+    ['DUP',           0],
+    ['ENDF',          0],
+    ['INT',           1],
+    ['JUMP',          1],
+    ['JUMP_IF_FALSE', 1],
+    ['LABEL',         1],
+    ['CALL',          0],
+    ['APPLY',         0],
+    ['RETURN',        0],
+    ['SET_LOCAL',     1],
+    ['SET_ARGS',      0],
+    ['HALT',          0],
+    ['DEBUG',         0]
   ]
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
@@ -196,12 +196,12 @@ class VM
           end
         end
       when JUMP
-        label = fetch
-        @ip = @labels.fetch(label)
-      when JUMP_IF_TRUE
+        count = fetch.to_i
+        @ip += (count - 1)
+      when JUMP_IF_FALSE
         val = pop
-        label = fetch
-        @ip = @labels.fetch(label) if val != bool_false
+        count = fetch.to_i
+        @ip += (count - 1) if val == bool_false
       when CALL
         @call_stack << { return: @ip, locals: {}, args: @call_args }
         fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH

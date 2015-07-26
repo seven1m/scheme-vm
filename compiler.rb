@@ -219,21 +219,14 @@ class Compiler
   end
 
   def if((condition, true_body, false_body), options)
-    @ifs ||= 0
-    @ifs += 1
-    true_label = "if_#{@ifs}_true".to_sym
-    false_label = "if_#{@ifs}_false".to_sym
-    end_label = "if_#{@ifs}_end".to_sym
+    true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
+    false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
     [
       compile_sexp(condition, options.merge(use: true)),
-      VM::JUMP_IF_TRUE, true_label,
-      VM::JUMP, false_label,
-      VM::LABEL, true_label,
-      compile_sexp(true_body, options.merge(use: true)),
-      VM::JUMP, end_label,
-      VM::LABEL, false_label,
-      compile_sexp(false_body, options.merge(use: true)),
-      VM::LABEL, end_label,
+      VM::JUMP_IF_FALSE, true_instr.size + 3,
+      true_instr,
+      VM::JUMP, false_instr.size + 1,
+      false_instr,
       pop_maybe(options)
     ]
   end

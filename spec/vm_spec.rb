@@ -432,16 +432,39 @@ describe VM do
   describe 'JUMP' do
     before do
       subject.execute([
-        VM::JUMP, :skip,
+        VM::JUMP, 3,
         VM::PUSH_NUM, 1,
-        VM::LABEL, :skip,
         VM::PUSH_NUM, 2,
         VM::HALT
       ])
     end
 
-    it 'skips over the intermediate code, to the given label' do
+    it 'skips the given number of instructions' do
       expect(subject.stack_values).to eq([
+        VM::Int.new(2)
+      ])
+    end
+  end
+
+  describe 'JUMP_IF_FALSE' do
+    before do
+      subject.execute([
+        VM::PUSH_FALSE,
+        VM::JUMP_IF_FALSE, 3,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_TRUE,
+        VM::JUMP_IF_FALSE, 3,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::HALT
+      ])
+    end
+
+    it 'jumps the given number of instructions if the top value on the stack is #f' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(2),
+        VM::Int.new(1),
         VM::Int.new(2)
       ])
     end
@@ -667,29 +690,6 @@ describe VM do
         VM::Int.new(1),
         VM::Int.new(1)
       ])
-    end
-  end
-
-  describe 'JUMP_IF_TRUE' do
-    before do
-      subject.execute([
-        VM::PUSH_NUM, '0',
-        VM::LABEL, :loop,
-        VM::DUP,
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_NUM, '1',
-        VM::ADD,
-        VM::DUP,
-        VM::PUSH_NUM, '10',
-        VM::CMP_LT,
-        VM::JUMP_IF_TRUE, :loop,
-        VM::HALT
-      ])
-    end
-
-    it 'jumps to the label if the last value on the stack is truthy' do
-      subject.stdout.rewind
-      expect(subject.stdout.read).to eq('0123456789')
     end
   end
 
