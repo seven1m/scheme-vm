@@ -774,6 +774,37 @@ describe Compiler do
           ])
         end
       end
+
+      context 'given multiple templates, recursive expansion' do
+        before do
+          @result = subject.compile([
+            ['define-syntax', 'and',
+              ['syntax-rules', [],
+                [['and'], '#t'],
+                [['and', 'test'], 'test'],
+                [['and', 'test1', 'test2'],
+                 ['if', 'test1', ['and', 'test2'], '#f']]]],
+            ['and'],
+            ['and', '1'],
+            ['and', '1', '2']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_TRUE',
+            'VM::POP',
+            'VM::PUSH_NUM', '1',
+            'VM::POP',
+            'VM::PUSH_NUM', '1',
+            'VM::JUMP_IF_FALSE', 5,
+            'VM::PUSH_NUM', '2',
+            'VM::JUMP', 2,
+            'VM::PUSH_FALSE',
+            'VM::HALT'
+          ])
+        end
+      end
     end
   end
 end
