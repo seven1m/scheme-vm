@@ -275,6 +275,28 @@ describe Compiler do
           ])
         end
       end
+
+      context 'given a list containing an unquoted variable' do
+        before do
+          @result = subject.compile([
+            ['define', 'foo', '2'],
+            ['quasiquote', ['list', '1', ['unquote', 'foo']]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '2',
+            'VM::SET_LOCAL', 'foo',
+            'VM::PUSH_ATOM', 'list',
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_LOCAL', 'foo',
+            'VM::PUSH_NUM', 3,   # arg count
+            'VM::PUSH_LIST',     # ['list', '1', '2']
+            'VM::HALT'
+          ])
+        end
+      end
     end
 
     context 'define' do
@@ -713,14 +735,41 @@ describe Compiler do
               ['syntax-rules', [],
                 [['and', 'test'], 'test']]],
             ['and', '10'],
-            ['and', '#f']
+            ['and', ['print', '11']]
           ])
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::PUSH_NUM', '10',
-            'VM::PUSH_FALSE',
+            'VM::POP',
+            'VM::PUSH_NUM', '11',
+            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'given a template with two arguments and a nested template' do
+        before do
+          @result = subject.compile([
+            ['define-syntax', 'listify',
+              ['syntax-rules', [],
+                [['listify', 'first', 'second'], ['list', ['list', 'first'], ['list', 'second']]]]],
+            ['listify', '1', '2']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::PUSH_NUM', 1,
+            'VM::PUSH_LIST',
+            'VM::PUSH_NUM', '2',
+            'VM::PUSH_NUM', 1,
+            'VM::PUSH_LIST',
+            'VM::PUSH_NUM', 2,
+            'VM::PUSH_LIST',
             'VM::HALT'
           ])
         end

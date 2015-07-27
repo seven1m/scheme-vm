@@ -51,9 +51,11 @@ class Compiler
   end
 
   def compile_sexp(sexp, options = { use: false, locals: {} })
+    sexp = sexp.to_a if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty?
     (name, *args) = sexp
+    name = name.to_s if name.is_a?(VM::Atom)
     if options[:quote] || options[:quasiquote]
       if name =~ /unquote(\-splicing)?/ && options[:quasiquote] # FIXME move to a method
         expr = compile_sexp(args.first, options.merge(quasiquote: false))
@@ -66,7 +68,7 @@ class Compiler
       else
         list(sexp, options)
       end
-    elsif name.is_a?(Array)
+    elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
     elsif respond_to?((underscored_name = name.gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
@@ -74,7 +76,7 @@ class Compiler
       macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
       vm = VM.new(macro.flatten.compact)
       vm.execute
-      compile_sexp(vm.pop_val, options.merge(use: true))
+      compile_sexp(vm.pop_val, options.merge(use: true)) + [pop_maybe(options)]
     else
       call(sexp, options)
     end
@@ -238,7 +240,7 @@ class Compiler
     while (rule = rules.pop)
       (pattern, template) = rule
       names = pattern[1..-1]
-      template = quote_names_in_template(template, names)
+      template = unquote_names_in_template(template, names)
       last = ['if', ['=', ['length', ['quote', pattern]], ['length', 'expr']],
                ['apply', ['lambda', names, ['quasiquote', template]], ['cdr', 'expr']],
                last]
@@ -246,11 +248,11 @@ class Compiler
     ['lambda', ['expr'], last]
   end
 
-  def quote_names_in_template(template, names)
+  def unquote_names_in_template(template, names)
     return ['unquote', template] if names.include?(template)
     return template unless template.is_a?(Array)
-    template.each do |part|
-      quote_names_in_template(part, names)
+    template.each_with_index do |part, index|
+      template[index] = unquote_names_in_template(part, names)
     end
   end
 

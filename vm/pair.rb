@@ -33,6 +33,18 @@ class VM
       @size ||= to_a.size
     end
 
+    def empty?
+      false
+    end
+
+    def to_ruby
+      to_a.tap do |ary|
+        ary.each_with_index do |part, index|
+          ary[index] = part.to_ruby
+        end
+      end
+    end
+
     def inspect
       "#<VM::Pair @address=#{@address}, @next_node=#{@next_node}, @value=#{@heap[@address].inspect}>"
     end

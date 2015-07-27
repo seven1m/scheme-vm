@@ -8,6 +8,10 @@ class VM
       false
     end
 
+    def to_ruby
+      raw
+    end
+
     def to_s
       '#f'
     end

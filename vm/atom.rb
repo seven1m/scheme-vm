@@ -16,5 +16,9 @@ class VM
     def to_s
       raw.to_s
     end
+
+    def to_ruby
+      to_s
+    end
   end
 end

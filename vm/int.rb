@@ -31,6 +31,10 @@ class VM
       raw.to_s
     end
 
+    def to_ruby
+      @num
+    end
+
     def <=>(other)
       raw <=> other.raw
     end

@@ -311,6 +311,7 @@ class VM
 
   def pop_val
     address = pop
+    fail 'no value on stack' unless address
     resolve(address)
   end
 
@@ -323,6 +324,12 @@ class VM
 
   def peek
     @stack.last
+  end
+
+  def peek_val
+    address = @stack.last
+    fail 'no value on stack' unless address
+    resolve(address)
   end
 
   def stack_values
