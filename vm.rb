@@ -43,7 +43,6 @@ class VM
     ['INT',           1],
     ['JUMP',          1],
     ['JUMP_IF_FALSE', 1],
-    ['LABEL',         1],
     ['CALL',          0],
     ['APPLY',         0],
     ['RETURN',        0],
@@ -82,7 +81,6 @@ class VM
     else
       @ip = 0
     end
-    build_labels
     while (instruction = fetch)
       case instruction
       when PUSH_ATOM
@@ -217,8 +215,6 @@ class VM
         @ip = pop
       when RETURN
         @ip = @call_stack.pop.fetch(:return)
-      when LABEL
-        fetch # noop
       when SET_LOCAL
         index = fetch
         locals[index] = pop
@@ -406,20 +402,6 @@ class VM
 
   def lib_code(filename)
     File.read(File.join(ROOT_PATH, 'lib', filename))
-  end
-
-  def build_labels
-    ip_was = @ip
-    while (instruction = fetch)
-      if instruction == LABEL
-        label = fetch
-        @labels[label] = @ip
-      else
-        (_name, arity) = INSTRUCTIONS[instruction]
-        arity.times { fetch } # skip args
-      end
-    end
-    @ip = ip_was
   end
 
   def print_debug
