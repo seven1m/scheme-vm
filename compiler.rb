@@ -276,13 +276,14 @@ class Compiler
   end
 
   {
-    '>'  => VM::CMP_GT,
-    '>=' => VM::CMP_GTE,
-    '<'  => VM::CMP_LT,
-    '<=' => VM::CMP_LTE,
-    '='  => VM::CMP_EQ,
-    '+'  => VM::ADD,
-    '-'  => VM::SUB
+    '+'   => VM::ADD,
+    '-'   => VM::SUB,
+    '>'   => VM::CMP_GT,
+    '>='  => VM::CMP_GTE,
+    '<'   => VM::CMP_LT,
+    '<='  => VM::CMP_LTE,
+    '='   => VM::CMP_EQ_NUM,
+    'eq?' => VM::CMP_EQ
   }.each do |name, instruction|
     define_method(name) do |args, options|
       compare(instruction, args, options)

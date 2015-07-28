@@ -644,10 +644,10 @@ describe Compiler do
       end
     end
 
-    context '=' do
+    context 'eq?' do
       before do
         @result = subject.compile([
-          ['=', '1', '1']
+          ['eq?', '1', '1']
         ])
       end
 
@@ -661,20 +661,35 @@ describe Compiler do
       end
     end
 
+    context '=' do
+      before do
+        @result = subject.compile([
+          ['=', '1', '1']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '1',
+          'VM::CMP_EQ_NUM',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'if' do
       context 'given value is not used' do
         before do
           @result = subject.compile([
-            ['if', ['=', '1', '1'], '2', '3'],
+            ['if', '#t', '2', '3'],
             '0'
           ])
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
-            'VM::PUSH_NUM', '1',
-            'VM::PUSH_NUM', '1',
-            'VM::CMP_EQ',
+            'VM::PUSH_TRUE',
             'VM::JUMP_IF_FALSE', 5,
             'VM::PUSH_NUM', '2',
             'VM::JUMP', 3,
@@ -689,15 +704,13 @@ describe Compiler do
       context 'given value is used' do
         before do
           @result = subject.compile([
-            ['print', ['if', ['=', '1', '1'], '2', '3']]
+            ['print', ['if', '#t', '2', '3']]
           ])
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
-            'VM::PUSH_NUM', '1',
-            'VM::PUSH_NUM', '1',
-            'VM::CMP_EQ',
+            'VM::PUSH_TRUE',
             'VM::JUMP_IF_FALSE', 5,
             'VM::PUSH_NUM', '2',
             'VM::JUMP', 3,
