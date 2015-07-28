@@ -11,6 +11,7 @@ require_relative 'compiler'
 class VM
   class CallStackTooDeep < StandardError; end
   class VariableUndefined < StandardError; end
+  class NoStackValue < StandardError; end
 
   MAX_CALL_DEPTH = 1000
 
@@ -307,7 +308,7 @@ class VM
 
   def pop_val
     address = pop
-    fail 'no value on stack' unless address
+    fail NoStackValue, 'no value on stack' unless address
     resolve(address)
   end
 

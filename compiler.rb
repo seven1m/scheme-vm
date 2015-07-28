@@ -76,7 +76,13 @@ class Compiler
       macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
       vm = VM.new(macro.flatten.compact)
       vm.execute
-      compile_sexp(vm.pop_val, options.merge(use: true)) + [pop_maybe(options)]
+      begin
+        val = vm.pop_val
+      rescue VM::NoStackValue
+        []
+      else
+        compile_sexp(val, options.merge(use: true)) + [pop_maybe(options)]
+      end
     else
       call(sexp, options)
     end
