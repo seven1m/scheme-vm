@@ -396,6 +396,7 @@ class VM
   LIBRARIES = %w(
     list
     pair
+    bool
   )
 
   def lib_sexps(lib)
