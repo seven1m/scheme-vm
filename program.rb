@@ -14,8 +14,6 @@ class Program
     vm.execute(nil, debug: debug)
   end
 
-  private
-
   def compiler
     @compiler ||= Compiler.new(@sexps)
   end

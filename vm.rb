@@ -382,17 +382,16 @@ class VM
   end
 
   def load_libraries
-    libraries.each do |name, code|
+    LIBRARIES.each do |name|
+      code = Compiler.new(lib_sexps("#{name}.scm")).compile(halt: false)
       load_code(code, execute: true)
     end
   end
 
-  def libraries
-    {
-      'list'  => Compiler.new(lib_sexps('list.scm')).compile(halt: false),
-      # 'logic' => Compiler.new(lib_sexps('logic.scm')).compile(halt: false)
-    }
-  end
+  LIBRARIES = %w(
+    list
+    pair
+  )
 
   def lib_sexps(lib)
     code = lib_code(lib)
