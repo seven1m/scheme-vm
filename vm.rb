@@ -60,10 +60,11 @@ class VM
 
   INT_PRINT     = 1
   INT_PRINT_VAL = 2
+  INT_INCLUDE   = 3
 
   attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(instructions = [], args: [], stdout: $stdout)
+  def initialize(instructions = [], args: [], stdout: $stdout, libraries: [])
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
@@ -72,7 +73,8 @@ class VM
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
-    load_libraries
+    load_libraries(libraries)
+    @ip = @heap.size
     load_code(instructions)
   end
 
@@ -80,8 +82,6 @@ class VM
     if instructions
       @ip = @heap.size
       @heap += instructions
-    else
-      @ip = 0
     end
     while (instruction = fetch)
       print((@ip - 1).to_s.ljust(5)) if debug > 0
@@ -199,6 +199,8 @@ class VM
           else
             stdout_print(nil)
           end
+        when INT_INCLUDE
+          load_library(pop_val.to_s)
         end
       when JUMP
         count = fetch.to_i
@@ -386,11 +388,15 @@ class VM
     @ip = ip_was
   end
 
-  def load_libraries
-    LIBRARIES.each do |name|
-      code = Compiler.new(lib_sexps("#{name}.scm")).compile(halt: false)
-      load_code(code, execute: true)
+  def load_libraries(additional = [])
+    (LIBRARIES + additional).each do |name|
+      load_library(name)
     end
+  end
+
+  def load_library(name)
+    code = Compiler.new(lib_sexps("#{name}.scm")).compile
+    load_code(code, execute: true)
   end
 
   LIBRARIES = %w(

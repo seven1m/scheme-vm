@@ -292,6 +292,13 @@ class Compiler
     end
   end
 
+  def include((arg), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::INT, VM::INT_INCLUDE
+    ]
+  end
+
   def compare(instruction, (arg1, arg2), options)
     [
       compile_sexp(arg1, options.merge(use: true)),

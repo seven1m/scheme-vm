@@ -834,5 +834,21 @@ describe Compiler do
         end
       end
     end
+
+    context 'include' do
+      before do
+        @result = subject.compile([
+          ['include', '"foo"']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_STR', 'foo',
+          'VM::INT', VM::INT_INCLUDE,
+          'VM::HALT'
+        ])
+      end
+    end
   end
 end
