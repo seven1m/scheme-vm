@@ -1,5 +1,6 @@
 class Parser
   PARENS_RE = /(\((?>[^()]|\g<1>)*\)|[^\(\)]+)/
+  STRING_RE = /".*?"|[^" ]+/
 
   def initialize(code = nil)
     @code = code
@@ -10,7 +11,7 @@ class Parser
       if sexp[0] == '('
         [parse(sexp[1..-1])]
       else
-        sexp.strip.split
+        sexp.strip.scan(STRING_RE)
       end
     end
   end

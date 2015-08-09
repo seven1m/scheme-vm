@@ -84,6 +84,7 @@ class VM
       @ip = 0
     end
     while (instruction = fetch)
+      print((@ip - 1).to_s.ljust(5)) if debug > 0
       case instruction
       when PUSH_ATOM
         name = fetch
@@ -233,7 +234,6 @@ class VM
         print_debug
       end
       if debug > 0
-        print((@ip - 1).to_s.ljust(5))
         (name, _arg_count) = INSTRUCTIONS.fetch(instruction)
         print name.ljust(15)
         case name

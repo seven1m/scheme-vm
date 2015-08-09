@@ -90,7 +90,7 @@ class Compiler
 
   # TODO rename this
   def compile_literal(literal, options = { use: false, locals: {} })
-    literal = literal.to_s
+    literal = literal.to_s.strip
     case literal
     when /\A[a-z]/
       if options[:quote] || options[:quasiquote]
@@ -105,6 +105,8 @@ class Compiler
       [VM::PUSH_TRUE, pop_maybe(options)]
     when '#f'
       [VM::PUSH_FALSE, pop_maybe(options)]
+    when /\A"(.*)"\z/
+      [VM::PUSH_STR, $1]
     else
       [
         VM::PUSH_NUM,

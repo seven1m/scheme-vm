@@ -51,6 +51,21 @@ describe Compiler do
       end
     end
 
+    context '"a string"' do
+      before do
+        @result = subject.compile([
+          '"a string"'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_STR', 'a string',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'car' do
       before do
         @result = subject.compile([
