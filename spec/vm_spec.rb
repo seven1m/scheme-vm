@@ -55,6 +55,95 @@ describe VM do
     end
   end
 
+  describe 'STR_REF' do
+    before do
+      subject.execute([
+        VM::PUSH_STR, 'hello world',
+        VM::PUSH_NUM, '4',
+        VM::STR_REF,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the character, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Char.new('o')
+      ])
+    end
+  end
+
+  describe 'STR_LEN' do
+    before do
+      subject.execute([
+        VM::PUSH_STR, 'hello world',
+        VM::STR_LEN,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the length of the string, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(11)
+      ])
+    end
+  end
+
+  describe 'LIST_TO_STR' do
+    before do
+      subject.execute([
+        VM::PUSH_CHAR, 'a',
+        VM::PUSH_CHAR, 'b',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::LIST_TO_STR,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the new string, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::ByteArray.new('ab')
+      ])
+    end
+  end
+
+  describe 'APPEND' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, '3',
+        VM::PUSH_NUM, '4',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, 2,
+        VM::APPEND,
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the new list, and pushes address onto the stack' do
+      expect(subject.stack_values.first.to_s).to eq('(1 2 3 4)')
+    end
+  end
+
+  describe 'PUSH_CHAR' do
+    before do
+      subject.execute([
+        VM::PUSH_CHAR, 'c',
+        VM::HALT
+      ])
+    end
+
+    it 'allocates memory, stores the character, and pushes address onto the stack' do
+      expect(subject.stack_values).to eq([
+        VM::Char.new('c')
+      ])
+    end
+  end
+
   describe 'PUSH_TRUE' do
     before do
       subject.execute([
@@ -119,32 +208,66 @@ describe VM do
     end
 
     it 'allocates memory, stores the first element from the pair, and pushes address onto the stack' do
-      expect(subject.stack_values.first.to_a).to eq([
-        VM::Int.new(2),
-        VM::Int.new(3)
-      ])
+      expect(subject.stack_values.first.to_s).to eq('(2 3)')
     end
   end
 
   describe 'PUSH_CONS' do
-    before do
-      subject.execute([
-        VM::PUSH_NUM, '1',
-        VM::PUSH_NUM, '2',
-        VM::PUSH_NUM, '3',
-        VM::PUSH_NUM, 2,
-        VM::PUSH_LIST,
-        VM::PUSH_CONS,
-        VM::HALT
-      ])
+    context 'given the first element is an int' do
+      before do
+        subject.execute([
+          VM::PUSH_NUM, '1',
+          VM::PUSH_NUM, '2',
+          VM::PUSH_NUM, '3',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_CONS,
+          VM::HALT
+        ])
+      end
+
+      it 'allocates memory, creates a new pair with the two stack arguments, and pushes the address onto the stack' do
+        expect(subject.stack_values.first.to_s).to eq('(1 2 3)')
+      end
     end
 
-    it 'allocates memory, creates a new pair with the two stack arguments, and pushes the address onto the stack' do
-      expect(subject.stack_values.first.to_a).to eq([
-        VM::Int.new(1),
-        VM::Int.new(2),
-        VM::Int.new(3)
-      ])
+    context 'given the first element is a list' do
+      before do
+        subject.execute([
+          VM::PUSH_NUM, '1',
+          VM::PUSH_NUM, '2',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_NUM, '3',
+          VM::PUSH_NUM, '4',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_CONS,
+          VM::HALT
+        ])
+      end
+
+      it 'allocates memory, creates a new pair with the two stack arguments, and pushes the address onto the stack' do
+        expect(subject.stack_values.first.to_s).to eq('((1 2) 3 4)')
+      end
+    end
+
+    context 'given the last element is an int' do
+      before do
+        subject.execute([
+          VM::PUSH_NUM, '1',
+          VM::PUSH_NUM, '2',
+          VM::PUSH_CONS,
+          VM::HALT
+        ])
+      end
+
+      it 'allocates memory, creates a new pair with the two stack arguments, and pushes the address onto the stack' do
+        pair = subject.stack_values.first
+        expect(pair.car).to eq(VM::Int.new(1))
+        expect(pair.cdr).to eq(VM::Int.new(2))
+        expect(pair.to_s).to eq('(1 . 2)')
+      end
     end
   end
 
@@ -507,43 +630,105 @@ describe VM do
   end
 
   describe 'APPLY' do
-    before do
-      subject.execute([
-        VM::PUSH_FUNC,
-        VM::PUSH_ARG,
-        VM::SET_LOCAL, 'x',
-        VM::PUSH_ARG,
-        VM::SET_LOCAL, 'y',
-        VM::PUSH_ARG,
-        VM::SET_LOCAL, 'z',
-        VM::PUSH_LOCAL, 'x',
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_LOCAL, 'z',
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::PUSH_LOCAL, 'y',
-        VM::INT, VM::INT_PRINT_VAL,
-        VM::RETURN,
-        VM::ENDF,
-        VM::SET_LOCAL, 'foo',
-        VM::PUSH_NUM, '1',
-        VM::PUSH_NUM, '2',
-        VM::PUSH_NUM, 2,
-        VM::PUSH_LIST,
-        VM::PUSH_NUM, '3',
-        VM::PUSH_NUM, '4',
-        VM::PUSH_NUM, 2,
-        VM::PUSH_LIST,
-        VM::PUSH_NUM, 2, # arg count
-        VM::SET_ARGS,
-        VM::PUSH_LOCAL, 'foo',
-        VM::APPLY,
-        VM::HALT
-      ])
+    context 'given an empty list' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_ARGS,
+          VM::SET_LOCAL, 'x',
+          VM::PUSH_LOCAL, 'x',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::RETURN,
+          VM::ENDF,
+          VM::SET_LOCAL, 'foo',
+          VM::PUSH_NUM, 0,
+          VM::PUSH_LIST,
+          VM::PUSH_NUM, 1, # arg count
+          VM::SET_ARGS,
+          VM::PUSH_LOCAL, 'foo',
+          VM::APPLY,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function, applying the list as arguments' do
+        subject.stdout.rewind
+        expect(subject.stdout.read).to eq('()')
+      end
     end
 
-    it 'calls the function, applying the list as arguments' do
-      subject.stdout.rewind
-      expect(subject.stdout.read).to eq('(1 2)43')
+    context 'given one lists' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_ARG,
+          VM::SET_LOCAL, 'x',
+          VM::PUSH_ARG,
+          VM::SET_LOCAL, 'y',
+          VM::PUSH_LOCAL, 'x',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::PUSH_LOCAL, 'y',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::RETURN,
+          VM::ENDF,
+          VM::SET_LOCAL, 'foo',
+          VM::PUSH_NUM, '1',
+          VM::PUSH_NUM, '2',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_NUM, 1, # arg count
+          VM::SET_ARGS,
+          VM::PUSH_LOCAL, 'foo',
+          VM::APPLY,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function, applying the list as arguments' do
+        subject.stdout.rewind
+        expect(subject.stdout.read).to eq('12')
+      end
+    end
+
+    context 'given two lists' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_ARG,
+          VM::SET_LOCAL, 'x',
+          VM::PUSH_ARG,
+          VM::SET_LOCAL, 'y',
+          VM::PUSH_ARG,
+          VM::SET_LOCAL, 'z',
+          VM::PUSH_LOCAL, 'x',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::PUSH_LOCAL, 'z',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::PUSH_LOCAL, 'y',
+          VM::INT, VM::INT_PRINT_VAL,
+          VM::RETURN,
+          VM::ENDF,
+          VM::SET_LOCAL, 'foo',
+          VM::PUSH_NUM, '1',
+          VM::PUSH_NUM, '2',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_NUM, '3',
+          VM::PUSH_NUM, '4',
+          VM::PUSH_NUM, 2,
+          VM::PUSH_LIST,
+          VM::PUSH_NUM, 2, # arg count
+          VM::SET_ARGS,
+          VM::PUSH_LOCAL, 'foo',
+          VM::APPLY,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function, passing the first argument as-is and applying the last argument' do
+        subject.stdout.rewind
+        expect(subject.stdout.read).to eq('(1 2)43')
+      end
     end
   end
 

@@ -66,6 +66,97 @@ describe Compiler do
       end
     end
 
+    context 'character #\c' do
+      before do
+        @result = subject.compile([
+          '#\c'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_CHAR', 'c',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'string-ref' do
+      before do
+        @result = subject.compile([
+          ['string-ref', '"hello world"', '4']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_STR', 'hello world',
+          'VM::PUSH_NUM', '4',
+          'VM::STR_REF',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'string-length' do
+      before do
+        @result = subject.compile([
+          ['string-length', '"hello world"']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_STR', 'hello world',
+          'VM::STR_LEN',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'list->string' do
+      before do
+        @result = subject.compile([
+          ['list->string', ['list', '#\a', '#\b']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_CHAR', 'a',
+          'VM::PUSH_CHAR', 'b',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+          'VM::LIST_TO_STR',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'append' do
+      before do
+        @result = subject.compile([
+          ['append', ['list', '1', '2'], ['list', '3', '4']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+          'VM::PUSH_NUM', '3',
+          'VM::PUSH_NUM', '4',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+          'VM::PUSH_NUM', 2,
+          'VM::APPEND',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'car' do
       before do
         @result = subject.compile([

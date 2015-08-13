@@ -51,7 +51,7 @@ class Compiler
   end
 
   def compile_sexp(sexp, options = { use: false, locals: {} })
-    sexp = sexp.to_a if sexp.is_a?(VM::Pair)
+    sexp = sexp.to_ruby if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty?
     (name, *args) = sexp
@@ -70,7 +70,7 @@ class Compiler
       end
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
-    elsif respond_to?((underscored_name = name.gsub(/([a-z])-/, '\1_')), :include_private)
+    elsif respond_to?((underscored_name = name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
     elsif (transformer = options[:syntax][name])
       macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
@@ -105,8 +105,12 @@ class Compiler
       [VM::PUSH_TRUE, pop_maybe(options)]
     when '#f'
       [VM::PUSH_FALSE, pop_maybe(options)]
+    when /\A#\\(.)/
+      [VM::PUSH_CHAR, $1, pop_maybe(options)]
     when /\A"(.*)"\z/
       [VM::PUSH_STR, $1]
+    when ''
+      []
     else
       [
         VM::PUSH_NUM,
@@ -141,6 +145,15 @@ class Compiler
     ]
   end
 
+  def append(args, options)
+    [
+      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+      VM::PUSH_NUM, args.size,
+      VM::APPEND,
+      pop_maybe(options)
+    ]
+  end
+
   def null?((arg, *_rest), options)
     [
       compile_sexp(arg, options.merge(use: true)),
@@ -148,6 +161,32 @@ class Compiler
       pop_maybe(options)
     ]
   end
+
+  def string_ref((string, index), options)
+    [
+      compile_sexp(string, options.merge(use: true)),
+      compile_sexp(index, options.merge(use: true)),
+      VM::STR_REF,
+      pop_maybe(options)
+    ]
+  end
+
+  def string_length((string, *_rest), options)
+    [
+      compile_sexp(string, options.merge(use: true)),
+      VM::STR_LEN,
+      pop_maybe(options)
+    ]
+  end
+
+  def list_to_string((list, *_rest), options)
+    [
+      compile_sexp(list, options.merge(use: true)),
+      VM::LIST_TO_STR,
+      pop_maybe(options)
+    ]
+  end
+
 
   def quote((arg, *_rest), options)
     if arg.is_a?(Array)

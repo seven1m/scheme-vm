@@ -1,6 +1,7 @@
 require_relative 'vm/atom'
 require_relative 'vm/int'
 require_relative 'vm/byte_array'
+require_relative 'vm/char'
 require_relative 'vm/pair'
 require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
@@ -13,12 +14,13 @@ class VM
   class VariableUndefined < StandardError; end
   class NoStackValue < StandardError; end
 
-  MAX_CALL_DEPTH = 1000
+  MAX_CALL_DEPTH = 50
 
   INSTRUCTIONS = [
     ['PUSH_ATOM',     1],
     ['PUSH_NUM',      1],
     ['PUSH_STR',      1],
+    ['PUSH_CHAR',     1],
     ['PUSH_TRUE',     0],
     ['PUSH_FALSE',    0],
     ['PUSH_CAR',      0],
@@ -30,6 +32,10 @@ class VM
     ['PUSH_ARG',      0],
     ['PUSH_ARGS',     0],
     ['PUSH_FUNC',     0],
+    ['STR_REF',       0],
+    ['STR_LEN',       0],
+    ['LIST_TO_STR',   0],
+    ['APPEND',        0],
     ['POP',           0],
     ['ADD',           0],
     ['SUB',           0],
@@ -95,6 +101,9 @@ class VM
       when PUSH_STR
         str = fetch
         push_val(ByteArray.new(str))
+      when PUSH_CHAR
+        char = fetch
+        push_val(Char.new(char))
       when PUSH_TRUE
         push_true
       when PUSH_FALSE
@@ -135,9 +144,8 @@ class VM
         address = args.shift
         push(address)
       when PUSH_ARGS
-        last = empty_list
-        address = nil
-        while arg = args.pop
+        address = last = empty_list
+        while (arg = args.pop)
           address = alloc
           @heap[address] = build_pair(arg, last)
           last = address
@@ -146,6 +154,31 @@ class VM
       when PUSH_FUNC
         push(@ip)
         fetch_func_body # discard
+      when STR_REF
+        index = pop_val.raw
+        str = pop_val
+        push_val(Char.new(str.raw[index]))
+      when STR_LEN
+        str = pop_val
+        push_val(Int.new(str.size))
+      when LIST_TO_STR
+        list = pop_val
+        chars = list.to_ruby.map(&:to_s)
+        push_val(ByteArray.new(chars.join))
+      when APPEND
+        count = pop_raw
+        if count == 0
+          push(empty_list)
+        else
+          raw = (0...count).map { pop_val }.reverse.map(&:to_a).inject(&:+)
+          address = last = empty_list
+          while (arg = raw.pop)
+            address = alloc
+            @heap[address] = build_pair(arg, last)
+            last = address
+          end
+          push(address)
+        end
       when POP
         pop
       when ADD
@@ -225,8 +258,8 @@ class VM
       when RETURN
         @ip = @call_stack.pop.fetch(:return)
       when SET_LOCAL
-        index = fetch
-        locals[index] = pop
+        name = fetch
+        locals[name] = pop
       when SET_ARGS
         count = pop_raw
         @call_args = (0...count).map { pop }.reverse
@@ -250,7 +283,7 @@ class VM
           p @ip
         else
           print 'stack:  '
-          p @stack.each_with_object({}) { |a, h| h[a] = resolve(a) }
+          puts @stack.map { |a| "#{a} => #{resolve(a).inspect}" }.join(', ') rescue puts @stack.inspect
         end
       end
     end
@@ -403,6 +436,7 @@ class VM
     list
     pair
     bool
+    string
   )
 
   def lib_sexps(lib)

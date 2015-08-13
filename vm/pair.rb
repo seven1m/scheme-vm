@@ -16,17 +16,31 @@ class VM
     end
 
     def to_s
-      "(#{raw.map(&:raw).join(' ')})"
+      items = to_a.flat_map do |item|
+        if item.is_a?(Fixnum) # address
+          @heap[item].to_s
+        else
+          ['.', item.to_s]
+        end
+      end
+      "(#{items.join(' ')})"
     end
 
     def each
-      current = self
-      yield @heap[current.address]
-      while (next_address = current.next_node)
-        current = @heap[next_address]
-        break if current == EmptyList.instance
-        yield @heap[current.address]
+      pair = self
+      while pair.is_a?(Pair) && (next_address = pair.next_node)
+        yield pair.address
+        pair = @heap[next_address]
       end
+      yield pair unless pair.is_a?(Pair) || pair.is_a?(EmptyList)
+    end
+
+    def car
+      @heap[address]
+    end
+
+    def cdr
+      @heap[next_node]
     end
 
     def size
@@ -39,7 +53,8 @@ class VM
 
     def to_ruby
       to_a.tap do |ary|
-        ary.each_with_index do |part, index|
+        ary.each_with_index do |address, index|
+          part = @heap[address]
           ary[index] = part.to_ruby
         end
       end
