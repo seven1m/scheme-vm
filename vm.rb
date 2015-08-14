@@ -64,8 +64,7 @@ class VM
     const_set(name.to_sym, index)
   end
 
-  INT_PRINT     = 1
-  INT_PRINT_VAL = 2
+  INT_WRITE     = 1
   INT_INCLUDE   = 3
 
   attr_reader :stack, :heap, :stdout, :ip
@@ -222,10 +221,7 @@ class VM
       when INT
         func = fetch
         case func
-        when INT_PRINT
-          address = peek
-          stdout_print(address)
-        when INT_PRINT_VAL
+        when INT_WRITE
           if (address = pop)
             val = resolve(address)
             stdout_print(val)
@@ -283,7 +279,7 @@ class VM
           p @ip
         else
           print 'stack:  '
-          puts @stack.map { |a| "#{a} => #{resolve(a).inspect}" }.join(', ') rescue puts @stack.inspect
+          puts @stack.map { |a| resolve(a).inspect }.join("\n" + (' ' * 28)) rescue puts @stack.inspect
         end
       end
     end
@@ -437,6 +433,7 @@ class VM
     pair
     bool
     string
+    logic
   )
 
   def lib_sexps(lib)

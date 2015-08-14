@@ -11,5 +11,9 @@ class VM
     def to_s
       '()'
     end
+
+    def to_a
+      []
+    end
   end
 end

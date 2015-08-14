@@ -61,7 +61,7 @@ class VM
     end
 
     def inspect
-      "#<VM::Pair @address=#{@address}, @next_node=#{@next_node}, @value=#{@heap[@address].inspect}>"
+      "#<VM::Pair size=#{size}, car=#{car.inspect}>"
     end
   end
 end

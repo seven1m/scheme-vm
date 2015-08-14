@@ -69,13 +69,37 @@ describe Compiler do
     context 'character #\c' do
       before do
         @result = subject.compile([
-          '#\c'
+          '#\c',
+          '#\space',
+          '#\newline'
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_CHAR', 'c',
+          'VM::POP',
+          'VM::PUSH_CHAR', ' ',
+          'VM::POP',
+          'VM::PUSH_CHAR', "\n",
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'begin' do
+      before do
+        @result = subject.compile([
+          ['begin', ['write', '1'], ['write', '2']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::INT', VM::INT_WRITE,
+          'VM::PUSH_NUM', '2',
+          'VM::INT', VM::INT_WRITE,
           'VM::HALT'
         ])
       end
@@ -281,7 +305,7 @@ describe Compiler do
       context 'given a list' do
         before do
           @result = subject.compile([
-            ['quote', ['foo', '2', '3', ['print', '4']]]
+            ['quote', ['foo', '2', '3', ['write', '4']]]
           ])
         end
 
@@ -290,7 +314,7 @@ describe Compiler do
             'VM::PUSH_ATOM', 'foo',
             'VM::PUSH_NUM', '2',
             'VM::PUSH_NUM', '3',
-            'VM::PUSH_ATOM', 'print',
+            'VM::PUSH_ATOM', 'write',
             'VM::PUSH_NUM', '4',
             'VM::PUSH_NUM', 2, # arg count
             'VM::PUSH_LIST',
@@ -321,7 +345,7 @@ describe Compiler do
       context 'given a simple list' do
         before do
           @result = subject.compile([
-            ['quasiquote', ['foo', '2', '3', ['print', '4']]]
+            ['quasiquote', ['foo', '2', '3', ['write', '4']]]
           ])
         end
 
@@ -330,7 +354,7 @@ describe Compiler do
             'VM::PUSH_ATOM', 'foo',
             'VM::PUSH_NUM', '2',
             'VM::PUSH_NUM', '3',
-            'VM::PUSH_ATOM', 'print',
+            'VM::PUSH_ATOM', 'write',
             'VM::PUSH_NUM', '4',
             'VM::PUSH_NUM', 2, # arg count
             'VM::PUSH_LIST',
@@ -421,17 +445,17 @@ describe Compiler do
       end
     end
 
-    context 'print' do
+    context 'write' do
       before do
         @result = subject.compile([
-          ['print', '1']
+          ['write', '1']
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
-          'VM::INT', VM::INT_PRINT_VAL,
+          'VM::INT', VM::INT_WRITE,
           'VM::HALT'
         ])
       end
@@ -523,7 +547,7 @@ describe Compiler do
             ['define', 'one',
               ['lambda', [],
                 '1']],
-            ['print', ['one']]
+            ['write', ['one']]
           ])
         end
 
@@ -536,7 +560,7 @@ describe Compiler do
             'VM::SET_LOCAL', 'one',
             'VM::PUSH_LOCAL', 'one',
             'VM::CALL',
-            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::INT', VM::INT_WRITE,
             'VM::HALT'
           ])
         end
@@ -810,7 +834,7 @@ describe Compiler do
       context 'given value is used' do
         before do
           @result = subject.compile([
-            ['print', ['if', '#t', '2', '3']]
+            ['write', ['if', '#t', '2', '3']]
           ])
         end
 
@@ -821,7 +845,7 @@ describe Compiler do
             'VM::PUSH_NUM', '2',
             'VM::JUMP', 3,
             'VM::PUSH_NUM', '3',
-            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::INT', VM::INT_WRITE,
             'VM::HALT'
           ])
         end
@@ -854,7 +878,7 @@ describe Compiler do
               ['syntax-rules', [],
                 [['and', 'test'], 'test']]],
             ['and', '10'],
-            ['and', ['print', '11']]
+            ['and', ['write', '11']]
           ])
         end
 
@@ -863,7 +887,7 @@ describe Compiler do
             'VM::PUSH_NUM', '10',
             'VM::POP',
             'VM::PUSH_NUM', '11',
-            'VM::INT', VM::INT_PRINT_VAL,
+            'VM::INT', VM::INT_WRITE,
             'VM::HALT'
           ])
         end

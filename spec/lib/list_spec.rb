@@ -14,7 +14,7 @@ describe 'Library' do
         <<-END
           (define empty-list
             (list))
-          (print (empty? empty-list))
+          (write (empty? empty-list))
         END
       end
 
@@ -29,7 +29,7 @@ describe 'Library' do
         <<-END
           (define non-empty-list
             (list 1 2 3))
-          (print (empty? non-empty-list))
+          (write (empty? non-empty-list))
         END
       end
 
@@ -46,7 +46,7 @@ describe 'Library' do
         <<-END
           (define empty-list
             (list))
-          (print (length empty-list))
+          (write (length empty-list))
         END
       end
 
@@ -61,7 +61,7 @@ describe 'Library' do
         <<-END
           (define non-empty-list
             (list 1 2 3))
-          (print (length non-empty-list))
+          (write (length non-empty-list))
         END
       end
 

@@ -1,1 +1,1 @@
-(print "hello from include-test")
+(write "hello from include-test")

@@ -315,7 +315,6 @@ describe VM do
         [
           VM::PUSH_FUNC,
           VM::PUSH_REMOTE, 'my_func',
-          VM::INT, VM::INT_PRINT,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 'my_func',
@@ -330,10 +329,9 @@ describe VM do
       end
 
       it 'pushes the address of the current function onto the stack' do
-        stdout.rewind
-        expect(stdout.read.to_i).to eq(
+        expect(subject.stack).to eq([
           subject.heap.size - instructions.size + 1
-        )
+        ])
       end
     end
 
@@ -363,7 +361,7 @@ describe VM do
 
           VM::PUSH_FUNC,
           VM::PUSH_REMOTE, 0, # x
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 1, # my_func
@@ -395,11 +393,11 @@ describe VM do
         VM::PUSH_ARGS,
         VM::SET_LOCAL, 3,            # list containing third and fourth args
         VM::PUSH_LOCAL, 1,
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::PUSH_LOCAL, 2,
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::PUSH_LOCAL, 3,
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::RETURN,
         VM::ENDF,
         VM::SET_LOCAL, 0,
@@ -519,28 +517,11 @@ describe VM do
   end
 
   describe 'INT' do
-    context 'given arg of INT_PRINT' do
-      before do
-        subject.execute([
-          VM::PUSH_NUM, '123',
-          VM::INT, VM::INT_PRINT,
-          VM::HALT
-        ])
-      end
-
-      it 'prints the address of the last item on the stack' do
-        stdout.rewind
-        address = stdout.read.to_i
-        value = subject.resolve(address)
-        expect(value).to eq(VM::Int.new(123))
-      end
-    end
-
-    context 'given arg of INT_PRINT_VAL' do
+    context 'given arg of INT_WRITE' do
       before do
         subject.execute([
           VM::PUSH_STR, 'hello world',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::HALT
         ])
       end
@@ -613,7 +594,7 @@ describe VM do
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_STR, 'yo',
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::RETURN,
         VM::ENDF,
         VM::DUP,
@@ -637,7 +618,7 @@ describe VM do
           VM::PUSH_ARGS,
           VM::SET_LOCAL, 'x',
           VM::PUSH_LOCAL, 'x',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 'foo',
@@ -666,9 +647,9 @@ describe VM do
           VM::PUSH_ARG,
           VM::SET_LOCAL, 'y',
           VM::PUSH_LOCAL, 'x',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::PUSH_LOCAL, 'y',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 'foo',
@@ -701,11 +682,11 @@ describe VM do
           VM::PUSH_ARG,
           VM::SET_LOCAL, 'z',
           VM::PUSH_LOCAL, 'x',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::PUSH_LOCAL, 'z',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::PUSH_LOCAL, 'y',
-          VM::INT, VM::INT_PRINT_VAL,
+          VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
           VM::SET_LOCAL, 'foo',
@@ -937,7 +918,7 @@ describe VM do
         VM::PUSH_STR, 'func.',
         VM::SET_LOCAL, 0,
         VM::PUSH_LOCAL, 0,
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::POP,
         VM::RETURN,
         VM::ENDF,
@@ -949,7 +930,7 @@ describe VM do
         VM::PUSH_STR, 'main.',
         VM::SET_LOCAL, 0,
         VM::PUSH_LOCAL, 0,
-        VM::INT, VM::INT_PRINT_VAL,
+        VM::INT, VM::INT_WRITE,
         VM::POP,
 
         VM::PUSH_LOCAL, 1,

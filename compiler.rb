@@ -66,11 +66,11 @@ class Compiler
           expr
         end
       else
-        list(sexp, options)
+        do_list(sexp, options)
       end
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
-    elsif respond_to?((underscored_name = name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
+    elsif respond_to?((underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
     elsif (transformer = options[:syntax][name])
       macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
@@ -105,8 +105,12 @@ class Compiler
       [VM::PUSH_TRUE, pop_maybe(options)]
     when '#f'
       [VM::PUSH_FALSE, pop_maybe(options)]
-    when /\A#\\(.)/
-      [VM::PUSH_CHAR, $1, pop_maybe(options)]
+    when /\A#\\(.+)\z/
+      char = {
+        'space'   => ' ',
+        'newline' => "\n"
+      }.fetch($1, $1[0])
+      [VM::PUSH_CHAR, char, pop_maybe(options)]
     when /\A"(.*)"\z/
       [VM::PUSH_STR, $1]
     when ''
@@ -120,7 +124,13 @@ class Compiler
     end
   end
 
-  def car((arg, *_rest), options)
+  def do_begin(args, options)
+    args.each_with_index.map do |arg, index|
+      compile_sexp(arg, options.merge(use: index == args.size - 1))
+    end
+  end
+
+  def do_car((arg, *_rest), options)
     [
       compile_sexp(arg, options.merge(use: true)),
       VM::PUSH_CAR,
@@ -128,7 +138,7 @@ class Compiler
     ]
   end
 
-  def cdr((arg, *_rest), options)
+  def do_cdr((arg, *_rest), options)
     [
       compile_sexp(arg, options.merge(use: true)),
       VM::PUSH_CDR,
@@ -136,7 +146,7 @@ class Compiler
     ]
   end
 
-  def cons(args, options)
+  def do_cons(args, options)
     fail 'cons expects exactly 2 arguments' if args.size != 2
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
@@ -145,7 +155,7 @@ class Compiler
     ]
   end
 
-  def append(args, options)
+  def do_append(args, options)
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
       VM::PUSH_NUM, args.size,
@@ -154,7 +164,7 @@ class Compiler
     ]
   end
 
-  def null?((arg, *_rest), options)
+  def do_null?((arg, *_rest), options)
     [
       compile_sexp(arg, options.merge(use: true)),
       VM::CMP_NULL,
@@ -162,7 +172,7 @@ class Compiler
     ]
   end
 
-  def string_ref((string, index), options)
+  def do_string_ref((string, index), options)
     [
       compile_sexp(string, options.merge(use: true)),
       compile_sexp(index, options.merge(use: true)),
@@ -171,7 +181,7 @@ class Compiler
     ]
   end
 
-  def string_length((string, *_rest), options)
+  def do_string_length((string, *_rest), options)
     [
       compile_sexp(string, options.merge(use: true)),
       VM::STR_LEN,
@@ -179,7 +189,7 @@ class Compiler
     ]
   end
 
-  def list_to_string((list, *_rest), options)
+  def do_list_to_string((list, *_rest), options)
     [
       compile_sexp(list, options.merge(use: true)),
       VM::LIST_TO_STR,
@@ -188,7 +198,7 @@ class Compiler
   end
 
 
-  def quote((arg, *_rest), options)
+  def do_quote((arg, *_rest), options)
     if arg.is_a?(Array)
       compile_sexp(arg, options.merge(quote: true))
     else
@@ -196,7 +206,7 @@ class Compiler
     end
   end
 
-  def quasiquote((arg, *_rest), options)
+  def do_quasiquote((arg, *_rest), options)
     if arg.is_a?(Array)
       compile_sexp(arg, options.merge(quasiquote: true))
     else
@@ -204,7 +214,7 @@ class Compiler
     end
   end
 
-  def define((name, val), options)
+  def do_define((name, val), options)
     options[:locals][name] = true
     [
       compile_sexp(val, options.merge(use: true)),
@@ -212,7 +222,7 @@ class Compiler
     ]
   end
 
-  def lambda((args, *body), options)
+  def do_lambda((args, *body), options)
     arg_locals = {}
     if args.is_a?(Array)
       if args.include?('.')
@@ -246,7 +256,7 @@ class Compiler
     ]
   end
 
-  def apply((lambda, *args), options)
+  def do_apply((lambda, *args), options)
     fail 'apply expects at least 2 arguments' if args.empty?
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
@@ -257,7 +267,7 @@ class Compiler
     ]
   end
 
-  def list(args, options)
+  def do_list(args, options)
     members = args.flat_map do |arg|
       expr = compile_sexp(arg, options.merge(use: true))
       if expr.first == 'splice'
@@ -274,15 +284,15 @@ class Compiler
     ]
   end
 
-  def define_syntax((name, transformer), options)
+  def do_define_syntax((name, transformer), options)
     transformer.shift
-    options[:syntax][name] = syntax_rules(transformer, options)
+    options[:syntax][name] = do_syntax_rules(transformer, options)
     []
   end
 
   # TODO: identifiers
   # TODO: bindings isolated from current scope
-  def syntax_rules((_identifiers, *rules), options)
+  def do_syntax_rules((_identifiers, *rules), options)
     last = []
     while (rule = rules.pop)
       (pattern, template) = rule
@@ -303,7 +313,7 @@ class Compiler
     end
   end
 
-  def if((condition, true_body, false_body), options)
+  def do_if((condition, true_body, false_body), options)
     true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
     false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
     [
@@ -326,16 +336,9 @@ class Compiler
     '='   => VM::CMP_EQ_NUM,
     'eq?' => VM::CMP_EQ
   }.each do |name, instruction|
-    define_method(name) do |args, options|
+    define_method('do_' + name) do |args, options|
       compare(instruction, args, options)
     end
-  end
-
-  def include((arg), options)
-    [
-      compile_sexp(arg, options.merge(use: true)),
-      VM::INT, VM::INT_INCLUDE
-    ]
   end
 
   def compare(instruction, (arg1, arg2), options)
@@ -347,10 +350,17 @@ class Compiler
     ]
   end
 
-  def print(args, options)
+  def do_include((arg), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::INT, VM::INT_INCLUDE
+    ]
+  end
+
+  def do_write(args, options)
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
-      VM::INT, VM::INT_PRINT_VAL
+      VM::INT, VM::INT_WRITE
     ]
   end
 

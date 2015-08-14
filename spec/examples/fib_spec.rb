@@ -17,7 +17,7 @@ describe 'Fib' do
                 (+
                   (fib (- n 1))
                   (fib (- n 2))))))
-        (print (fib 8))
+        (write (fib 8))
       END
     end
 
@@ -38,7 +38,7 @@ describe 'Fib' do
                     c
                     (f (- i 1) n (+ c n)))))
             (f n 0 1)))
-        (print (fib 8))
+        (write (fib 8))
       END
     end
 
