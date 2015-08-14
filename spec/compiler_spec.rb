@@ -933,7 +933,7 @@ describe Compiler do
           ])
         end
 
-        it 'compiles into vm instructions' do
+        xit 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::PUSH_TRUE',
             'VM::POP',
