@@ -397,7 +397,6 @@ class VM
     stdout.print(val.to_s)
   end
 
-  # TODO: does this ever need to return anything, or just burn through the function body?
   def fetch_func_body
     body = []
     while (instruction = fetch) != ENDF

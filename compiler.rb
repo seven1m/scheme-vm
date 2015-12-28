@@ -83,7 +83,6 @@ class Compiler
     end
   end
 
-  # TODO rename this
   def compile_literal(literal, options = { use: false, locals: {} })
     literal = literal.to_s.strip
     case literal
