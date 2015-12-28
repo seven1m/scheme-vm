@@ -3,13 +3,14 @@ require_relative 'lib/pattern'
 require 'pp'
 
 class Compiler
-  def initialize(sexps = nil, arguments: {})
+  def initialize(sexps = nil, arguments: {}, syntax: {})
     @sexps = sexps
     @variables = {}
     @arguments = arguments
+    @syntax = syntax
   end
 
-  attr_reader :variables, :arguments
+  attr_reader :variables, :arguments, :syntax
 
   def compile(sexps = @sexps, halt: true)
     instructions = compile_sexps(sexps)
@@ -45,7 +46,6 @@ class Compiler
 
   def compile_sexps(sexps, options = {})
     options[:locals] ||= {}
-    options[:syntax] ||= {}
     sexps.each_with_index.flat_map do |sexp, index|
       compile_sexp(sexp, options.merge(use: index == sexps.size - 1))
     end.flatten.compact
@@ -73,7 +73,7 @@ class Compiler
       call(sexp, options)
     elsif respond_to?((underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
-    elsif (transformer = options[:syntax][name])
+    elsif (transformer = syntax[name])
       templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
       (values, template) = templates.detect { |values, _| values }
       sexp = expand_template(template, values)
@@ -279,7 +279,7 @@ class Compiler
 
   def do_define_syntax((name, transformer), options)
     transformer.shift(2)
-    options[:syntax][name] = transformer
+    syntax[name] = transformer
     []
   end
 
