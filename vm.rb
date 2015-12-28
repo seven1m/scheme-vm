@@ -14,6 +14,8 @@ class VM
   class VariableUndefined < StandardError; end
   class NoStackValue < StandardError; end
 
+  ROOT_PATH = File.expand_path('..', __FILE__)
+
   MAX_CALL_DEPTH = 50
 
   INSTRUCTIONS = [
@@ -69,7 +71,7 @@ class VM
 
   attr_reader :stack, :heap, :stdout, :ip
 
-  def initialize(instructions = [], args: [], stdout: $stdout, libraries: [])
+  def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
@@ -78,7 +80,6 @@ class VM
     @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
-    load_libraries(libraries)
     @ip = @heap.size
     load_code(instructions)
   end
@@ -416,36 +417,6 @@ class VM
     @ip = ip_was
   end
 
-  def load_libraries(additional = [])
-    (LIBRARIES + additional).each do |name|
-      load_library(name)
-    end
-  end
-
-  def load_library(name)
-    code = Compiler.new(lib_sexps("#{name}.scm")).compile
-    load_code(code, execute: true)
-  end
-
-  LIBRARIES = %w(
-    list
-    pair
-    bool
-    string
-    logic
-  )
-
-  def lib_sexps(lib)
-    code = lib_code(lib)
-    Parser.new(code).parse
-  end
-
-  ROOT_PATH = File.expand_path('..', __FILE__)
-
-  def lib_code(filename)
-    File.read(File.join(ROOT_PATH, 'lib', filename))
-  end
-
   def print_debug
     puts
     puts 'op stack --------------------'
@@ -458,5 +429,21 @@ class VM
       p frame
     end
     puts
+  end
+
+  def load_library(name)
+    compiler = Compiler.new(lib_sexps("#{name}.scm"))
+    code = compiler.compile
+    load_code(code, execute: true)
+    { code: code, syntax: compiler.syntax }
+  end
+
+  def lib_sexps(lib)
+    code = lib_code(lib)
+    Parser.new(code).parse
+  end
+
+  def lib_code(filename)
+    File.read(File.join(ROOT_PATH, 'lib', filename))
   end
 end
