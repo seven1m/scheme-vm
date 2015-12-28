@@ -1,4 +1,5 @@
 require_relative 'vm'
+require_relative 'lib/pattern'
 require 'pp'
 
 class Compiler
@@ -73,16 +74,10 @@ class Compiler
     elsif respond_to?((underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
     elsif (transformer = options[:syntax][name])
-      macro = compile_sexp([transformer, ['quote', sexp]], options.merge(use: true)) + [VM::HALT]
-      vm = VM.new(macro.flatten.compact)
-      vm.execute
-      begin
-        val = vm.pop_val
-      rescue VM::NoStackValue
-        []
-      else
-        compile_sexp(val, options.merge(use: true)) + [pop_maybe(options)]
-      end
+      templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
+      (values, template) = templates.detect { |values, _| values }
+      sexp = expand_template(template, values)
+      compile_sexp(sexp, options)
     else
       call(sexp, options)
     end
@@ -197,7 +192,6 @@ class Compiler
     ]
   end
 
-
   def do_quote((arg, *_rest), options)
     if arg.is_a?(Array)
       compile_sexp(arg, options.merge(quote: true))
@@ -285,31 +279,24 @@ class Compiler
   end
 
   def do_define_syntax((name, transformer), options)
-    transformer.shift
-    options[:syntax][name] = do_syntax_rules(transformer, options)
+    transformer.shift(2)
+    options[:syntax][name] = transformer
     []
   end
 
-  # TODO: identifiers
-  # TODO: bindings isolated from current scope
-  def do_syntax_rules((_identifiers, *rules), options)
-    last = []
-    while (rule = rules.pop)
-      (pattern, template) = rule
-      names = pattern[1..-1]
-      template = unquote_names_in_template(template, names)
-      last = ['if', ['=', ['length', ['quote', pattern]], ['length', 'expr']],
-               ['apply', ['lambda', names, ['quasiquote', template]], ['cdr', 'expr']],
-               last]
-    end
-    ['lambda', ['expr'], last]
-  end
-
-  def unquote_names_in_template(template, names)
-    return ['unquote', template] if names.include?(template)
-    return template unless template.is_a?(Array)
-    template.each_with_index do |part, index|
-      template[index] = unquote_names_in_template(part, names)
+  def expand_template(template, values)
+    if values.key?(template)
+      values[template]
+    elsif !template.is_a?(Array)
+      template
+    else
+      ([nil] + template).each_cons(2).flat_map do |(prev, part)|
+        if part == '...' && prev
+          expand_template("#{prev}...", values)
+        else
+          [expand_template(part, values)]
+        end
+      end
     end
   end
 
