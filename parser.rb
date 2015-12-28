@@ -85,7 +85,6 @@ class Parser
   def initialize(code = nil)
     @code = code
     @parser = LISP::Parser.new
-    @parser = LISP::Parser.new
     @transform = LISP::Transform.new
   end
 
