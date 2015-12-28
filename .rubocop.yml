@@ -4,6 +4,9 @@ Style/AlignArray:
 Style/WordArray:
   Enabled: false
 
+Style/PerlBackrefs:
+  Enabled: false
+
 Metrics/LineLength:
   Max: 120
 
