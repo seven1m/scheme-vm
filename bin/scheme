@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require_relative '../program'
+
+options = { debug: 0 }
+opt_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: scheme [options] path [arguments]\n" \
+                "       scheme [options] -e \"(print (+ 2 2))\" [arguments]"
+
+  opts.on('-d', '--debug', 'Output debugging information (repeat to increase verbosity)') do
+    options[:debug] += 1
+  end
+
+  opts.on('-e "(print (+ 2 2))"', 'Execute script passed as argument') do |script|
+    options[:script] = script
+  end
+
+  opts.on('-h', '--help', 'Print this help') do
+    puts opts
+    exit
+  end
+end
+opt_parser.parse!
+
+program = if options[:script]
+  Program.new(options[:script], args: ARGV)
+elsif ARGV.any?
+  Program.new(File.read(ARGV.shift), args: ARGV)
+end
+
+if program
+  program.run(debug: options[:debug])
+else
+  puts opt_parser
+end
