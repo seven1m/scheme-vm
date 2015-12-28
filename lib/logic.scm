@@ -1,12 +1,22 @@
 (define and
   (lambda conditions
-    (if (eq 0 (length conditions))
+    (if (= 0 (length conditions))
         #t
-        (if (eq 1 (length conditions))
+        (if (= 1 (length conditions))
             (car conditions)
             (if (car conditions)
                 (apply and (cdr conditions))
                 #f)))))
+
+(define or
+  (lambda conditions
+    (if (= 0 (length conditions))
+        #f
+        (if (= 1 (length conditions))
+            (car conditions)
+            (if (car conditions)
+                (car conditions)
+                (apply or (cdr conditions)))))))
 
 (define not
   (lambda (condition)
