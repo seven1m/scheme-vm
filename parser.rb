@@ -1,19 +1,96 @@
-class Parser
-  PARENS_RE  = /(\((?>[^()]|\g<1>)*\)|[^\(\)]+)/
-  STRING_RE  = /".*?"|[^" ]+/
-  COMMENT_RE = /;.*$/
+require 'parslet'
 
+module LISP
+  class Parser < Parslet::Parser
+    rule(:whitespace) do
+      match('[ \n]').repeat
+    end
+
+    rule(:escape) do
+      str('\\') >> any
+    end
+
+    rule(:string) do
+      (str('"') >> (match('[^"]') | escape).repeat >> str('"')).as(:string)
+    end
+
+    rule(:atom) do
+      quote.maybe >> match('[^\(\) \n]').repeat(1).as(:atom)
+    end
+
+    rule(:sexp) do
+      quoted_sexp | simple_sexp
+    end
+
+    rule(:quote) do
+      (match("'") | match(',@') | match(',') | match('`')).as(:quote)
+    end
+
+    rule(:quoted_sexp) do
+      quote >> simple_sexp
+    end
+
+    rule(:simple_sexp) do
+      (str('(') >> expression.repeat >> str(')')).as(:sexp)
+    end
+
+    rule(:comment) do
+      str(';') >> match('[^\n]').repeat
+    end
+
+    rule(:expression) do
+      (string | comment | atom | sexp) >> whitespace
+    end
+
+    rule(:program) do
+      expression.repeat(1)
+    end
+
+    root(:program)
+  end
+
+  class Transform < Parslet::Transform
+    QUOTE_METHOD = {
+      "'"  => 'quote',
+      ',@' => 'unquote-splicing',
+      ','  => 'unquote',
+      '`'  => 'quasiquote'
+    }
+
+    rule(quote: simple(:quote), atom: simple(:atom)) do
+      method = QUOTE_METHOD[quote.to_s]
+      [method, atom.to_s]
+    end
+
+    rule(atom: simple(:atom)) do
+      atom.to_s
+    end
+
+    rule(string: simple(:string)) do
+      string.to_s
+    end
+
+    rule(quote: simple(:quote), sexp: subtree(:sexp)) do
+      method = QUOTE_METHOD[quote.to_s]
+      [method] + sexp
+    end
+
+    rule(sexp: subtree(:sexp)) do
+      sexp
+    end
+  end
+end
+
+class Parser
   def initialize(code = nil)
     @code = code
+    @parser = LISP::Parser.new
+    @parser = LISP::Parser.new
+    @transform = LISP::Transform.new
   end
 
   def parse(code = @code)
-    code.gsub(COMMENT_RE, '').scan(PARENS_RE).flat_map do |(sexp)|
-      if sexp[0] == '('
-        [parse(sexp[1..-1])]
-      else
-        sexp.strip.scan(STRING_RE)
-      end
-    end
+    result = @parser.parse(code.strip)
+    @transform.apply(result)
   end
 end

@@ -5,6 +5,10 @@ describe Parser do
     before do
       @result = subject.parse(<<-END)
         ; comment
+        'foo
+        '(1 2)
+        ,foo
+        ,(foo bar)
         (if (< 1 2)
             x ; another comment
             (foo (bar (baz "this is a string"))))
@@ -13,6 +17,10 @@ describe Parser do
 
     it 'parses s-expressions' do
       expect(@result).to eq([
+        ['quote', 'foo'],
+        ['quote', '1', '2'],
+        ['unquote', 'foo'],
+        ['unquote', 'foo', 'bar'],
         ['if', ['<', '1', '2'],
                'x',
                ['foo', ['bar', ['baz', '"this is a string"']]]]
