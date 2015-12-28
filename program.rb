@@ -5,9 +5,10 @@ class Program
   LIBRARIES = %w(
     list
     pair
+    let
+    logic
     bool
     string
-    logic
   )
 
   def initialize(code, args: [], stdout: $stdout, libraries: [])
@@ -31,7 +32,7 @@ class Program
 
   def load_libraries
     @libraries.each do |name|
-      result = vm.load_library(name)
+      result = vm.load_library(name, syntax: @syntax)
       @syntax.merge!(result[:syntax])
     end
   end

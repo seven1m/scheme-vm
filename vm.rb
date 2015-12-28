@@ -431,8 +431,8 @@ class VM
     puts
   end
 
-  def load_library(name)
-    compiler = Compiler.new(lib_sexps("#{name}.scm"))
+  def load_library(name, syntax: {})
+    compiler = Compiler.new(lib_sexps("#{name}.scm"), syntax: syntax)
     code = compiler.compile
     load_code(code, execute: true)
     { code: code, syntax: compiler.syntax }
