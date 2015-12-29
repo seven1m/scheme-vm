@@ -314,7 +314,7 @@ class Compiler
         if part.to_s == '...' && prev
           expand_template("#{prev}...", values)
         else
-          [expand_template(part, values)]
+          [expand_template(part, values)].compact
         end
       end
     end

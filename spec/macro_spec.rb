@@ -91,7 +91,6 @@ describe Compiler do
           'VM::PUSH_LOCAL', 'z',
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
-          'VM::POP',
           'VM::RETURN',
           'VM::ENDF',
           'VM::CALL',

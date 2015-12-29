@@ -270,10 +270,10 @@ class VM
         case name
         when 'SET_ARGS'
           print 'args:   '
-          p @call_args.each_with_object({}) { |a, h| h[a] = resolve(a) }
+          p @call_args.each_with_object({}) { |a, h| h[a] = resolve(a) rescue nil }
         when 'SET_LOCAL'
           print 'locals: '
-          p locals.each_with_object({}) { |(n, a), h| h[n] = resolve(a) }
+          p locals.each_with_object({}) { |(n, a), h| h[n] = resolve(a) rescue nil }
         when /^JUMP/
           print 'ip:     '
           p @ip
