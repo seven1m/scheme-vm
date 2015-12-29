@@ -3,7 +3,7 @@ require 'parslet'
 module LISP
   class Parser < Parslet::Parser
     rule(:whitespace) do
-      match('[ \n]').repeat
+      match('[ \t\n]').repeat
     end
 
     rule(:escape) do
@@ -15,7 +15,7 @@ module LISP
     end
 
     rule(:atom) do
-      quote.maybe >> match('[^\(\) \n]').repeat(1).as(:atom)
+      quote.maybe >> match('[^\(\) \t\n]').repeat(1).as(:atom)
     end
 
     rule(:sexp) do
