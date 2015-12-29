@@ -15,7 +15,7 @@ module LISP
     end
 
     rule(:atom) do
-      quote.maybe >> match('[^\(\) \t\n]').repeat(1).as(:atom)
+      quote.maybe >> match('[^\(\) \t\n\[\]\{\}]').repeat(1).as(:atom)
     end
 
     rule(:sexp) do
