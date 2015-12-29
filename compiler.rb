@@ -139,6 +139,10 @@ class Compiler
     end
   end
 
+  def do_halt(args, option)
+    [VM::HALT]
+  end
+
   def do_begin(args, options)
     args.each_with_index.map do |arg, index|
       compile_sexp(arg, options.merge(use: index == args.size - 1))

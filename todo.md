@@ -11,7 +11,7 @@
 - [ ] pairs separated with `.` (pp 8)
 - [ ] datum labels `#<n>=` and `#<n>#` (pp 9)
 - [ ] `eof-object?` (pp 10)
-- [ ] proper tail recursion (pp 11)
+- [x] proper tail recursion (pp 11)
 - [ ] `set!` (pp 14, 26)
 - [ ] `include` takes multiple file paths (pp 14)
 - [ ] `include-ci` (pp 14)

@@ -1044,4 +1044,31 @@ describe VM do
       ])
     end
   end
+
+  describe 'tail call elimination' do
+    before do
+      c = Compiler.new([
+        ['define', 'fn',
+          ['lambda', ['n'],
+            ['halt'],
+            ['if', ['<', 'n', '1'],
+              'n',
+              ['fn', ['-', 'n', '1']]]]],
+        ['fn', '2']
+      ])
+      instr = c.compile
+      subject.execute(instr)
+    end
+
+    it 'reuses the same stack frame' do
+      expect(subject.call_stack.size).to eq(2)
+      subject.execute
+      expect(subject.call_stack.size).to eq(2)
+      subject.execute
+      expect(subject.call_stack.size).to eq(2)
+      subject.execute
+      expect(subject.call_stack.size).to eq(1)
+      expect(subject.pop_val).to eq(VM::Int.new(0))
+    end
+  end
 end

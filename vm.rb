@@ -247,7 +247,11 @@ class VM
         count = fetch.to_i
         @ip += (count - 1) if val == bool_false
       when CALL
-        @call_stack << { return: @ip, locals: {}, args: @call_args }
+        if @heap[@ip] == RETURN
+          @call_stack.last[:args] = @call_args
+        else
+          @call_stack << { return: @ip, locals: {}, args: @call_args }
+        end
         fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
         @ip = pop
       when APPLY
