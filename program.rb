@@ -11,7 +11,7 @@ class Program
     string
   )
 
-  def initialize(code, filename: nil, args: [], stdout: $stdout)
+  def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
     @filename = filename
     @args = args
     @stdout = stdout
