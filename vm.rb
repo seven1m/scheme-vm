@@ -7,6 +7,7 @@ require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
 require_relative 'vm/exceptions'
+require_relative 'vm/gc'
 require_relative 'parser'
 require_relative 'compiler'
 
@@ -67,7 +68,7 @@ class VM
   INT_WRITE     = 1
   INT_INCLUDE   = 3
 
-  attr_reader :stack, :heap, :stdout, :ip
+  attr_reader :stack, :heap, :stdout, :ip, :call_stack
 
   def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0
@@ -259,7 +260,9 @@ class VM
         fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
         @ip = pop
       when RETURN
-        @ip = @call_stack.pop.fetch(:return)
+        frame = @call_stack.pop
+        @ip = frame.fetch(:return)
+        VM::GC.new(self).run(debug: debug)
       when SET_LOCAL
         name = fetch
         locals[name] = pop
