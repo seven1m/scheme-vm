@@ -59,15 +59,15 @@ module LISP
 
     rule(quote: simple(:quote), atom: simple(:atom)) do
       method = QUOTE_METHOD[quote.to_s]
-      [method, atom.to_s]
+      [method, atom]
     end
 
     rule(atom: simple(:atom)) do
-      atom.to_s
+      atom
     end
 
     rule(string: simple(:string)) do
-      string.to_s
+      string
     end
 
     rule(quote: simple(:quote), sexp: subtree(:sexp)) do

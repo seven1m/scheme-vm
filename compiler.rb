@@ -3,17 +3,19 @@ require_relative 'lib/pattern'
 require 'pp'
 
 class Compiler
-  def initialize(sexps = nil, arguments: {}, syntax: {})
+  def initialize(sexps = nil, filename: nil, arguments: {}, syntax: {})
     @sexps = sexps
     @variables = {}
+    @filename = filename
     @arguments = arguments
     @syntax = syntax
+    @source = {}
   end
 
-  attr_reader :variables, :arguments, :syntax
+  attr_reader :variables, :filename, :arguments, :syntax, :source
 
   def compile(sexps = @sexps, halt: true)
-    instructions = compile_sexps(sexps)
+    instructions = compile_sexps(sexps, filename: filename)
     instructions + \
     (halt ? [VM::HALT] : [])
   end
@@ -44,11 +46,31 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps, options = {})
+  def compile_sexps(sexps, options = {}, filename:)
     options[:locals] ||= {}
-    sexps.each_with_index.flat_map do |sexp, index|
-      compile_sexp(sexp, options.merge(use: index == sexps.size - 1))
-    end.flatten.compact
+    source[filename] = {}
+    sexps
+      .each_with_index
+      .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1)) }
+      .flatten
+      .compact
+      .each_with_index
+      .map do |instr, index|
+        stringify_and_record_location(instr, index)
+      end
+  end
+
+  def stringify_and_record_location(instr, index)
+    if instr.is_a?(Parslet::Slice)
+      (line, column) = instr.line_and_column
+      @source[filename][index] = {
+        line: line,
+        column: column
+      }
+      instr.to_s
+    else
+      instr
+    end
   end
 
   def compile_sexp(sexp, options = { use: false, locals: {} })
@@ -56,11 +78,10 @@ class Compiler
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty?
     (name, *args) = sexp
-    name = name.to_s if name.is_a?(VM::Atom)
     if options[:quote] || options[:quasiquote]
-      if name =~ /unquote(\-splicing)?/ && options[:quasiquote] # FIXME move to a method
+      if name.to_s =~ /unquote(\-splicing)?/ && options[:quasiquote] # FIXME move to a method
         expr = compile_sexp(args.first, options.merge(quasiquote: false))
-        if name == 'unquote-splicing'
+        if name.to_s == 'unquote-splicing'
           fail "can only use unquote-splicing with a list" if expr.compact.last != VM::PUSH_LIST
           ['splice', expr.first]
         else
@@ -71,9 +92,9 @@ class Compiler
       end
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
-    elsif respond_to?((underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
+    elsif respond_to?((underscored_name = 'do_' + name.to_s.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
       send(underscored_name, args, options)
-    elsif (transformer = syntax[name])
+    elsif (transformer = syntax[name.to_s])
       templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
       (values, template) = templates.detect { |values, _| values }
       sexp = expand_template(template, values)
@@ -84,8 +105,7 @@ class Compiler
   end
 
   def compile_literal(literal, options = { use: false, locals: {} })
-    literal = literal.to_s.strip
-    case literal
+    case literal.to_s.strip
     when /\A[a-z]/
       if options[:quote] || options[:quasiquote]
         [VM::PUSH_ATOM, literal]
@@ -208,7 +228,7 @@ class Compiler
   end
 
   def do_define((name, val), options)
-    options[:locals][name] = true
+    options[:locals][name.to_s] = true
     [
       compile_sexp(val, options.merge(use: true)),
       VM::SET_LOCAL, name
@@ -233,7 +253,7 @@ class Compiler
     [
       VM::PUSH_FUNC,
       args,
-      compile_sexps(body, locals: arg_locals),
+      do_begin(body, locals: arg_locals),
       VM::RETURN,
       VM::ENDF,
       pop_maybe(options)
@@ -279,18 +299,18 @@ class Compiler
 
   def do_define_syntax((name, transformer), options)
     transformer.shift(2)
-    syntax[name] = transformer
+    syntax[name.to_s] = transformer
     []
   end
 
   def expand_template(template, values)
-    if values.key?(template)
-      values[template]
+    if values.key?(template.to_s)
+      values[template.to_s]
     elsif !template.is_a?(Array)
-      template
+      template.to_s
     else
       ([nil] + template).each_cons(2).flat_map do |(prev, part)|
-        if part == '...' && prev
+        if part.to_s == '...' && prev
           expand_template("#{prev}...", values)
         else
           [expand_template(part, values)]
@@ -352,7 +372,7 @@ class Compiler
 
   def push_var(name, options)
     [
-      options[:locals][name] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
+      options[:locals][name.to_s] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
       name
     ]
   end

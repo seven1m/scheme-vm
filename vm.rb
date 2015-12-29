@@ -6,14 +6,11 @@ require_relative 'vm/pair'
 require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
+require_relative 'vm/exceptions'
 require_relative 'parser'
 require_relative 'compiler'
 
 class VM
-  class CallStackTooDeep < StandardError; end
-  class VariableUndefined < StandardError; end
-  class NoStackValue < StandardError; end
-
   ROOT_PATH = File.expand_path('..', __FILE__)
 
   MAX_CALL_DEPTH = 50
@@ -85,7 +82,9 @@ class VM
   end
 
   def execute(instructions = nil, debug: 0)
+    start = 0
     if instructions
+      start = @heap.size + 1
       @ip = @heap.size
       @heap += instructions
     end
@@ -132,12 +131,12 @@ class VM
       when PUSH_LOCAL
         var = fetch
         address = locals[var]
-        fail VariableUndefined, "#{var} is not defined" unless address
+        fail VariableUndefined.new(var, @ip - start) unless address
         push(address)
       when PUSH_REMOTE
         var = fetch
         frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[var] }
-        fail VariableUndefined, "#{var} is not defined" unless frame_locals
+        fail VariableUndefined.new(var, @ip - start) unless frame_locals
         address = frame_locals.fetch(var)
         push(address)
       when PUSH_ARG
