@@ -79,6 +79,7 @@ class VM
     @call_args = []      # used for next CALL
     @stdout = stdout
     @ip = @heap.size
+    @executable = []     # ranges of executable heap (w^x)
     load_code(instructions)
   end
 
@@ -88,6 +89,7 @@ class VM
       start = @heap.size + 1
       @ip = @heap.size
       @heap += instructions
+      @executable << (@ip..(@heap.size - 1))
     end
     while (instruction = fetch)
       print((@ip - 1).to_s.ljust(5)) if debug > 0
@@ -292,14 +294,29 @@ class VM
   end
 
   def fetch
+    fail "heap[#{@ip}] is not executable" unless executable?(@ip)
     instruction = @heap[@ip]
     @ip += 1
     instruction
   end
 
+  def executable?(address)
+    @executable.any? { |range| range.include?(address) }
+  end
+
+  def writable?(address)
+    !executable?(address)
+  end
+
+  def writable_heap
+    @executable.each_with_object(@heap.dup) do |range, writable_heap|
+      writable_heap[range] = [nil] * range.size
+    end
+  end
+
   def resolve(address)
     fail 'cannot lookup nil' if address.nil?
-    @heap[address] || fail('invalid address')
+    @heap[address] || fail("invalid address #{address}")
   end
 
   def push(address)
@@ -415,9 +432,11 @@ class VM
   end
 
   def load_code(instructions, execute: false)
+    return if instructions.empty?
     ip_was = @ip
     @ip = @heap.size
     @heap += instructions
+    @executable << (@ip..(@heap.size - 1))
     self.execute if execute
     @ip = ip_was
   end
