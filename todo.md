@@ -4,7 +4,7 @@
 
 ## Missing things from R7RS:
 
-- [ ] `|pipe delimited identifiers|` (pp 7)
+- [x] `|pipe delimited identifiers|` (pp 7)
 - [ ] case folding directives (pp 8)
 - [ ] block comments `#| ... |#` (pp 8)
 - [ ] `#;` comments (pp 8)

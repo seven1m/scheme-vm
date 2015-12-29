@@ -9,6 +9,7 @@ describe Parser do
         '(1 2)
         ,foo
         ,(foo bar)
+        (print |space in identifier|)
         (if (< 1 2)
             x ; another comment
             (foo (bar (baz "this is a string"))))
@@ -21,6 +22,7 @@ describe Parser do
         ['quote', '1', '2'],
         ['unquote', 'foo'],
         ['unquote', 'foo', 'bar'],
+        ['print', 'space in identifier'],
         ['if', ['<', '1', '2'],
                'x',
                ['foo', ['bar', ['baz', '"this is a string"']]]]

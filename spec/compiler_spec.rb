@@ -6,7 +6,25 @@ describe Compiler do
   end
 
   describe '#compile' do
-    context 'literal' do
+    context 'identifier' do
+      before do
+        @result = subject.compile([
+          'foo',
+          'bar baz'
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_REMOTE', 'foo',
+          'VM::POP',
+          'VM::PUSH_REMOTE', 'bar baz',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'number' do
       before do
         @result = subject.compile([
           '1'
