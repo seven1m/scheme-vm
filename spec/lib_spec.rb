@@ -1,10 +1,10 @@
 require_relative './spec_helper'
 require 'stringio'
 
-describe 'Libs' do
-  it 'passes all tests' do
-    failed = false
-    Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
+Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
+  describe File.split(path).last do
+    it 'passes all tests' do
+      failed = false
       out = StringIO.new
       Program.new(File.read(path), filename: File.split(path).last, stdout: out).run
       out.rewind
@@ -14,7 +14,7 @@ describe 'Libs' do
         puts result
         failed = true
       end
+      fail 'spec failed' if failed
     end
-    fail 'spec failed' if failed
   end
 end
