@@ -116,9 +116,9 @@ class Compiler
           pop_maybe(options)
         ]
       end
-    when '#t'
+    when '#t', '#true'
       [VM::PUSH_TRUE, pop_maybe(options)]
-    when '#f'
+    when '#f', '#false'
       [VM::PUSH_FALSE, pop_maybe(options)]
     when /\A#\\(.+)\z/
       char = {
