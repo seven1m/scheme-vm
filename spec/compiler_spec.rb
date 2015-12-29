@@ -791,6 +791,23 @@ describe Compiler do
       end
     end
 
+    context 'eqv?' do
+      before do
+        @result = subject.compile([
+          ['eqv?', '1', '1']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '1',
+          'VM::CMP_EQV',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context '=' do
       before do
         @result = subject.compile([

@@ -14,10 +14,12 @@ class VM
       @num
     end
 
-    def ==(other)
+    def eq?(other)
       return false unless other.is_a?(Int)
       raw == other.raw
     end
+
+    alias_method :==, :eq?
 
     def +(other)
       Int.new(raw + other.raw)

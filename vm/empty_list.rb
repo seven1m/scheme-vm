@@ -15,5 +15,7 @@ class VM
     def to_a
       []
     end
+
+    alias_method :eq?, :==
   end
 end

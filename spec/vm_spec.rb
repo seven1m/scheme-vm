@@ -842,6 +842,39 @@ describe VM do
     end
   end
 
+  describe 'CMP_EQV' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::CMP_EQV,
+        VM::PUSH_NUM, '8',
+        VM::PUSH_NUM, '9',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_NUM, 2,
+        VM::PUSH_LIST,
+        VM::CMP_EQV,
+        VM::HALT
+      ])
+    end
+
+    it 'removes both values and puts a #t or #f on the stack' do
+      expect(subject.stack_values).to eq([
+        VM::BoolTrue.instance,
+        VM::BoolFalse.instance
+      ])
+    end
+  end
+
   describe 'CMP_EQ_NUM' do
     before do
       subject.execute([

@@ -63,5 +63,12 @@ class VM
     def inspect
       "#<VM::Pair size=#{size}, car=#{car.inspect}>"
     end
+
+    alias_method :eq?, :==
+
+    def eqv?(other)
+      return false unless other.is_a?(Pair)
+      to_ruby == other.to_ruby
+    end
   end
 end

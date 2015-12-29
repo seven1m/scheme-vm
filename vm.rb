@@ -43,6 +43,7 @@ class VM
     ['CMP_LT',        0],
     ['CMP_LTE',       0],
     ['CMP_EQ',        0],
+    ['CMP_EQV',       0],
     ['CMP_EQ_NUM',    0],
     ['CMP_NULL',      0],
     ['DUP',           0],
@@ -205,13 +206,17 @@ class VM
         num1 = pop_val
         num1 <= num2 ? push_true : push_false
       when CMP_EQ
-        num2 = pop_val
-        num1 = pop_val
-        num1 == num2 ? push_true : push_false
+        obj2 = pop_val
+        obj1 = pop_val
+        obj1.eq?(obj2) ? push_true : push_false
+      when CMP_EQV
+        obj2 = pop_val
+        obj1 = pop_val
+        obj1.eqv?(obj2) ? push_true : push_false
       when CMP_EQ_NUM
         num2 = pop_val
         num1 = pop_val
-        num1.is_a?(Int) && num2.is_a?(Int) && num1 == num2 ? push_true : push_false
+        num1.is_a?(Int) && num2.is_a?(Int) && num1.eq?(num2) ? push_true : push_false
       when CMP_NULL
         val = pop_val
         val == EmptyList.instance ? push_true : push_false
