@@ -50,7 +50,7 @@
 - [ ] `zero?`, `positive?`, `negative?`, `odd?`, `even?` (pp 36)
 - [ ] `max`, `min` (pp 36)
 - [ ] `abs` (pp 36)
-- [ ] `floor/`, `fllor-quotient`, `floor-remainder`,
+- [ ] `floor/`, `floor-quotient`, `floor-remainder`,
       `truncate/`, `truncate-quotient`, `truncate-remainder` (pp 36)
 - [ ] `quotient`, `remainder`, `modulo` (pp 37)
 - [ ] `gcd`, `lcm` (pp 37)
