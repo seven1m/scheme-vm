@@ -97,6 +97,7 @@ class Compiler
     elsif (transformer = syntax[name.to_s])
       templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
       (values, template) = templates.detect { |values, _| values }
+      fail 'Could not match any template' unless values
       sexp = expand_template(template, values)
       compile_sexp(sexp, options)
     else

@@ -18,7 +18,7 @@ class Pattern
       if identifier == '...'
         if previous.is_a?(Array)
           previous.each_with_index.each do |pr, index|
-            hash[pr + identifier] = [expr.flatten].map { |e| e[index] }.compact
+            hash[pr + identifier] = expr.map { |e| e[index] }
           end
         else
           hash[previous + identifier] = expr.dup

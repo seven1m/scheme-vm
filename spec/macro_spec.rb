@@ -6,46 +6,6 @@ describe Compiler do
   end
 
   context 'define-syntax and syntax-rules' do
-    context 'given an empty template' do
-      before do
-        @result = subject.compile([
-          ['define-syntax', 'and',
-            ['syntax-rules', [],
-              [['and'], '#t']]],
-          ['and']
-        ])
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_TRUE',
-          'VM::HALT'
-        ])
-      end
-    end
-
-    context 'given a template with one argument' do
-      before do
-        @result = subject.compile([
-          ['define-syntax', 'and',
-            ['syntax-rules', [],
-              [['and', 'test'], 'test']]],
-          ['and', '10'],
-          ['and', ['write', '11']]
-        ])
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '10',
-          'VM::POP',
-          'VM::PUSH_NUM', '11',
-          'VM::INT', VM::INT_WRITE,
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'given a template with two arguments and a nested template' do
       before do
         @result = subject.compile([
@@ -95,6 +55,46 @@ describe Compiler do
           'VM::PUSH_FALSE',
           'VM::JUMP', 2,
           'VM::PUSH_FALSE',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'given multiple templates, recursive expansion' do
+      before do
+        @result = subject.compile([
+          ['define-syntax', 'let',
+            ['syntax-rules', [],
+              [['let', [['name', 'val'], '...'], 'body1', 'body2', '...'],
+                [['lambda', ['name', '...'], 'body1', 'body2', '...'],
+                'val', '...']]]],
+          ['let', [['x', '1'], ['y', '2'], ['z', '3']], ['list', 'x', 'y', 'z']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_NUM', '3',
+          'VM::PUSH_NUM', 3,
+          'VM::SET_ARGS',
+          'VM::PUSH_FUNC',
+          'VM::PUSH_ARG',
+          'VM::SET_LOCAL', 'x',
+          'VM::PUSH_ARG',
+          'VM::SET_LOCAL', 'y',
+          'VM::PUSH_ARG',
+          'VM::SET_LOCAL', 'z',
+          'VM::PUSH_LOCAL', 'x',
+          'VM::PUSH_LOCAL', 'y',
+          'VM::PUSH_LOCAL', 'z',
+          'VM::PUSH_NUM', 3,
+          'VM::PUSH_LIST',
+          'VM::POP',
+          'VM::RETURN',
+          'VM::ENDF',
+          'VM::CALL',
           'VM::HALT'
         ])
       end
