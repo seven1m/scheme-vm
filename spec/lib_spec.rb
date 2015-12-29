@@ -6,9 +6,13 @@ describe 'Libs' do
 
   it 'passes all tests' do
     Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
-      Program.new(File.read(path), stdout: out).run
+      Program.new(File.read(path), filename: File.split(path).last, stdout: out).run
       out.rewind
-      expect(out.read).to eq('')
+      result = out.read
+      if result != ''
+        puts result
+        fail 'spec failed'
+      end
     end
   end
 end
