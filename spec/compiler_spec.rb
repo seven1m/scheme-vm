@@ -6,6 +6,25 @@ describe Compiler do
   end
 
   describe '#compile' do
+    context 'nil' do
+      before do
+        @result = subject.compile([
+          'foo',
+          nil,
+          'bar'
+        ])
+      end
+
+      it 'ignores nil' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_REMOTE', 'foo',
+          'VM::POP',
+          'VM::PUSH_REMOTE', 'bar',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'identifier' do
       before do
         @result = subject.compile([

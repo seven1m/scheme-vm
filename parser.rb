@@ -26,7 +26,7 @@ module LISP
     end
 
     rule(:quote) do
-      (match("'") | match(',@') | match(',') | match('`')).as(:quote)
+      (str("'") | str(',@') | str(',') | str('`')).as(:quote)
     end
 
     rule(:quoted_sexp) do
@@ -38,7 +38,19 @@ module LISP
     end
 
     rule(:comment) do
+      block_comment | line_comment | datum_comment.as(:comment)
+    end
+
+    rule(:block_comment) do
+      str('#|') >> (str('|#').absent? >> any).repeat >> str('|#')
+    end
+
+    rule(:line_comment) do
       str(';') >> match('[^\n]').repeat
+    end
+
+    rule(:datum_comment) do
+      str('#;') >> str(' ').maybe >> (atom | sexp)
     end
 
     rule(:expression) do
@@ -59,6 +71,8 @@ module LISP
       ','  => 'unquote',
       '`'  => 'quasiquote'
     }
+
+    rule(comment: subtree(:comment))
 
     rule(quote: simple(:quote), atom: simple(:atom)) do
       method = QUOTE_METHOD[quote.to_s]

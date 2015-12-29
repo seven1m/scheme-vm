@@ -9,8 +9,10 @@ describe Parser do
         '(1 2)
         ,foo
         ,(foo bar)
+        #| this is a
+           multi-line comment |#
         (print |space in identifier|)
-        (if (< 1 2)
+        (if (< 1 2) #;(2 3)
             x ; another comment
             (foo (bar (baz "this is a string"))))
       END
@@ -23,7 +25,7 @@ describe Parser do
         ['unquote', 'foo'],
         ['unquote', 'foo', 'bar'],
         ['print', 'space in identifier'],
-        ['if', ['<', '1', '2'],
+        ['if', ['<', '1', '2'], nil,
                'x',
                ['foo', ['bar', ['baz', '"this is a string"']]]]
       ])
