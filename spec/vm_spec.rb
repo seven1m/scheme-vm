@@ -381,26 +381,23 @@ describe VM do
 
   describe 'SET_ARGS and PUSH_ARG and PUSH_ARGS' do
     before do
-      address = subject.alloc
-      subject.heap[address] = VM::Int.new(9)
-      subject.locals[0] = address
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_ARG,
-        VM::SET_LOCAL, 1,            # first arg
+        VM::SET_LOCAL, 'x',            # first arg
         VM::PUSH_ARG,
-        VM::SET_LOCAL, 2,            # second arg
+        VM::SET_LOCAL, 'y',            # second arg
         VM::PUSH_ARGS,
-        VM::SET_LOCAL, 3,            # list containing third and fourth args
-        VM::PUSH_LOCAL, 1,
+        VM::SET_LOCAL, 'z',            # list containing third and fourth args
+        VM::PUSH_LOCAL, 'x',
         VM::INT, VM::INT_WRITE,
-        VM::PUSH_LOCAL, 2,
+        VM::PUSH_LOCAL, 'y',
         VM::INT, VM::INT_WRITE,
-        VM::PUSH_LOCAL, 3,
+        VM::PUSH_LOCAL, 'z',
         VM::INT, VM::INT_WRITE,
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 0,
+        VM::SET_LOCAL, 'fn',
 
         VM::PUSH_NUM, 2,             # first arg
         VM::PUSH_NUM, 3,             # second arg
@@ -408,7 +405,7 @@ describe VM do
         VM::PUSH_NUM, 5,             # fourth arg
         VM::PUSH_NUM, 4,             # arg count
         VM::SET_ARGS,
-        VM::PUSH_LOCAL, 0,
+        VM::PUSH_LOCAL, 'fn',
         VM::CALL,
         VM::HALT
       ])
