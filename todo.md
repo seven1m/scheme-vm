@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] GC
+- [x] GC
 
 ## Missing things from R7RS:
 
