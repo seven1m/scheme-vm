@@ -8,12 +8,12 @@ opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: scheme [options] path [arguments]\n" \
                 "       scheme [options] -e \"(print (+ 2 2))\" [arguments]"
 
-  opts.on('-d', '--debug', 'Output debugging info (repeat to show more)') do
-    options[:debug] += 1
-  end
-
   opts.on('-e SCRIPT', 'Execute script passed as argument') do |script|
     options[:script] = script
+  end
+
+  opts.on('-d', '--debug', 'Output debugging info (repeat to show more)') do
+    options[:debug] += 1
   end
 
   opts.on('-h', '--help', 'Print this help') do
