@@ -286,6 +286,7 @@ class VM
           print 'stack:  '
           puts @stack.map { |a| resolve(a).inspect }.join("\n" + (' ' * 28)) rescue puts @stack.inspect
         end
+        puts "#{' ' * 20}heap:   #{@heap.inspect}\n\n" if debug >= 3
       end
     end
   end
