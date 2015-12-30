@@ -3,7 +3,8 @@
     (if (empty? l)
         #t
         (if (pair? l)
-            (or (empty? (cdr l)) (list? (cdr l)))
+            (let ((next (cdr l)))
+              (or (empty? next) (list? next)))
             #f))))
 
 (define empty?
