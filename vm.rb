@@ -112,7 +112,8 @@ class VM
   end
 
   def execute_instruction(instruction, debug: 0)
-    print((@ip - 1).to_s.ljust(5)) if debug > 0
+    debug_output = DebugOutput.new(self, instruction, debug) if debug >= 2
+    debug_output.print_ip if debug >= 2
     case instruction
     when RETURN
       do_return(debug)
@@ -122,7 +123,7 @@ class VM
       name = INSTRUCTIONS[instruction].first
       send("do_#{name.downcase}")
     end
-    DebugOutput.new(self, instruction, debug).print_debug if debug > 0
+    debug_output.print_debug if debug >= 2
   end
 
   def fetch

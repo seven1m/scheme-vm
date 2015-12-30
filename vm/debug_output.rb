@@ -6,6 +6,10 @@ class VM
       @debug_level = debug_level
     end
 
+    def print_ip
+      print((@vm.ip - 1).to_s.ljust(5))
+    end
+
     def print_debug
       (name, _arg_count) = VM::INSTRUCTIONS.fetch(@instruction)
       print name.ljust(15)

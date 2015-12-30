@@ -24,7 +24,7 @@ class Program
   end
 
   def run(debug: 0)
-    @compiler.pretty_print(@instr) if debug >= 2
+    @compiler.pretty_print(@instr) if debug >= 1
     vm.execute(@instr, debug: debug)
   rescue VM::VariableUndefined => e
     print_error_message(e)
