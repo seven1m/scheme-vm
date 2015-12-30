@@ -295,7 +295,7 @@ class VM
       when HALT
         break
       when DEBUG
-        print_debug
+        binding.pry
       end
       if debug > 0
         (name, _arg_count) = INSTRUCTIONS.fetch(instruction)
@@ -470,20 +470,6 @@ class VM
     @executable << (@ip..(@heap.size - 1))
     self.execute if execute
     @ip = ip_was
-  end
-
-  def print_debug
-    puts
-    puts 'op stack --------------------'
-    @stack.each do |address|
-      puts "#{address} => #{resolve(address) rescue 'error'}"
-    end
-    puts
-    puts 'call stack ------------------'
-    @call_stack.each do |frame|
-      p frame
-    end
-    puts
   end
 
   def load_library(name, syntax: {})

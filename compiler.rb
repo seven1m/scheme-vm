@@ -248,6 +248,10 @@ class Compiler
     end
   end
 
+  def do_debug(_args, _options)
+    [VM::DEBUG]
+  end
+
   def do_define((name, val), options)
     options[:locals][name.to_s] = true
     [
