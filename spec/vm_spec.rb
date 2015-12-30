@@ -946,24 +946,25 @@ describe VM do
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_STR, 'func.',
-        VM::SET_LOCAL, 0,
-        VM::PUSH_LOCAL, 0,
+        VM::SET_LOCAL, 'x',
+        VM::PUSH_LOCAL, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 1,
+        VM::SET_LOCAL, 'fn',
 
-        VM::PUSH_LOCAL, 1,
+        VM::PUSH_LOCAL, 'fn',
         VM::CALL,
 
         VM::PUSH_STR, 'main.',
-        VM::SET_LOCAL, 0,
-        VM::PUSH_LOCAL, 0,
+        VM::SET_LOCAL, 'x',
+
+        VM::PUSH_LOCAL, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
 
-        VM::PUSH_LOCAL, 1,
+        VM::PUSH_LOCAL, 'fn',
         VM::CALL,
 
         VM::HALT
@@ -971,7 +972,7 @@ describe VM do
     end
 
     it 'stores the stack value in given variable index' do
-      expect(subject.local_values[0]).to eq(
+      expect(subject.local_values['x']).to eq(
         VM::ByteArray.new('main.')
       )
     end
@@ -979,6 +980,49 @@ describe VM do
     it 'keeps locals from different call frames separate' do
       subject.stdout.rewind
       expect(subject.stdout.read).to eq('func.main.func.')
+    end
+  end
+
+  describe 'SET_REMOTE' do
+    before do
+      subject.execute([
+        VM::PUSH_FUNC,
+        VM::PUSH_STR, 'func.',
+        VM::SET_REMOTE, 'x',
+        VM::PUSH_REMOTE, 'x',
+        VM::INT, VM::INT_WRITE,
+        VM::POP,
+        VM::RETURN,
+        VM::ENDF,
+        VM::SET_LOCAL, 'fn',
+
+        VM::PUSH_STR, 'main.',
+        VM::SET_LOCAL, 'x',
+
+        VM::PUSH_LOCAL, 'x',
+        VM::INT, VM::INT_WRITE,
+        VM::POP,
+
+        VM::PUSH_LOCAL, 'fn',
+        VM::CALL,
+
+        VM::PUSH_LOCAL, 'x',
+        VM::INT, VM::INT_WRITE,
+        VM::POP,
+
+        VM::HALT
+      ])
+    end
+
+    it 'stores the stack value in given variable index' do
+      expect(subject.local_values['x']).to eq(
+        VM::ByteArray.new('func.')
+      )
+    end
+
+    it 'overwrites the value in the frame above' do
+      subject.stdout.rewind
+      expect(subject.stdout.read).to eq('main.func.func.')
     end
   end
 

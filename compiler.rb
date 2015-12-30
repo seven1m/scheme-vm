@@ -242,6 +242,14 @@ class Compiler
     ]
   end
 
+  def do_set!((name, val), options)
+    op = options[:locals][name.to_s] ? VM::SET_LOCAL : VM::SET_REMOTE
+    [
+      compile_sexp(val, options.merge(use: true)),
+      op, name
+    ]
+  end
+
   def do_lambda((args, *body), options)
     arg_locals = {}
     if args.is_a?(Array)

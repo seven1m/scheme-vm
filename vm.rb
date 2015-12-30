@@ -56,6 +56,7 @@ class VM
     ['APPLY',         0],
     ['RETURN',        0],
     ['SET_LOCAL',     1],
+    ['SET_REMOTE',    1],
     ['SET_ARGS',      0],
     ['HALT',          0],
     ['DEBUG',         0]
@@ -270,6 +271,11 @@ class VM
       when SET_LOCAL
         name = fetch
         locals[name] = pop
+      when SET_REMOTE
+        name = fetch
+        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
+        fail VariableUndefined.new(var, @ip - start) unless frame_locals
+        frame_locals[name] = pop
       when SET_ARGS
         count = pop_raw
         @call_args = (0...count).map { pop }.reverse

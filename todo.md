@@ -12,7 +12,7 @@
 - [ ] datum labels `#<n>=` and `#<n>#` (pp 9)
 - [ ] `eof-object?` (pp 10)
 - [x] proper tail recursion (pp 11)
-- [ ] `set!` (pp 14, 26)
+- [x] `set!` (pp 14, 26)
 - [ ] `include` takes multiple file paths (pp 14)
 - [ ] `include-ci` (pp 14)
 - [ ] `cond` (pp 14)

@@ -304,7 +304,7 @@ describe Compiler do
     context 'null?' do
       before do
         @result = subject.compile([
-          ['null?', ['list']],
+          ['null?', ['list']]
         ])
       end
 
@@ -318,22 +318,28 @@ describe Compiler do
       end
     end
 
-    context 'local variable' do
+    context 'variables' do
       before do
         @result = subject.compile([
-          ['define', 'n', '10'],
-          ['define', 'x', '11'],
-          'n'
+          ['define', 'y', '10'],
+          ['set!', 'y', '11'],
+          ['set!', 'x', '9'],
+          'y',
+          'x'
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '10',
-          'VM::SET_LOCAL', 'n',
+          'VM::SET_LOCAL', 'y',
           'VM::PUSH_NUM', '11',
-          'VM::SET_LOCAL', 'x',
-          'VM::PUSH_LOCAL', 'n',
+          'VM::SET_LOCAL', 'y',
+          'VM::PUSH_NUM', '9',
+          'VM::SET_REMOTE', 'x',
+          'VM::PUSH_LOCAL', 'y',
+          'VM::POP',
+          'VM::PUSH_REMOTE', 'x',
           'VM::HALT'
         ])
       end
