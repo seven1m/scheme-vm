@@ -1,5 +1,5 @@
 require_relative 'vm'
-require_relative 'lib/pattern'
+require_relative 'pattern'
 require 'pp'
 
 class Compiler
