@@ -3,10 +3,10 @@ require_relative 'compiler'
 
 class Program
   LIBRARIES = %w(
-    list
-    pair
     let
     logic
+    list
+    pair
     bool
     string
   )

@@ -55,6 +55,22 @@ describe VM do
     end
   end
 
+  describe 'PUSH_TYPE' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, 1,
+        VM::PUSH_TYPE,
+        VM::HALT
+      ])
+    end
+
+    it 'pushes an int representing the type' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(5)
+      ])
+    end
+  end
+
   describe 'STR_REF' do
     before do
       subject.execute([

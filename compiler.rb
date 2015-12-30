@@ -193,6 +193,20 @@ class Compiler
     ]
   end
 
+  def do_pair?((arg, *_rest), options)
+    [
+      compile_sexp(arg, options.merge(use: true)),
+      VM::PUSH_TYPE,
+      VM::PUSH_NUM, VM::TYPES.index(VM::Pair),
+      VM::CMP_EQ_NUM,
+      VM::JUMP_IF_FALSE, 4,
+      VM::PUSH_TRUE,
+      VM::JUMP, 2,
+      VM::PUSH_FALSE,
+      pop_maybe(options)
+    ]
+  end
+
   def do_string_ref((string, index), options)
     [
       compile_sexp(string, options.merge(use: true)),

@@ -12,7 +12,7 @@
   (lambda (expected actual)
     (if (not (eqv? expected actual))
         (begin
-          (print "assert-eq failed:")
+          (print "assert-eqv failed:")
           (write "  expected: ")
           (print expected)
           (write "  actual:   ")

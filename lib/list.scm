@@ -1,3 +1,11 @@
+(define list?
+  (lambda (l)
+    (if (empty? l)
+        #t
+        (if (pair? l)
+            (or (empty? (cdr l)) (list? (cdr l)))
+            #f))))
+
 (define empty?
   (lambda (l)
     (null? l)))

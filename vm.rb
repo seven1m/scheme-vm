@@ -10,6 +10,7 @@ require_relative 'vm/exceptions'
 require_relative 'vm/gc'
 require_relative 'parser'
 require_relative 'compiler'
+require 'pry'
 
 class VM
   ROOT_PATH = File.expand_path('..', __FILE__)
@@ -23,6 +24,7 @@ class VM
     ['PUSH_CHAR',     1],
     ['PUSH_TRUE',     0],
     ['PUSH_FALSE',    0],
+    ['PUSH_TYPE',     0],
     ['PUSH_CAR',      0],
     ['PUSH_CDR',      0],
     ['PUSH_CONS',     0],
@@ -69,6 +71,16 @@ class VM
   INT_WRITE     = 1
   INT_INCLUDE   = 3
 
+  TYPES = [
+    VM::BoolTrue,
+    VM::BoolFalse,
+    VM::ByteArray,
+    VM::Char,
+    VM::EmptyList,
+    VM::Int,
+    VM::Pair
+  ]
+
   attr_reader :stack, :heap, :stdout, :ip, :call_stack
 
   def initialize(instructions = [], args: [], stdout: $stdout)
@@ -112,6 +124,9 @@ class VM
         push_true
       when PUSH_FALSE
         push_false
+      when PUSH_TYPE
+        val = pop_val
+        push_type(val)
       when PUSH_CAR
         pair = pop_val
         push(pair.address)
@@ -354,6 +369,11 @@ class VM
     push(bool_true)
   end
 
+  def push_type(val)
+    num = TYPES.index(val.class)
+    push_val(Int.new(num))
+  end
+
   def bool_false
     @false_address ||= begin
       address = alloc
@@ -469,7 +489,8 @@ class VM
   end
 
   def load_library(name, syntax: {})
-    compiler = Compiler.new(lib_sexps("#{name}.scm"), syntax: syntax)
+    filename = "#{name}.scm"
+    compiler = Compiler.new(lib_sexps(filename), filename: filename, syntax: syntax)
     code = compiler.compile
     load_code(code, execute: true)
     { code: code, syntax: compiler.syntax }

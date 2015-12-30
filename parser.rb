@@ -106,7 +106,9 @@ class Parser
   end
 
   def parse(code = @code)
-    result = @parser.parse(code.strip)
+    code.strip!
+    return [] if code.empty?
+    result = @parser.parse(code)
     @transform.apply(result)
   end
 end
