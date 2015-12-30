@@ -84,15 +84,13 @@ class VM
   attr_reader :stack, :heap, :stdout, :ip, :call_stack
 
   def initialize(instructions = [], args: [], stdout: $stdout)
-    @ip = 0
+    @ip = 0              # instruction pointer
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
     @call_stack << { locals: {}, args: args }
     @heap = []           # a heap "address" is an index into this array
-    @labels = {}         # named labels -- a prepass over the code stores these and their associated IP
     @call_args = []      # used for next CALL
     @stdout = stdout
-    @ip = @heap.size
     @executable = []     # ranges of executable heap (w^x)
     load_code(instructions)
   end
