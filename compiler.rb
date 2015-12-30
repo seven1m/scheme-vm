@@ -15,9 +15,8 @@ class Compiler
   attr_reader :variables, :filename, :arguments, :syntax, :source
 
   def compile(sexps = @sexps, halt: true)
-    instructions = compile_sexps(sexps, filename: filename)
-    instructions + \
-    (halt ? [VM::HALT] : [])
+    compile_sexps(sexps, filename: filename) +
+      (halt ? [VM::HALT] : [])
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
