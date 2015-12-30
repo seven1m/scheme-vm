@@ -9,6 +9,16 @@
         tag)
       val ...))))
 
+(define-syntax let*
+  (syntax-rules ()
+    ((let* () body1 body2 ...)
+     (let () body1 body2 ...))
+    ((let* ((name1 val1) (name2 val2) ...)
+       body1 body2 ...)
+     (let ((name1 val1))
+       (let* ((name2 val2) ...)
+         body1 body2 ...)))))
+
 (define-syntax letrec
   (syntax-rules ()
     ((letrec ((var1 init1) ...) body ...)
@@ -37,3 +47,12 @@
        (newtemp temp ...)
        ((var1 init1) ...)
        body ...))))
+
+(define-syntax letrec*
+  (syntax-rules ()
+    ((letrec* ((var1 init1) ...) body1 body2 ...)
+     (let ((var1 <undefined>) ...)
+       (set! var1 init1)
+       ...
+       (let () body1 body2 ...)))))
+
