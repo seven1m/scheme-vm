@@ -2,11 +2,22 @@ require_relative './spec_helper'
 
 describe Parser do
   describe '#parse' do
+    def stringify(sexp)
+      if sexp.is_a?(Array)
+        sexp.map { |s| stringify(s) }
+      elsif sexp.is_a?(Parslet::Slice)
+        sexp.to_s
+      else
+        sexp
+      end
+    end
+
     before do
       @result = subject.parse(<<-END)
         ; comment
         'foo
         '(1 2)
+        '()
         ,foo
         ,(foo bar)
         #| this is a
@@ -19,11 +30,12 @@ describe Parser do
     end
 
     it 'parses s-expressions' do
-      expect(@result).to eq([
+      expect(stringify(@result)).to eq([
         ['quote', 'foo'],
-        ['quote', '1', '2'],
+        ['quote', ['1', '2']],
+        ['list'],
         ['unquote', 'foo'],
-        ['unquote', 'foo', 'bar'],
+        ['unquote', ['foo', 'bar']],
         ['print', 'space in identifier'],
         ['if', ['<', '1', '2'], nil,
                'x',

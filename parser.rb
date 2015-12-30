@@ -89,7 +89,11 @@ module LISP
 
     rule(quote: simple(:quote), sexp: subtree(:sexp)) do
       method = QUOTE_METHOD[quote.to_s]
-      [method] + sexp
+      if sexp == '()'
+        ['list']
+      else
+        [method] << sexp
+      end
     end
 
     rule(sexp: subtree(:sexp)) do
