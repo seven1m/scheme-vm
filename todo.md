@@ -32,6 +32,7 @@
 - [ ] underscore matches anything in `syntax-rules` and other matching semantics (pp 23)
 - [ ] syntax errors in macro expansion (pp 24)
 - [ ] `import` (pp 25)
+- [ ] `define` with body (pp 25)
 - [ ] internal definitions (pp 26)
 - [ ] `define-values` (pp 26)
 - [ ] internal syntax definition, e.g. `define-syntax` is local to the scope (pp 26)
