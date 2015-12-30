@@ -8,7 +8,7 @@
 - [ ] case folding directives (pp 8)
 - [x] block comments `#| ... |#` (pp 8)
 - [x] `#;` comments (pp 8)
-- [ ] pairs separated with `.` (pp 8)
+- [x] pairs separated with `.` (pp 8)
 - [ ] datum labels `#<n>=` and `#<n>#` (pp 9)
 - [ ] `eof-object?` (pp 10)
 - [x] proper tail recursion (pp 11)

@@ -87,6 +87,8 @@ class Compiler
         else
           expr
         end
+      elsif sexp.size == 3 && sexp[1] == '.'
+        do_pair(sexp, options)
       else
         do_list(sexp, options)
       end
@@ -282,6 +284,15 @@ class Compiler
       VM::SET_ARGS,
       compile_sexp(lambda, options.merge(use: true)),
       VM::APPLY
+    ]
+  end
+
+  def do_pair((car, _, cdr), options)
+    [
+      compile_sexp(car, options.merge(use: true)),
+      compile_sexp(cdr, options.merge(use: true)),
+      VM::PUSH_CONS,
+      pop_maybe(options)
     ]
   end
 

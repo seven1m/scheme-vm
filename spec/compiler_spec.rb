@@ -103,6 +103,23 @@ describe Compiler do
       end
     end
 
+    context 'a . pair' do
+      before do
+        @result = subject.compile([
+          ['quote', ['1', '.', '2']]
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_CONS',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'character #\c' do
       before do
         @result = subject.compile([
