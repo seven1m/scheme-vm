@@ -61,12 +61,15 @@ describe Compiler do
     context '#t' do
       before do
         @result = subject.compile([
-          '#t'
+          '#t',
+          '#true'
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::PUSH_TRUE',
+          'VM::POP',
           'VM::PUSH_TRUE',
           'VM::HALT'
         ])
@@ -76,12 +79,15 @@ describe Compiler do
     context '#f' do
       before do
         @result = subject.compile([
-          '#f'
+          '#f',
+          '#false'
         ])
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::PUSH_FALSE',
+          'VM::POP',
           'VM::PUSH_FALSE',
           'VM::HALT'
         ])
