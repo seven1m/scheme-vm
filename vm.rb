@@ -9,11 +9,14 @@ require_relative 'vm/bool_false'
 require_relative 'vm/exceptions'
 require_relative 'vm/gc'
 require_relative 'vm/debug_output'
+require_relative 'vm/operations'
 require_relative 'parser'
 require_relative 'compiler'
 require 'pry'
 
 class VM
+  include Operations
+
   ROOT_PATH = File.expand_path('..', __FILE__)
 
   MAX_CALL_DEPTH = 50
@@ -96,7 +99,6 @@ class VM
     load_code(instructions)
   end
 
-  # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/AbcSize
   def execute(instructions = nil, debug: 0)
     @start = 0
     if instructions
@@ -104,134 +106,24 @@ class VM
       load_code(instructions)
     end
     while (instruction = fetch)
-      print((@ip - 1).to_s.ljust(5)) if debug > 0
-      case instruction
-      when PUSH_ATOM
-        name = fetch
-        push_val(Atom.new(name))
-      when PUSH_NUM
-        num = fetch
-        push_val(Int.new(num))
-      when PUSH_STR
-        str = fetch
-        push_val(ByteArray.new(str))
-      when PUSH_CHAR
-        char = fetch
-        push_val(Char.new(char))
-      when PUSH_TRUE
-        push_true
-      when PUSH_FALSE
-        push_false
-      when PUSH_TYPE
-        val = pop_val
-        push_type(val)
-      when PUSH_CAR
-        pair = pop_val
-        push(pair.address)
-      when PUSH_CDR
-        pair = pop_val
-        push(pair.next_node)
-      when PUSH_CONS
-        cdr = pop
-        car = pop
-        pair = build_pair(car, cdr)
-        push_val(pair)
-      when PUSH_LIST
-        push_list
-      when PUSH_LOCAL
-        push_local
-      when PUSH_REMOTE
-        push_remote
-      when PUSH_ARG
-        address = args.shift
-        push(address)
-      when PUSH_ARGS
-        push_args
-      when PUSH_FUNC
-        push(@ip)
-        fetch_func_body # discard
-      when STR_REF
-        str_ref
-      when STR_LEN
-        str_len
-      when LIST_TO_STR
-        list_to_str
-      when APPEND
-        append
-      when POP
-        pop
-      when ADD
-        num2 = pop_val
-        num1 = pop_val
-        push_val(num1 + num2)
-      when SUB
-        num2 = pop_val
-        num1 = pop_val
-        push_val(num1 - num2)
-      when CMP_GT
-        num2 = pop_val
-        num1 = pop_val
-        num1 > num2 ? push_true : push_false
-      when CMP_GTE
-        num2 = pop_val
-        num1 = pop_val
-        num1 >= num2 ? push_true : push_false
-      when CMP_LT
-        num2 = pop_val
-        num1 = pop_val
-        num1 < num2 ? push_true : push_false
-      when CMP_LTE
-        num2 = pop_val
-        num1 = pop_val
-        num1 <= num2 ? push_true : push_false
-      when CMP_EQ
-        obj2 = pop_val
-        obj1 = pop_val
-        obj1.eq?(obj2) ? push_true : push_false
-      when CMP_EQV
-        obj2 = pop_val
-        obj1 = pop_val
-        obj1.eqv?(obj2) ? push_true : push_false
-      when CMP_EQ_NUM
-        num2 = pop_val
-        num1 = pop_val
-        num1.is_a?(Int) && num1.eq?(num2) ? push_true : push_false
-      when CMP_NULL
-        val = pop_val
-        val == EmptyList.instance ? push_true : push_false
-      when DUP
-        val = peek
-        push(val)
-      when INT
-        int
-      when JUMP
-        count = fetch.to_i
-        @ip += (count - 1)
-      when JUMP_IF_FALSE
-        val = pop
-        count = fetch.to_i
-        @ip += (count - 1) if val == bool_false
-      when CALL
-        do_call
-      when APPLY
-        do_apply
-      when RETURN
-        do_return(debug)
-      when SET_LOCAL
-        set_local
-      when SET_REMOTE
-        set_remote
-      when SET_ARGS
-        set_args
-      when HALT
-        break
-      when DEBUG
-        binding.pry # rubocop:disable Lint/Debugger
-      end
-      DebugOutput.new(self, instruction, debug).print_debug if debug > 0
+      break if instruction == HALT
+      execute_instruction(instruction, debug: debug)
     end
   end
-  # rubocop:enable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/AbcSize
+
+  def execute_instruction(instruction, debug: 0)
+    print((@ip - 1).to_s.ljust(5)) if debug > 0
+    case instruction
+    when RETURN
+      do_return(debug)
+    when DEBUG
+      binding.pry # rubocop:disable Lint/Debugger
+    else
+      name = INSTRUCTIONS[instruction].first
+      send("do_#{name.downcase}")
+    end
+    DebugOutput.new(self, instruction, debug).print_debug if debug > 0
+  end
 
   def fetch
     fail "heap[#{@ip}] is not executable" unless executable?(@ip)
@@ -286,92 +178,6 @@ class VM
     push_val(Int.new(num))
   end
 
-  def push_local
-    var = fetch
-    address = locals[var]
-    fail VariableUndefined.new(var, @ip - @start) unless address
-    push(address)
-  end
-
-  def push_remote
-    name = fetch
-    frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-    fail VariableUndefined.new(name, @ip - @start) unless frame_locals
-    address = frame_locals.fetch(name)
-    push(address)
-  end
-
-  def push_args
-    last = empty_list
-    while (arg = args.pop)
-      address = alloc
-      @heap[address] = build_pair(arg, last)
-      last = address
-    end
-    push(address || empty_list)
-  end
-
-  def str_ref
-    index = pop_val.raw
-    str = pop_val
-    push_val(Char.new(str.raw[index]))
-  end
-
-  def str_len
-    str = pop_val
-    push_val(Int.new(str.size))
-  end
-
-  def list_to_str
-    list = pop_val
-    chars = list.to_ruby.map(&:to_s)
-    push_val(ByteArray.new(chars.join))
-  end
-
-  def do_call
-    if @heap[@ip] == RETURN
-      @call_stack.last[:args] = @call_args
-    else
-      @call_stack << { return: @ip, locals: {}, args: @call_args }
-    end
-    fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
-    @ip = pop
-  end
-
-  def do_apply
-    pair = resolve(@call_args.pop)
-    while pair != EmptyList.instance
-      @call_args.push(pair.address)
-      pair = @heap[pair.next_node]
-    end
-    @call_stack << { return: @ip, locals: {}, args: @call_args }
-    fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
-    @ip = pop
-  end
-
-  def do_return(debug)
-    frame = @call_stack.pop
-    @ip = frame.fetch(:return)
-    VM::GC.new(self).run(debug: debug)
-  end
-
-  def set_local
-    name = fetch
-    locals[name] = pop
-  end
-
-  def set_remote
-    name = fetch
-    frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-    fail VariableUndefined.new(var, @ip - @start) unless frame_locals
-    frame_locals[name] = pop
-  end
-
-  def set_args
-    count = pop_raw
-    @call_args = (0...count).map { pop }.reverse
-  end
-
   def bool_false
     @false_address ||= begin
       address = alloc
@@ -384,18 +190,6 @@ class VM
     push(bool_false)
   end
 
-  def push_list
-    count = pop_raw
-    address = last = empty_list
-    count.times do
-      arg = pop
-      address = alloc
-      @heap[address] = build_pair(arg, last)
-      last = address
-    end
-    push(address)
-  end
-
   def empty_list
     @empty_list_address ||= begin
       address = alloc
@@ -406,37 +200,6 @@ class VM
 
   def pop
     @stack.pop
-  end
-
-  def int
-    func = fetch
-    case func
-    when INT_WRITE
-      if (address = pop)
-        val = resolve(address)
-        stdout_print(val)
-      else
-        stdout_print(nil)
-      end
-    when INT_INCLUDE
-      load_library(pop_val.to_s)
-    end
-  end
-
-  def append
-    count = pop_raw
-    if count == 0
-      push(empty_list)
-    else
-      raw = (0...count).map { pop_val }.reverse.map(&:to_a).inject(&:+)
-      last = empty_list
-      while (arg = raw.pop)
-        address = alloc
-        @heap[address] = build_pair(arg, last)
-        last = address
-      end
-      push(address || empty_list)
-    end
   end
 
   def pop_val

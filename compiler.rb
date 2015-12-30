@@ -72,76 +72,116 @@ class Compiler
     end
   end
 
+  # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize
   def compile_sexp(sexp, options = { use: false, locals: {} })
     sexp = sexp.to_ruby if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     sexp.compact! # datum comments #;(...) come in as nil due to our parser :-(
     return [] if sexp.empty?
     (name, *args) = sexp
+    underscored_name = 'do_' + name.to_s.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')
     if options[:quote] || options[:quasiquote]
-      if name.to_s =~ /unquote(\-splicing)?/ && options[:quasiquote] # FIXME move to a method
-        expr = compile_sexp(args.first, options.merge(quasiquote: false))
-        if name.to_s == 'unquote-splicing'
-          fail "can only use unquote-splicing with a list" if expr.compact.last != VM::PUSH_LIST
-          ['splice', expr.first]
-        else
-          expr
-        end
-      elsif sexp.size == 3 && sexp[1] == '.'
-        do_pair(sexp, options)
-      else
-        do_list(sexp, options)
-      end
+      compile_quoted_sexp(sexp, options)
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
-    elsif respond_to?((underscored_name = 'do_' + name.to_s.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')), :include_private)
+    elsif respond_to?(underscored_name, :include_private)
       send(underscored_name, args, options)
     elsif (transformer = syntax[name.to_s])
-      templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
-      (values, template) = templates.detect { |values, _| values }
-      fail 'Could not match any template' unless values
-      sexp = expand_template(template, values)
-      compile_sexp(sexp, options)
+      compile_macro_sexp(sexp, transformer, options)
     else
       call(sexp, options)
+    end
+  end
+  # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
+
+  def compile_quoted_sexp(sexp, options)
+    (name, *_args) = sexp
+    if name.to_s =~ /unquote(\-splicing)?/ && options[:quasiquote]
+      compile_quasiquoted_sexp(sexp, options)
+    elsif sexp.size == 3 && sexp[1] == '.'
+      do_pair(sexp, options)
+    else
+      do_list(sexp, options)
+    end
+  end
+
+  def compile_quasiquoted_sexp(sexp, options)
+    (name, *args) = sexp
+    expr = compile_sexp(args.first, options.merge(quasiquote: false))
+    if name.to_s == 'unquote-splicing'
+      fail 'can only use unquote-splicing with a list' if expr.compact.last != VM::PUSH_LIST
+      ['splice', expr.first]
+    else
+      expr
     end
   end
 
   def compile_literal(literal, options = { use: false, locals: {} })
     case literal.to_s.strip
     when /\A[a-z]/
-      if options[:quote] || options[:quasiquote]
-        [VM::PUSH_ATOM, literal]
-      else
-        [
-          push_var(literal, options),
-          pop_maybe(options)
-        ]
-      end
-    when '#t', '#true'
-      [VM::PUSH_TRUE, pop_maybe(options)]
-    when '#f', '#false'
-      [VM::PUSH_FALSE, pop_maybe(options)]
+      compile_atom(literal, options)
+    when '#t', '#true', '#f', '#false'
+      compile_boolean(literal, options)
     when /\A#\\(.+)\z/
-      char = {
-        'space'   => ' ',
-        'newline' => "\n"
-      }.fetch($1, $1[0])
-      [VM::PUSH_CHAR, char, pop_maybe(options)]
+      compile_character($1, options)
     when /\A"(.*)"\z/
-      [VM::PUSH_STR, $1]
+      compile_string($1, options)
     when ''
       []
     else
+      compile_number(literal, options)
+    end
+  end
+
+  def compile_atom(name, options)
+    if options[:quote] || options[:quasiquote]
+      [VM::PUSH_ATOM, name]
+    else
       [
-        VM::PUSH_NUM,
-        literal,
+        push_var(name, options),
         pop_maybe(options)
       ]
     end
   end
 
-  def do_halt(args, option)
+  def compile_boolean(name, options)
+    case name
+    when '#t', '#true'
+      [VM::PUSH_TRUE, pop_maybe(options)]
+    when '#f', '#false'
+      [VM::PUSH_FALSE, pop_maybe(options)]
+    end
+  end
+
+  def compile_character(name, options)
+    char = {
+      'space'   => ' ',
+      'newline' => "\n"
+    }.fetch(name, name[0])
+    [VM::PUSH_CHAR, char, pop_maybe(options)]
+  end
+
+  def compile_string(string, _options)
+    [VM::PUSH_STR, string]
+  end
+
+  def compile_number(number, options)
+    [
+      VM::PUSH_NUM,
+      number,
+      pop_maybe(options)
+    ]
+  end
+
+  def compile_macro_sexp(sexp, transformer, options)
+    templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
+    (values, template) = templates.detect { |values, _| values }
+    fail 'Could not match any template' unless values
+    sexp = expand_template(template, values)
+    compile_sexp(sexp, options)
+  end
+
+  def do_halt(_args, _option)
     [VM::HALT]
   end
 
@@ -339,7 +379,7 @@ class Compiler
     ]
   end
 
-  def do_define_syntax((name, transformer), options)
+  def do_define_syntax((name, transformer), _options)
     transformer.shift(2)
     syntax[name.to_s] = transformer
     []

@@ -353,17 +353,17 @@ describe VM do
 
     context 'pushing undefined local variable' do
       it 'raises an error' do
-        expect {
+        expect do
           subject.execute([VM::PUSH_LOCAL, 'x', VM::HALT])
-        }.to raise_error(VM::VariableUndefined, 'x is not defined')
+        end.to raise_error(VM::VariableUndefined, 'x is not defined')
       end
     end
 
     context 'pushing undefined remote variable' do
       it 'raises an error' do
-        expect {
+        expect do
           subject.execute([VM::PUSH_REMOTE, 'x', VM::HALT])
-        }.to raise_error(VM::VariableUndefined, 'x is not defined')
+        end.to raise_error(VM::VariableUndefined, 'x is not defined')
       end
     end
   end
@@ -1056,7 +1056,7 @@ describe VM do
         VM::PUSH_REMOTE, 'y',
         VM::SET_LOCAL, 'my-y',
 
-        VM::HALT,               # pause execution here
+        VM::HALT, # pause execution here
         VM::RETURN,
         VM::ENDF,
         VM::SET_LOCAL, 'fn',

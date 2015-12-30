@@ -16,14 +16,7 @@ class Pattern
     previous = nil
     while (identifier = pattern.shift)
       if identifier == '...'
-        if previous.is_a?(Array)
-          previous.each_with_index.each do |pr, index|
-            hash[pr + identifier] = expr.map { |e| e[index] }
-          end
-        else
-          hash[previous + identifier] = expr.dup
-        end
-        expr.clear
+        match_dotted_sub(identifier, expr, previous, hash)
       elsif identifier.is_a?(Array)
         hash.merge!(match_sub(expr.shift, identifier.dup))
       else
@@ -35,6 +28,17 @@ class Pattern
     end
     return if expr.any?
     hash
+  end
+
+  def match_dotted_sub(identifier, expr, previous, hash)
+    if previous.is_a?(Array)
+      previous.each_with_index.each do |pr, index|
+        hash[pr + identifier] = expr.map { |e| e[index] }
+      end
+    else
+      hash[previous + identifier] = expr.dup
+    end
+    expr.clear
   end
 
   def deatomize(sexp)
