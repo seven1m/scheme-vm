@@ -1010,5 +1010,20 @@ describe Compiler do
         end
       end
     end
+
+    context 'exit' do
+      before do
+        @result = subject.compile([
+          ['exit']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::HALT',
+          'VM::HALT'
+        ])
+      end
+    end
   end
 end

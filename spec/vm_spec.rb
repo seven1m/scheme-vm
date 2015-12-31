@@ -1102,7 +1102,7 @@ describe VM do
       c = Compiler.new([
         ['define', 'fn',
           ['lambda', ['n'],
-            ['halt'],
+            ['exit'],
             ['if', ['<', 'n', '1'],
               'n',
               ['fn', ['-', 'n', '1']]]]],

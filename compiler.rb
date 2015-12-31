@@ -191,7 +191,7 @@ class Compiler
     compile_sexp(sexp, options)
   end
 
-  def do_halt(_args, _option)
+  def do_exit(_args, _option)
     [VM::HALT]
   end
 
