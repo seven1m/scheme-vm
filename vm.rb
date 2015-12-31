@@ -76,7 +76,6 @@ class VM
   end
 
   INT_WRITE   = 1
-  INT_INCLUDE = 3
 
   TYPES = [
     VM::BoolTrue,
