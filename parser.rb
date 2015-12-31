@@ -97,7 +97,11 @@ module LISP
     end
 
     rule(sexp: subtree(:sexp)) do
-      sexp
+      if sexp == '()'
+        []
+      else
+        sexp
+      end
     end
   end
 end
