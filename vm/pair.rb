@@ -2,7 +2,7 @@ class VM
   class Pair
     include Enumerable
 
-    attr_reader :address
+    attr_accessor :address
     attr_accessor :next_node
 
     def initialize(address, next_node, heap:)

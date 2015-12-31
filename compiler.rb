@@ -219,6 +219,24 @@ class Compiler
     ]
   end
 
+  def do_set_car!((pair, new_car), options)
+    [
+      compile_sexp(pair, options.merge(use: true)),
+      compile_sexp(new_car, options.merge(use: true)),
+      VM::SET_CAR,
+      pop_maybe(options)
+    ]
+  end
+
+  def do_set_cdr!((pair, new_cdr), options)
+    [
+      compile_sexp(pair, options.merge(use: true)),
+      compile_sexp(new_cdr, options.merge(use: true)),
+      VM::SET_CDR,
+      pop_maybe(options)
+    ]
+  end
+
   def do_append(args, options)
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },

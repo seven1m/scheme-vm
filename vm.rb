@@ -64,6 +64,8 @@ class VM
     ['SET_LOCAL',     1],
     ['SET_REMOTE',    1],
     ['SET_ARGS',      0],
+    ['SET_CAR',       0],
+    ['SET_CDR',       0],
     ['HALT',          0],
     ['DEBUG',         0]
   ]

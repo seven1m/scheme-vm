@@ -301,6 +301,44 @@ describe Compiler do
       end
     end
 
+    context 'set-car!' do
+      before do
+        @result = subject.compile([
+          ['set-car!', ['quote', ['1', '.', '2']], '3']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_CONS',
+          'VM::PUSH_NUM', '3',
+          'VM::SET_CAR',
+          'VM::HALT'
+        ])
+      end
+    end
+
+    context 'set-cdr!' do
+      before do
+        @result = subject.compile([
+          ['set-cdr!', ['quote', ['1', '.', '2']], '3']
+        ])
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '1',
+          'VM::PUSH_NUM', '2',
+          'VM::PUSH_CONS',
+          'VM::PUSH_NUM', '3',
+          'VM::SET_CDR',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'null?' do
       before do
         @result = subject.compile([

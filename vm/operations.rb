@@ -267,5 +267,17 @@ class VM
       count = pop_raw
       @call_args = (0...count).map { pop }.reverse
     end
+
+    def do_set_car
+      new_car = pop
+      pair = pop_val
+      pair.address = new_car
+    end
+
+    def do_set_cdr
+      new_cdr = pop
+      pair = pop_val
+      pair.next_node = new_cdr
+    end
   end
 end

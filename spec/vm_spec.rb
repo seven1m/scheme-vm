@@ -433,6 +433,48 @@ describe VM do
     end
   end
 
+  describe 'SET_CAR' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_CONS,
+        VM::DUP,
+        VM::PUSH_NUM, '3',
+        VM::SET_CAR,
+        VM::HALT
+      ])
+    end
+
+    it 'changes the car of the pair' do
+      pair = subject.pop_val
+      expect(pair).to be_a(VM::Pair)
+      expect(subject.heap[pair.address]).to eq(VM::Int.new(3))
+      expect(subject.heap[pair.next_node]).to eq(VM::Int.new(2))
+    end
+  end
+
+  describe 'SET_CDR' do
+    before do
+      subject.execute([
+        VM::PUSH_NUM, '1',
+        VM::PUSH_NUM, '2',
+        VM::PUSH_CONS,
+        VM::DUP,
+        VM::PUSH_NUM, '3',
+        VM::SET_CDR,
+        VM::HALT
+      ])
+    end
+
+    it 'changes the car of the pair' do
+      pair = subject.pop_val
+      expect(pair).to be_a(VM::Pair)
+      expect(subject.heap[pair.address]).to eq(VM::Int.new(1))
+      expect(subject.heap[pair.next_node]).to eq(VM::Int.new(3))
+    end
+  end
+
   describe 'PUSH_FUNC and ENDF' do
     context 'given a single function' do
       let(:instructions) do
