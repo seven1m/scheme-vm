@@ -155,20 +155,48 @@ describe Compiler do
     end
 
     context 'begin' do
-      before do
-        @result = subject.compile([
-          ['begin', ['write', '1'], ['write', '2']]
-        ])
+      context 'when it is last in the program' do
+        before do
+          @result = subject.compile([
+            ['begin', '1', '2']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::POP',
+            'VM::PUSH_NUM', '2',
+            'VM::POP',
+            'VM::HALT'
+          ])
+        end
       end
 
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '1',
-          'VM::INT', VM::INT_WRITE,
-          'VM::PUSH_NUM', '2',
-          'VM::INT', VM::INT_WRITE,
-          'VM::HALT'
-        ])
+      context 'when it is last in a lambda' do
+        before do
+          @result = subject.compile([
+            ['define', 'fn',
+              ['lambda', [],
+                '1',
+                ['begin', '2', '3']]]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_NUM', '1',
+            'VM::POP',
+            'VM::PUSH_NUM', '2',
+            'VM::POP',
+            'VM::PUSH_NUM', '3',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 'fn',
+            'VM::HALT'
+          ])
+        end
       end
     end
 

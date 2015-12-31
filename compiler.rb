@@ -201,7 +201,7 @@ class Compiler
 
   def do_begin(args, options)
     args.each_with_index.map do |arg, index|
-      compile_sexp(arg, options.merge(use: index == args.size - 1))
+      compile_sexp(arg, options.merge(use: options[:use] && index == args.size - 1))
     end
   end
 
@@ -370,7 +370,7 @@ class Compiler
     [
       VM::PUSH_FUNC,
       args,
-      do_begin(body, locals: arg_locals),
+      do_begin(body, options.merge(use: true, locals: arg_locals)),
       VM::RETURN,
       VM::ENDF,
       pop_maybe(options)
