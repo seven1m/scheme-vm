@@ -284,21 +284,4 @@ class VM
     self.execute
     @ip = ip_was
   end
-
-  def load_library(name, syntax: {})
-    filename = "#{name}.scm"
-    compiler = Compiler.new(lib_sexps(filename), filename: filename, syntax: syntax)
-    code = compiler.compile
-    load_code(code, execute: true)
-    { code: code, syntax: compiler.syntax }
-  end
-
-  def lib_sexps(lib)
-    code = lib_code(lib)
-    Parser.new(code).parse
-  end
-
-  def lib_code(filename)
-    File.read(File.join(ROOT_PATH, 'lib', filename))
-  end
 end

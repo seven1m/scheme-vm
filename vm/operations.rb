@@ -219,8 +219,6 @@ class VM
         else
           stdout_print(nil)
         end
-      when INT_INCLUDE
-        load_library(pop_val.to_s)
       end
     end
 

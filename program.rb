@@ -2,7 +2,7 @@ require_relative 'parser'
 require_relative 'compiler'
 
 class Program
-  LIBRARIES = %w(
+  INCLUDES = %w(
     let
     logic
     cond
@@ -16,12 +16,11 @@ class Program
     @filename = filename
     @args = args
     @stdout = stdout
-    @syntax = {}
-    load_libraries
     @code = code
     @sexps = Parser.new(code).parse
-    @compiler = Compiler.new(@sexps, filename: filename, syntax: @syntax)
-    @instr = @compiler.compile
+    @compiler = Compiler.new(filename: filename)
+    @compiler.include_code(INCLUDES)
+    @instr = @compiler.compile(@sexps)
   end
 
   def run(debug: 0)
@@ -35,13 +34,6 @@ class Program
 
   def vm
     @vm ||= VM.new(stdout: @stdout, args: @args)
-  end
-
-  def load_libraries
-    LIBRARIES.each do |name|
-      result = vm.load_library(name, syntax: @syntax)
-      @syntax.merge!(result[:syntax])
-    end
   end
 
   def print_error_message(e)

@@ -599,21 +599,6 @@ describe VM do
         expect(stdout.read).to eq('hello world')
       end
     end
-
-    context 'given arg of INT_INCLUDE' do
-      before do
-        subject.execute([
-          VM::PUSH_STR, '../spec/fixtures/include-test',
-          VM::INT, VM::INT_INCLUDE,
-          VM::HALT
-        ])
-      end
-
-      it 'includes the file and executes it' do
-        stdout.rewind
-        expect(stdout.read).to eq('hello from include-test')
-      end
-    end
   end
 
   describe 'JUMP' do

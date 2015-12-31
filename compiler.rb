@@ -6,21 +6,29 @@ require 'pp'
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
 
-  def initialize(sexps = nil, filename: nil, arguments: {}, syntax: {})
+  def initialize(sexps = [], filename: nil, arguments: {})
     @sexps = sexps
     @variables = {}
     @filename = filename
     @arguments = arguments
-    @syntax = syntax
+    @syntax = {}
     @source = {}
   end
 
   attr_reader :variables, :filename, :arguments, :syntax, :source
 
-  def compile(sexps = @sexps, keep_last: false, halt: true)
-    instructions = compile_sexps(sexps, filename: filename, keep_last: keep_last)
+  def compile(sexps = [], keep_last: false, halt: true)
+    @sexps += sexps
+    instructions = compile_sexps(@sexps, { syntax: @syntax }, filename: filename, keep_last: keep_last)
     instructions << VM::HALT if halt
     optimize(instructions)
+  end
+
+  def include_code(paths)
+    paths.map do |path|
+      filename = "#{path}.scm"
+      @sexps += parse_file(filename)
+    end
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
@@ -94,7 +102,7 @@ class Compiler
       call(sexp, options)
     elsif respond_to?(underscored_name, :include_private)
       send(underscored_name, args, options)
-    elsif (transformer = syntax[name.to_s])
+    elsif (transformer = find_syntax(name.to_s, options))
       compile_macro_sexp(name, sexp, transformer, options)
     else
       call(sexp, options)
@@ -367,10 +375,11 @@ class Compiler
       arg_locals = { args => true }
       args = push_all_args(args)
     end
+    options_for_begin = options.merge(use: true, locals: arg_locals, syntax: {}, parent_options: options)
     [
       VM::PUSH_FUNC,
       args,
-      do_begin(body, options.merge(use: true, locals: arg_locals)),
+      do_begin(body, options_for_begin),
       VM::RETURN,
       VM::ENDF,
       pop_maybe(options)
@@ -423,8 +432,8 @@ class Compiler
     ]
   end
 
-  def do_define_syntax((name, transformer), _options)
-    syntax[name.to_s] = transformer
+  def do_define_syntax((name, transformer), options)
+    options[:syntax][name.to_s] = transformer
     []
   end
 
@@ -482,12 +491,12 @@ class Compiler
     ]
   end
 
-  def do_include(libs, _options)
-    libs.map do |lib|
-      fail "include expects a string, but got #{lib.inspect}" unless lib.to_s =~ /\A"(.+)?"\z/
+  def do_include(paths, options)
+    paths.map do |path|
+      fail "include expects a string, but got #{path.inspect}" unless path.to_s =~ /\A"(.+)?"\z/
       filename = "#{$1}.scm"
       sexps = parse_file(filename)
-      compile_sexps(sexps, filename: filename)
+      compile_sexps(sexps, { syntax: options[:syntax] }, filename: filename)
     end
   end
 
@@ -526,5 +535,14 @@ class Compiler
   def parse_file(filename)
     code = File.read(File.join(ROOT_PATH, 'lib', filename))
     Parser.new(code).parse
+  end
+
+  # walk up the chain of options looking for a syntax definition
+  def find_syntax(name, options)
+    loop do
+      return options[:syntax][name] if options[:syntax].key?(name)
+      break unless (options = options[:parent_options])
+    end
+    nil
   end
 end

@@ -1105,6 +1105,58 @@ describe Compiler do
       end
     end
 
+    context 'define-syntax' do
+      context 'at the top level' do
+        before do
+          @result = subject.compile([
+            ['define-syntax', 'and',
+              ['syntax-rules', [],
+                [['and'], '#t']]],
+            ['and']
+          ])
+        end
+
+        it 'stores the transformer in the top-level syntax accessor' do
+          expect(subject.syntax['and']).to eq(['syntax-rules', [], [['and'], '#t']])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_TRUE',
+            'VM::POP',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'inside a lambda' do
+        before do
+          @result = subject.compile([
+            ['lambda', [],
+              ['define-syntax', 'and',
+                ['syntax-rules', [],
+                  [['and'], '#t']]],
+              ['and']]
+          ])
+        end
+
+        it 'does not store the transformer in the top-level syntax accessor' do
+          expect(subject.syntax).to eq({})
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_TRUE',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::POP',
+            'VM::HALT'
+          ])
+        end
+      end
+    end
+
     context 'include' do
       context 'given a library name' do
         before do
