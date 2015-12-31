@@ -273,15 +273,11 @@ class VM
     body.flatten
   end
 
-  def load_code(instructions, execute: false)
+  def load_code(instructions)
     return if instructions.empty?
-    ip_was = @ip
     @ip = @heap.size
     @heap += instructions
     @executable << (@ip..(@heap.size - 1))
-    return unless execute
-    self.execute
-    @ip = ip_was
   end
 
   def return_value
