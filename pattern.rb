@@ -1,6 +1,7 @@
 class Pattern
-  def initialize(pattern)
+  def initialize(pattern, literals: [])
     @pattern = deatomize(pattern)
+    @literals = literals.map(&:to_s)
   end
 
   def match(expr)
@@ -15,10 +16,19 @@ class Pattern
     hash = {}
     previous = nil
     while (identifier = pattern.shift)
-      if identifier == '...'
+      if @literals.include?(identifier)
+        keyword = expr.shift
+        return if identifier != keyword
+      elsif identifier == '...'
         match_dotted_sub(identifier, expr, previous, hash)
       elsif identifier.is_a?(Array)
-        hash.merge!(match_sub(expr.shift, identifier.dup))
+        sub_expr = expr.shift
+        return unless sub_expr.is_a?(Array)
+        if (sub_match = match_sub(sub_expr, identifier.dup))
+          hash.merge!(sub_match)
+        else
+          return
+        end
       else
         value = expr.shift
         return if value.nil? && pattern.first != '...'

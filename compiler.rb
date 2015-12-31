@@ -176,7 +176,8 @@ class Compiler
   end
 
   def compile_macro_sexp(sexp, transformer, options)
-    templates = transformer.lazy.map { |pattern, template| [Pattern.new(pattern).match(sexp), template] }
+    (_name, literals, *patterns) = transformer
+    templates = patterns.lazy.map { |pattern, template| [Pattern.new(pattern, literals: literals).match(sexp), template] }
     (values, template) = templates.detect { |values, _| values }
     fail 'Could not match any template' unless values
     sexp = expand_template(template, values)
@@ -382,7 +383,6 @@ class Compiler
   end
 
   def do_define_syntax((name, transformer), _options)
-    transformer.shift(2)
     syntax[name.to_s] = transformer
     []
   end
