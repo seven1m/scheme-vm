@@ -154,52 +154,6 @@ describe Compiler do
       end
     end
 
-    context 'begin' do
-      context 'when it is last in the program' do
-        before do
-          @result = subject.compile([
-            ['begin', '1', '2']
-          ])
-        end
-
-        it 'compiles into vm instructions' do
-          expect(d(@result)).to eq([
-            'VM::PUSH_NUM', '1',
-            'VM::POP',
-            'VM::PUSH_NUM', '2',
-            'VM::POP',
-            'VM::HALT'
-          ])
-        end
-      end
-
-      context 'when it is last in a lambda' do
-        before do
-          @result = subject.compile([
-            ['define', 'fn',
-              ['lambda', [],
-                '1',
-                ['begin', '2', '3']]]
-          ])
-        end
-
-        it 'compiles into vm instructions' do
-          expect(d(@result)).to eq([
-            'VM::PUSH_FUNC',
-            'VM::PUSH_NUM', '1',
-            'VM::POP',
-            'VM::PUSH_NUM', '2',
-            'VM::POP',
-            'VM::PUSH_NUM', '3',
-            'VM::RETURN',
-            'VM::ENDF',
-            'VM::SET_LOCAL', 'fn',
-            'VM::HALT'
-          ])
-        end
-      end
-    end
-
     context 'string-ref' do
       before do
         @result = subject.compile([
@@ -747,13 +701,12 @@ describe Compiler do
         end
       end
 
-      context 'return value' do
+      context 'with return value' do
         before do
           @result = subject.compile([
-            ['define', 'one',
-              ['lambda', [],
-                '1']],
-            ['write', ['one']]
+            ['lambda', [],
+              '1',
+              '2']
           ])
         end
 
@@ -761,12 +714,11 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_NUM', '1',
+            'VM::POP',
+            'VM::PUSH_NUM', '2',
             'VM::RETURN',
             'VM::ENDF',
-            'VM::SET_LOCAL', 'one',
-            'VM::PUSH_LOCAL', 'one',
-            'VM::CALL',
-            'VM::INT', VM::INT_WRITE,
+            'VM::POP',
             'VM::HALT'
           ])
         end

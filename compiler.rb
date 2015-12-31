@@ -207,12 +207,6 @@ class Compiler
     ]
   end
 
-  def do_begin(args, options)
-    args.each_with_index.map do |arg, index|
-      compile_sexp(arg, options.merge(use: options[:use] && index == args.size - 1))
-    end
-  end
-
   def do_car((arg, *_rest), options)
     [
       compile_sexp(arg, options.merge(use: true)),
@@ -361,29 +355,48 @@ class Compiler
   end
 
   def do_lambda((args, *body), options)
-    arg_locals = {}
-    if args.is_a?(Array)
-      if args.include?('.')
-        (named, _dot, rest) = args.slice_when { |i, j| [i, j].include?('.') }.to_a
-        arg_locals = (named + rest).each_with_object({}) { |arg, hash| hash[arg] = true }
-        args = named.map { |name| push_arg(name) } + push_all_args(rest.first)
-      else
-        arg_locals = args.each_with_object({}) { |arg, hash| hash[arg] = true }
-        args = args.map { |name| push_arg(name) }
-      end
-    else
-      arg_locals = { args => true }
-      args = push_all_args(args)
-    end
-    options_for_begin = options.merge(use: true, locals: arg_locals, syntax: {}, parent_options: options)
+    (locals, args) = compile_lambda_args(args)
+    body = compile_lambda_body(body, locals, options)
     [
       VM::PUSH_FUNC,
       args,
-      do_begin(body, options_for_begin),
+      body,
       VM::RETURN,
       VM::ENDF,
       pop_maybe(options)
     ]
+  end
+
+  def compile_lambda_args(args)
+    if args.is_a?(Array)
+      compile_lambda_args_many(args)
+    else
+      compile_lambda_args_single(args)
+    end
+  end
+
+  def compile_lambda_args_many(args)
+    (named, _dot, rest) = args.slice_when { |i, j| [i, j].include?('.') }.to_a
+    locals = (Array(named) + Array(rest)).each_with_object({}) do |arg, hash|
+      hash[arg] = true
+    end
+    args = Array(named).map { |name| push_arg(name) }
+    args += push_all_args(rest.first) if rest
+    [locals, args]
+  end
+
+  def compile_lambda_args_single(arg)
+    [
+      { arg => true },
+      push_all_args(arg)
+    ]
+  end
+
+  def compile_lambda_body(body, locals, options)
+    body_opts = options.merge(use: true, locals: locals, syntax: {}, parent_options: options)
+    body.each_with_index.map do |sexp, index|
+      compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
+    end
   end
 
   def call((lambda, *args), options)

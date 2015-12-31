@@ -3,6 +3,7 @@ require_relative 'compiler'
 
 class Program
   INCLUDES = %w(
+    begin
     let
     logic
     cond
