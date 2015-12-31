@@ -94,7 +94,7 @@ class Compiler
     elsif respond_to?(underscored_name, :include_private)
       send(underscored_name, args, options)
     elsif (transformer = syntax[name.to_s])
-      compile_macro_sexp(sexp, transformer, options)
+      compile_macro_sexp(name, sexp, transformer, options)
     else
       call(sexp, options)
     end
@@ -180,11 +180,13 @@ class Compiler
     ]
   end
 
-  def compile_macro_sexp(sexp, transformer, options)
+  def compile_macro_sexp(name, sexp, transformer, options)
     (_name, literals, *patterns) = transformer
-    templates = patterns.lazy.map { |pattern, template| [Pattern.new(pattern, literals: literals).match(sexp), template] }
+    templates = patterns.lazy.map do |pattern, template|
+      [Pattern.new(pattern, literals: literals).match(sexp), template]
+    end
     (values, template) = templates.detect { |values, _| values }
-    fail 'Could not match any template' unless values
+    fail "Could not match any template for #{name} #{sexp.inspect}" unless values
     sexp = expand_template(template, values)
     compile_sexp(sexp, options)
   end
