@@ -327,12 +327,21 @@ class Compiler
     [VM::DEBUG]
   end
 
-  def do_define((name, val), options)
-    options[:locals][name.to_s] = true
-    [
-      compile_sexp(val, options.merge(use: true)),
-      VM::SET_LOCAL, name
-    ]
+  def do_define((name, *body), options)
+    if name.is_a?(Array)
+      (name, *args) = name
+      args = args.last if args.size == 2 && args.first == '.'
+      options[:locals][name.to_s] = true
+      do_lambda([args, *body], options.merge(use: true)) + [
+        VM::SET_LOCAL, name
+      ]
+    else
+      options[:locals][name.to_s] = true
+      [
+        compile_sexp(body.first, options.merge(use: true)),
+        VM::SET_LOCAL, name
+      ]
+    end
   end
 
   def do_set!((name, val), options)

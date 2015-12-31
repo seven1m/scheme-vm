@@ -556,18 +556,69 @@ describe Compiler do
     end
 
     context 'define' do
-      before do
-        @result = subject.compile([
-          ['define', 'x', '1']
-        ])
+      context '<variable> <expression>' do
+        before do
+          @result = subject.compile([
+            ['define', 'x', '1']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::SET_LOCAL', 'x',
+            'VM::HALT'
+          ])
+        end
       end
 
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '1',
-          'VM::SET_LOCAL', 'x',
-          'VM::HALT'
-        ])
+      context '(<variable> <formals>) <body>' do
+        before do
+          @result = subject.compile([
+            ['define', ['fn', 'x', 'y'],
+              ['list', 'x', 'y']]
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 'x',
+            'VM::PUSH_ARG',
+            'VM::SET_LOCAL', 'y',
+            'VM::PUSH_LOCAL', 'x',
+            'VM::PUSH_LOCAL', 'y',
+            'VM::PUSH_NUM', 2,
+            'VM::PUSH_LIST',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 'fn',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context '(<variable> . <formal>) <body>' do
+        before do
+          @result = subject.compile([
+            ['define', ['fn', '.', 'x'],
+              'x']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_ARGS',
+            'VM::SET_LOCAL', 'x',
+            'VM::PUSH_LOCAL', 'x',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::SET_LOCAL', 'fn',
+            'VM::HALT'
+          ])
+        end
       end
     end
 
