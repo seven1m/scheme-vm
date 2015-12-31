@@ -90,7 +90,7 @@
 - [ ] `digit-value` (pp 45)
 - [ ] `char->integer`, `integer->char` (pp 45)
 - [ ] `char-upcase`, `char-downcase`, `char-foldcase` (pp 45)
-- [ ] `string?` (pp 46)
+- [x] `string?` (pp 46)
 - [ ] `make-string`, `string` (pp 46)
 - [ ] `string-set!` (pp 46)
 - [ ] `string=?`, `string-ci=?` (pp 46)
