@@ -178,11 +178,6 @@ class VM
     push(bool_true)
   end
 
-  def push_type(val)
-    num = TYPES.index(val.class)
-    push_val(Int.new(num))
-  end
-
   def bool_false
     @false_address ||= begin
       address = alloc
@@ -201,6 +196,11 @@ class VM
       @heap[address] = EmptyList.instance
       address
     end
+  end
+
+  def push_type(val)
+    num = TYPES.index(val.class)
+    push_val(Int.new(num))
   end
 
   def pop
