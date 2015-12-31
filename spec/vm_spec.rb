@@ -1108,7 +1108,7 @@ describe VM do
               ['fn', ['-', 'n', '1']]]]],
         ['fn', '2']
       ])
-      instr = c.compile
+      instr = c.compile(keep_last: true)
       subject.execute(instr)
     end
 

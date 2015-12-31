@@ -26,6 +26,7 @@ describe Compiler do
           'VM::PUSH_LIST',
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -55,6 +56,7 @@ describe Compiler do
           'VM::PUSH_FALSE',
           'VM::JUMP', 2,
           'VM::PUSH_FALSE',
+          'VM::POP',
           'VM::HALT'
         ])
       end

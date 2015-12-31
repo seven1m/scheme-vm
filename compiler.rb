@@ -17,8 +17,9 @@ class Compiler
 
   attr_reader :variables, :filename, :arguments, :syntax, :source
 
-  def compile(sexps = @sexps, halt: true)
-    instructions = compile_sexps(sexps, filename: filename) + (halt ? [VM::HALT] : [])
+  def compile(sexps = @sexps, keep_last: false, halt: true)
+    instructions = compile_sexps(sexps, filename: filename, keep_last: keep_last)
+    instructions << VM::HALT if halt
     optimize(instructions)
   end
 
@@ -48,12 +49,12 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps, options = {}, filename:)
+  def compile_sexps(sexps, options = {}, filename:, keep_last: false)
     options[:locals] ||= {}
     source[filename] = {}
     sexps
       .each_with_index
-      .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1)) }
+      .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1 && keep_last)) }
       .flatten
       .compact
       .each_with_index
@@ -191,8 +192,11 @@ class Compiler
     compile_sexp(sexp, options)
   end
 
-  def do_exit(_args, _option)
-    [VM::HALT]
+  def do_exit((arg, *_rest), _option)
+    [
+      arg && compile_sexp(arg, use: true),
+      VM::HALT
+    ]
   end
 
   def do_begin(args, options)
@@ -230,8 +234,7 @@ class Compiler
     [
       compile_sexp(pair, options.merge(use: true)),
       compile_sexp(new_car, options.merge(use: true)),
-      VM::SET_CAR,
-      pop_maybe(options)
+      VM::SET_CAR
     ]
   end
 
@@ -239,8 +242,7 @@ class Compiler
     [
       compile_sexp(pair, options.merge(use: true)),
       compile_sexp(new_cdr, options.merge(use: true)),
-      VM::SET_CDR,
-      pop_maybe(options)
+      VM::SET_CDR
     ]
   end
 

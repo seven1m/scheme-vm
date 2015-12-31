@@ -118,7 +118,7 @@
 - [ ] output (pp 68-69)
 - [ ] `load` (pp 59)
 - [ ] `file-exists?`, `delete-file`, `command-line` (pp 60)
-- [ ] `exit` (pp 60)
+- [x] `exit` (pp 60)
 - [ ] `emergency-exit` (pp 60)
 - [ ] `get-environment-variable`, `get-environment-variables` (pp 60)
 - [ ] `current-second`, `current-jiffy`, `jiffies-per-second` (pp 60)

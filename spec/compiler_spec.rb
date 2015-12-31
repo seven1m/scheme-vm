@@ -20,6 +20,7 @@ describe Compiler do
           'VM::PUSH_REMOTE', 'foo',
           'VM::POP',
           'VM::PUSH_REMOTE', 'bar',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -38,6 +39,7 @@ describe Compiler do
           'VM::PUSH_REMOTE', 'foo',
           'VM::POP',
           'VM::PUSH_REMOTE', 'bar baz',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -53,6 +55,7 @@ describe Compiler do
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -71,6 +74,7 @@ describe Compiler do
           'VM::PUSH_TRUE',
           'VM::POP',
           'VM::PUSH_TRUE',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -89,6 +93,7 @@ describe Compiler do
           'VM::PUSH_FALSE',
           'VM::POP',
           'VM::PUSH_FALSE',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -121,6 +126,7 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_CONS',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -142,6 +148,7 @@ describe Compiler do
           'VM::PUSH_CHAR', ' ',
           'VM::POP',
           'VM::PUSH_CHAR', "\n",
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -177,6 +184,7 @@ describe Compiler do
           'VM::PUSH_STR', 'hello world',
           'VM::PUSH_NUM', '4',
           'VM::STR_REF',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -193,6 +201,7 @@ describe Compiler do
         expect(d(@result)).to eq([
           'VM::PUSH_STR', 'hello world',
           'VM::STR_LEN',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -212,6 +221,7 @@ describe Compiler do
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
           'VM::LIST_TO_STR',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -236,6 +246,7 @@ describe Compiler do
           'VM::PUSH_LIST',
           'VM::PUSH_NUM', 2,
           'VM::APPEND',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -256,6 +267,7 @@ describe Compiler do
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
           'VM::PUSH_CAR',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -276,6 +288,7 @@ describe Compiler do
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
           'VM::PUSH_CDR',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -296,6 +309,7 @@ describe Compiler do
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
           'VM::PUSH_CONS',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -351,6 +365,7 @@ describe Compiler do
           'VM::PUSH_NUM', 0,
           'VM::PUSH_LIST',
           'VM::CMP_NULL',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -378,6 +393,7 @@ describe Compiler do
           'VM::PUSH_LOCAL', 'y',
           'VM::POP',
           'VM::PUSH_REMOTE', 'x',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -400,6 +416,7 @@ describe Compiler do
           'VM::PUSH_REMOTE', 'n',
           'VM::RETURN',
           'VM::ENDF',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -424,6 +441,7 @@ describe Compiler do
             'VM::PUSH_LIST',
             'VM::PUSH_NUM', 4, # arg count
             'VM::PUSH_LIST',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -464,6 +482,7 @@ describe Compiler do
             'VM::PUSH_LIST',
             'VM::PUSH_NUM', 4, # arg count
             'VM::PUSH_LIST',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -485,6 +504,7 @@ describe Compiler do
             'VM::ADD',
             'VM::PUSH_NUM', 3,   # arg count
             'VM::PUSH_LIST',     # ['list', '1', '5']
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -505,6 +525,7 @@ describe Compiler do
             'VM::PUSH_NUM', '3',
             'VM::PUSH_NUM', 4,   # arg count
             'VM::PUSH_LIST',     # ['list', '1', '2', '3']
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -527,6 +548,7 @@ describe Compiler do
             'VM::PUSH_LOCAL', 'foo',
             'VM::PUSH_NUM', 3,   # arg count
             'VM::PUSH_LIST',     # ['list', '1', '2']
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -581,6 +603,7 @@ describe Compiler do
             'VM::SET_LOCAL', 'x',
             'VM::RETURN',
             'VM::ENDF',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -873,6 +896,7 @@ describe Compiler do
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', 2, # arg count
           'VM::PUSH_LIST',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -890,6 +914,7 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '1',
           'VM::CMP_EQ',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -907,6 +932,7 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '1',
           'VM::CMP_EQV',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -924,6 +950,7 @@ describe Compiler do
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '1',
           'VM::CMP_EQ_NUM',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -947,6 +974,7 @@ describe Compiler do
             'VM::PUSH_NUM', '3',
             'VM::POP',
             'VM::PUSH_NUM', '0',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -991,6 +1019,7 @@ describe Compiler do
             'VM::PUSH_NUM', '3',
             'VM::RETURN',
             'VM::ENDF',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -1012,17 +1041,35 @@ describe Compiler do
     end
 
     context 'exit' do
-      before do
-        @result = subject.compile([
-          ['exit']
-        ])
+      context 'given no arguments' do
+        before do
+          @result = subject.compile([
+            ['exit']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::HALT',
+            'VM::HALT'
+          ])
+        end
       end
 
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::HALT',
-          'VM::HALT'
-        ])
+      context 'given an integer argument' do
+        before do
+          @result = subject.compile([
+            ['exit', '10']
+          ])
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '10',
+            'VM::HALT',
+            'VM::HALT'
+          ])
+        end
       end
     end
   end

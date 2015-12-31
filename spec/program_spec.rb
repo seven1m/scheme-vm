@@ -13,6 +13,56 @@ describe Program do
       )
     end
 
+    context 'when the program successfully finishes' do
+      let(:code) { '(+ 1 1)' }
+
+      it 'returns 0' do
+        expect(subject.run).to eq(0)
+      end
+    end
+
+    context 'when the program fails' do
+      let(:code) { 'foo' }
+
+      it 'returns 1' do
+        expect(subject.run).to eq(1)
+      end
+    end
+
+    describe 'exit' do
+      context 'when the program calls (exit)' do
+        let(:code) { '(exit) foo' }
+
+        it 'returns 0' do
+          expect(subject.run).to eq(0)
+        end
+      end
+
+      context 'when the program calls (exit #t)' do
+        let(:code) { '(exit #t) foo' }
+
+        it 'returns 0' do
+          expect(subject.run).to eq(0)
+        end
+      end
+
+      context 'when the program calls (exit 10)' do
+        let(:code) { '(exit 10) foo' }
+
+        it 'returns 10' do
+          expect(subject.run).to eq(10)
+        end
+      end
+
+      context 'when the program calls (exit #f)' do
+        let(:code) { '(exit #f) foo' }
+
+        it 'returns 1' do
+          expect(subject.run).to eq(1)
+        end
+      end
+    end
+
     context do
       let(:code) do
         <<-END
