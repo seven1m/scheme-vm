@@ -10,6 +10,19 @@ describe VM do
     )
   end
 
+  describe 'NOOP' do
+    before do
+      subject.execute([
+        VM::NOOP,
+        VM::HALT
+      ])
+    end
+
+    it 'does nothing' do
+      expect(subject.stack_values).to eq([])
+    end
+  end
+
   describe 'PUSH_ATOM' do
     before do
       subject.execute([

@@ -1,6 +1,6 @@
-require_relative './spec_helper'
+require_relative '../spec_helper'
 
-describe Pattern do
+describe Compiler::Pattern do
   describe '#match' do
     it 'matches if length is the same' do
       expect(described_class.new(['and']).match(['and'])).to eq({})

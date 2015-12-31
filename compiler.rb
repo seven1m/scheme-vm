@@ -1,5 +1,6 @@
 require_relative 'vm'
-require_relative 'pattern'
+require_relative 'compiler/pattern'
+require_relative 'compiler/optimizer'
 require 'pp'
 
 class Compiler
@@ -17,8 +18,8 @@ class Compiler
   attr_reader :variables, :filename, :arguments, :syntax, :source
 
   def compile(sexps = @sexps, halt: true)
-    compile_sexps(sexps, filename: filename) +
-      (halt ? [VM::HALT] : [])
+    instructions = compile_sexps(sexps, filename: filename) + (halt ? [VM::HALT] : [])
+    optimize(instructions)
   end
 
   def pretty_format(instructions, grouped: false, ip: false)
@@ -59,6 +60,10 @@ class Compiler
       .map do |instr, index|
         stringify_and_record_location(instr, index)
       end
+  end
+
+  def optimize(instructions)
+    Optimizer.new(instructions).optimize
   end
 
   def stringify_and_record_location(instr, index)

@@ -22,6 +22,7 @@ class VM
   MAX_CALL_DEPTH = 50
 
   INSTRUCTIONS = [
+    ['NOOP',          0],
     ['PUSH_ATOM',     1],
     ['PUSH_NUM',      1],
     ['PUSH_STR',      1],
@@ -117,6 +118,8 @@ class VM
     debug_output = DebugOutput.new(self, instruction, debug) if debug >= 2
     debug_output.print_ip if debug >= 2
     case instruction
+    when NOOP
+      # nothing
     when RETURN
       do_return(debug)
     when DEBUG

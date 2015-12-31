@@ -971,6 +971,30 @@ describe Compiler do
           ])
         end
       end
+
+      context 'inside a function body' do
+        before do
+          @result = subject.compile([
+            ['lambda', [],
+              ['if', '#t', '2', '3']]
+          ])
+        end
+
+        it 'compiles into vm instructions, optimizing out the JUMP with a RETURN' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FUNC',
+            'VM::PUSH_TRUE',
+            'VM::JUMP_IF_FALSE', 5,
+            'VM::PUSH_NUM', '2',
+            'VM::RETURN',
+            'VM::NOOP',
+            'VM::PUSH_NUM', '3',
+            'VM::RETURN',
+            'VM::ENDF',
+            'VM::HALT'
+          ])
+        end
+      end
     end
 
     context 'include' do
