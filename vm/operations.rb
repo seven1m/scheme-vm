@@ -56,9 +56,9 @@ class VM
     end
 
     def do_push_local
-      var = fetch
-      address = locals[var]
-      fail VariableUndefined.new(var, @ip - @start) unless address
+      name = fetch
+      address = locals[name]
+      fail VariableUndefined.new(name, @ip - @start) unless address
       push(address)
     end
 
