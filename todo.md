@@ -18,7 +18,7 @@
 - [x] `include` takes multiple file paths (pp 14)
 - [ ] `include` allows relative and absolute paths (pp 14)
 - [ ] `include-ci` (pp 14)
-- [ ] `cond` (pp 14)
+- [x] `cond` (pp 14)
 - [ ] `case` (pp 14)
 - [ ] `when` (pp 15)
 - [ ] `unless` (pp 15)

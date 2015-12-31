@@ -5,6 +5,7 @@ class Program
   LIBRARIES = %w(
     let
     logic
+    cond
     list
     pair
     bool
