@@ -257,7 +257,7 @@ class VM
     def do_set_remote
       name = fetch
       frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-      fail VariableUndefined.new(var, @ip - @start) unless frame_locals
+      fail VariableUndefined.new(name, @ip - @start) unless frame_locals
       frame_locals[name] = pop
     end
 
