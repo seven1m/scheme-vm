@@ -283,4 +283,13 @@ class VM
     self.execute
     @ip = ip_was
   end
+
+  def return_value
+    if peek
+      val = pop_raw
+      return val if val.is_a?(Fixnum)
+      return 1 if val == false
+    end
+    0
+  end
 end

@@ -26,7 +26,7 @@ class Program
   def run(debug: 0)
     @compiler.pretty_print(@instr) if debug >= 1
     vm.execute(@instr, debug: debug)
-    return_value
+    vm.return_value
   rescue VM::VariableUndefined => e
     print_error_message(e)
     1
@@ -56,14 +56,5 @@ class Program
     source = @compiler.source[@filename]
     nearest = source.keys.reverse.find { |i| i <= e.ip }
     source[nearest]
-  end
-
-  def return_value
-    if vm.peek
-      val = vm.pop_raw
-      return val if val.is_a?(Fixnum)
-      return 1 if val == false
-    end
-    0
   end
 end
