@@ -936,18 +936,16 @@ describe Compiler do
     end
 
     context 'include' do
-      before do
-        @result = subject.compile([
-          ['include', '"foo"']
-        ])
-      end
+      context 'given a library name' do
+        before do
+          @result = subject.compile([
+            ['include', '"list"']
+          ])
+        end
 
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_STR', 'foo',
-          'VM::INT', VM::INT_INCLUDE,
-          'VM::HALT'
-        ])
+        it 'includes the code' do
+          expect(@result.size).to be > 20
+        end
       end
     end
   end

@@ -3,6 +3,8 @@ require_relative 'pattern'
 require 'pp'
 
 class Compiler
+  ROOT_PATH = VM::ROOT_PATH
+
   def initialize(sexps = nil, filename: nil, arguments: {}, syntax: {})
     @sexps = sexps
     @variables = {}
@@ -439,11 +441,13 @@ class Compiler
     ]
   end
 
-  def do_include((arg), options)
-    [
-      compile_sexp(arg, options.merge(use: true)),
-      VM::INT, VM::INT_INCLUDE
-    ]
+  def do_include(libs, _options)
+    libs.map do |lib|
+      fail "include expects a string, but got #{lib.inspect}" unless lib.to_s =~ /\A"(.+)?"\z/
+      filename = "#{$1}.scm"
+      sexps = parse_file(filename)
+      compile_sexps(sexps, filename: filename)
+    end
   end
 
   def do_write(args, options)
@@ -476,5 +480,10 @@ class Compiler
 
   def pop_maybe(options)
     return VM::POP unless options[:use]
+  end
+
+  def parse_file(filename)
+    code = File.read(File.join(ROOT_PATH, 'lib', filename))
+    Parser.new(code).parse
   end
 end
