@@ -30,12 +30,12 @@ class VM
 
     def print_set_args
       print 'args:   '
-      p @vm.call_args.each_with_object({}) { |a, h| h[a] = @vm.heap[a] }
+      p @vm.call_args.each_with_object({}) { |a, h| h[a] = a && @vm.heap[a] }
     end
 
     def print_set_local
       print 'locals: '
-      p @vm.locals.each_with_object({}) { |(n, a), h| h[n] = @vm.heap[a] }
+      p @vm.locals.each_with_object({}) { |(n, a), h| h[n] = a && @vm.heap[a] }
     end
 
     def print_jump
@@ -45,7 +45,7 @@ class VM
 
     def print_stack
       print 'stack:  '
-      puts @vm.stack.map { |a| @vm.heap[a].inspect }.join("\n" + (' ' * 28))
+      puts @vm.stack.map { |a| a ? @vm.heap[a].inspect : a.inspect }.join("\n" + (' ' * 28))
     end
   end
 end

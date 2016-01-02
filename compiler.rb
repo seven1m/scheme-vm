@@ -1,5 +1,5 @@
 require_relative 'vm'
-require_relative 'compiler/pattern'
+require_relative 'compiler/macro'
 require_relative 'compiler/optimizer'
 require 'pp'
 
@@ -11,8 +11,9 @@ class Compiler
     @variables = {}
     @filename = filename
     @arguments = arguments
-    @syntax = {}
-    @source = {}
+    @syntax = {}              # macro transformers
+    @mangled_identifiers = {} # used for macro hygiene
+    @source = {}              # records line and column numbers for identifiers
   end
 
   attr_reader :variables, :filename, :arguments, :syntax, :source
@@ -55,6 +56,21 @@ class Compiler
     pp pretty_format(instructions, grouped: true, ip: true)
   end
 
+  def mangle_identifier(name)
+    @mangled_identifiers[name] ||= 0
+    version = @mangled_identifiers[name] += 1
+    "##{name}.v#{version}"
+  end
+
+  def built_in_function?(name)
+    !built_in_function_name(name).nil?
+  end
+
+  def built_in_function_name(name)
+    underscored_name = 'do_' + name.to_s.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')
+    underscored_name if respond_to?(underscored_name, :include_private)
+  end
+
   private
 
   def compile_sexps(sexps, options = {}, filename:, keep_last: false)
@@ -88,27 +104,26 @@ class Compiler
     end
   end
 
-  # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize
+  # rubocop:disable Metrics/PerceivedComplexity
   def compile_sexp(sexp, options = { use: false, locals: {} })
     sexp = sexp.to_ruby if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     sexp.compact! # datum comments #;(...) come in as nil due to our parser :-(
     return [] if sexp.empty?
     (name, *args) = sexp
-    underscored_name = 'do_' + name.to_s.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')
     if options[:quote] || options[:quasiquote]
       compile_quoted_sexp(sexp, options)
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
-    elsif respond_to?(underscored_name, :include_private)
-      send(underscored_name, args, options)
-    elsif (transformer = find_syntax(name.to_s, options))
-      compile_macro_sexp(name, sexp, transformer, options)
+    elsif (built_in_name = built_in_function_name(name))
+      send(built_in_name, args, options)
+    elsif (macro = find_syntax(name.to_s, options))
+      compile_macro_sexp(name, sexp, macro, options)
     else
       call(sexp, options)
     end
   end
-  # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize
+  # rubocop:enable Metrics/PerceivedComplexity
 
   def compile_quoted_sexp(sexp, options)
     (name, *_args) = sexp
@@ -134,7 +149,7 @@ class Compiler
 
   def compile_literal(literal, options = { use: false, locals: {} })
     case literal.to_s.strip
-    when /\A[a-z]/
+    when /\A[a-z]|\A#[a-z].*\.v\d+$/
       compile_atom(literal, options)
     when '#t', '#true', '#f', '#false'
       compile_boolean(literal, options)
@@ -189,14 +204,8 @@ class Compiler
     ]
   end
 
-  def compile_macro_sexp(name, sexp, transformer, options)
-    (_name, literals, *patterns) = transformer
-    templates = patterns.lazy.map do |pattern, template|
-      [Pattern.new(pattern, literals: literals).match(sexp), template]
-    end
-    (values, template) = templates.detect { |values, _| values }
-    fail "Could not match any template for #{name} #{sexp.inspect}" unless values
-    sexp = expand_template(template, values)
+  def compile_macro_sexp(_name, sexp, macro, options)
+    sexp = Macro.new(macro, self).compile(sexp)
     compile_sexp(sexp, options)
   end
 
@@ -446,24 +455,11 @@ class Compiler
   end
 
   def do_define_syntax((name, transformer), options)
-    options[:syntax][name.to_s] = transformer
+    options[:syntax][name.to_s] = {
+      locals: options[:locals].keys + options[:syntax].keys + [name.to_s],
+      transformer: transformer
+    }
     []
-  end
-
-  def expand_template(template, values)
-    if values.key?(template.to_s)
-      values[template.to_s]
-    elsif !template.is_a?(Array)
-      template.to_s
-    else
-      ([nil] + template).each_cons(2).flat_map do |(prev, part)|
-        if part.to_s == '...' && prev
-          expand_template("#{prev}...", values)
-        else
-          [expand_template(part, values)].compact
-        end
-      end
-    end
   end
 
   def do_if((condition, true_body, false_body), options)
@@ -509,7 +505,7 @@ class Compiler
       fail "include expects a string, but got #{path.inspect}" unless path.to_s =~ /\A"(.+)?"\z/
       filename = "#{$1}.scm"
       sexps = parse_file(filename)
-      compile_sexps(sexps, { syntax: options[:syntax] }, filename: filename)
+      compile_sexps(sexps, { syntax: options[:syntax], locals: options[:locals] }, filename: filename)
     end
   end
 

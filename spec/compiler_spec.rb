@@ -1069,8 +1069,12 @@ describe Compiler do
         end
 
         it 'stores the transformer in the top-level syntax accessor' do
-          expect(subject.syntax['and']).to eq(['syntax-rules', [], [['and'], '#t']])
+          expect(subject.syntax['and']).to include(
+            transformer: ['syntax-rules', [], [['and'], '#t']]
+          )
         end
+
+        pending 'it stores variables in scope'
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
@@ -1153,6 +1157,59 @@ describe Compiler do
             'VM::HALT'
           ])
         end
+      end
+    end
+
+    context 'macro expansion' do
+      before do
+        @result = subject.compile([
+          ['define-syntax', 'foo',
+            ['syntax-rules', [],
+              [['foo', [['name1', 'val1'], '...']],
+                ['list',
+                  ['list', '"names"', ['quote', 'name1']], '...',
+                  ['list', '"vals"', ['quote', 'val1']], '...']]]],
+          ['foo', [['x', '"foo"'], ['y', '"bar"'], ['z', '"baz"']]]
+        ])
+      end
+
+      it 'expands the macro' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_STR', 'names',
+          'VM::PUSH_ATOM', 'x',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_STR', 'names',
+          'VM::PUSH_ATOM', 'y',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_STR', 'names',
+          'VM::PUSH_ATOM', 'z',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_STR', 'vals',
+          'VM::PUSH_STR', 'foo',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_STR', 'vals',
+          'VM::PUSH_STR', 'bar',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_STR', 'vals',
+          'VM::PUSH_STR', 'baz',
+          'VM::PUSH_NUM', 2,
+          'VM::PUSH_LIST',
+
+          'VM::PUSH_NUM', 6,
+          'VM::PUSH_LIST',
+          'VM::POP',
+          'VM::HALT'
+        ])
       end
     end
   end

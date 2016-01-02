@@ -51,6 +51,8 @@ class Program
     line = "#{@filename}##{details[:line]}"
     pointer = " #{' ' * details[:column]}^ #{e.message}"
     "\n\n#{line}\n\n#{code}\n#{pointer}"
+  rescue
+    ''
   end
 
   def error_details(e)
