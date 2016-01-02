@@ -5,6 +5,7 @@ class Program
   INCLUDES = %w(
     begin
     let
+    do
     logic
     cond
     list
