@@ -100,6 +100,8 @@ class Compiler
       compile_quoted_sexp(sexp, options)
     elsif name.is_a?(Array) || name.is_a?(VM::Pair)
       call(sexp, options)
+    elsif name == 'include'
+      do_include(args, name.filename, options)
     elsif (built_in_name = built_in_function_name(name))
       send(built_in_name, args, options)
     elsif (macro = find_syntax(name, options))
@@ -485,11 +487,11 @@ class Compiler
     ]
   end
 
-  def do_include(paths, options)
+  def do_include(paths, relative_to, options)
     paths.map do |path|
       fail "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
       filename = "#{$1}.scm"
-      sexps = parse_file(filename)
+      sexps = parse_file(filename, relative_to: relative_to)
       compile_sexps(sexps, { syntax: options[:syntax], locals: options[:locals] }, filename: filename)
     end
   end
@@ -526,8 +528,13 @@ class Compiler
     return VM::POP unless options[:use]
   end
 
-  def parse_file(filename)
-    code = File.read(File.join(ROOT_PATH, 'lib', filename))
+  def parse_file(filename, relative_to: nil)
+    if filename =~ /\A\./ && relative_to
+      path = File.join(File.dirname(relative_to), filename)
+    else
+      path = File.join(ROOT_PATH, 'lib', filename)
+    end
+    code = File.read(path)
     @source[filename] = code
     Parser.new(code, filename: filename).parse
   end

@@ -8,7 +8,7 @@ describe Program do
     subject do
       described_class.new(
         code,
-        filename: 'program_spec.rb',
+        filename: __FILE__,
         stdout: stdout
       )
     end
@@ -88,7 +88,7 @@ describe Program do
         stdout.rewind
         expect(stdout.read).to eq(
           "Error: foo is not defined\n\n" \
-            "program_spec.rb#2\n\n" \
+            "#{__FILE__}#2\n\n" \
             "  ; undefined variable\n" \
             "  (foo)\n" \
             "   ^ foo is not defined\n"
@@ -98,7 +98,7 @@ describe Program do
 
     context 'exception in macro in another file' do
       let(:code) do
-        '(include "../spec/fixtures/bad-macro")' \
+        '(include "./fixtures/bad-macro")' \
         '(bad-macro)'
       end
 
@@ -107,7 +107,7 @@ describe Program do
         stdout.rewind
         expect(stdout.read).to eq(
           "Error: foo is not defined\n\n" \
-            "../spec/fixtures/bad-macro.scm#3\n\n" \
+            "./fixtures/bad-macro.scm#3\n\n" \
             "    (syntax-rules ()\n" \
             "      ((bad-macro) (foo))))\n" \
             "                    ^ foo is not defined\n"

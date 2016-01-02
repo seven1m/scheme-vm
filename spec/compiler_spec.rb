@@ -1,7 +1,7 @@
 require_relative './spec_helper'
 
 describe Compiler do
-  subject { described_class.new(filename: 'compiler_spec.rb') }
+  subject { described_class.new(filename: __FILE__) }
 
   def d(instructions)
     subject.pretty_format(instructions)
@@ -1077,15 +1077,25 @@ describe Compiler do
     end
 
     context 'include' do
-      context 'given a library name' do
+      context 'given a path' do
         before do
           @result = subject.compile(<<-END)
-            (include "list")
+            (include "./fixtures/include-test")
+            (print "hello from main")
           END
         end
 
         it 'includes the code' do
-          expect(@result.size).to be > 20
+          expect(d(@result)).to eq([
+            'VM::PUSH_STR', 'hello from include-test',
+            'VM::INT', 1,
+            'VM::PUSH_STR', 'hello from main',
+            'VM::PUSH_NUM', 1,
+            'VM::SET_ARGS',
+            'VM::PUSH_REMOTE', 'print',
+            'VM::CALL',
+            'VM::HALT'
+          ])
         end
       end
     end
