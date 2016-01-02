@@ -1024,6 +1024,9 @@ describe Compiler do
       context 'at the top level' do
         before do
           @result = subject.compile(<<-END)
+            (define local-foo 1)
+            (define-syntax macro-foo (syntax-rules () ()))
+
             (define-syntax and
               (syntax-rules ()
                 ((and) #t)))
@@ -1037,10 +1040,16 @@ describe Compiler do
           )
         end
 
-        pending 'it stores variables in scope'
+        it 'it stores bindings from the current scope and itself' do
+          expect(subject.syntax['and']).to include(
+            locals: ['local-foo', 'macro-foo', 'and']
+          )
+        end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::PUSH_NUM', '1',
+            'VM::SET_LOCAL', 'local-foo',
             'VM::PUSH_TRUE',
             'VM::POP',
             'VM::HALT'
