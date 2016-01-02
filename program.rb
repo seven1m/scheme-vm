@@ -3,15 +3,7 @@ require_relative 'compiler'
 
 class Program
   INCLUDES = %w(
-    begin
-    let
-    do
-    logic
-    cond
-    list
-    pair
-    bool
-    string
+    base
   )
 
   def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
