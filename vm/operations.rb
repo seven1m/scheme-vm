@@ -58,14 +58,14 @@ class VM
     def do_push_local
       name = fetch
       address = locals[name]
-      fail VariableUndefined.new(name, @ip - @start) unless address
+      fail VariableUndefined.new(name) unless address
       push(address)
     end
 
     def do_push_remote
       name = fetch
       frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-      fail VariableUndefined.new(name, @ip - @start) unless frame_locals
+      fail VariableUndefined.new(name) unless frame_locals
       address = frame_locals.fetch(name)
       push(address)
     end
@@ -257,7 +257,7 @@ class VM
     def do_set_remote
       name = fetch
       frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l.key?(name) }
-      fail VariableUndefined.new(name, @ip - @start) unless frame_locals
+      fail VariableUndefined.new(name) unless frame_locals
       frame_locals[name] = pop
     end
 

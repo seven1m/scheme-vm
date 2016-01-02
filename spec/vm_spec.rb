@@ -1084,15 +1084,15 @@ describe VM do
 
   describe 'tail call elimination' do
     before do
-      c = Compiler.new([
-        ['define', 'fn',
-          ['lambda', ['n'],
-            ['exit'],
-            ['if', ['<', 'n', '1'],
-              'n',
-              ['fn', ['-', 'n', '1']]]]],
-        ['fn', '2']
-      ])
+      c = Compiler.new(<<-END, filename: 'tce.scm')
+        (define fn
+          (lambda (n)
+            (exit)
+            (if (< n 1)
+              n
+              (fn (- n 1)))))
+        (fn 2)
+      END
       instr = c.compile(keep_last: true)
       subject.execute(instr)
     end

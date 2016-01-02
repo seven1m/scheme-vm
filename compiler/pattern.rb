@@ -1,24 +1,13 @@
 class Compiler
   class Pattern
     def initialize(pattern, literals: [])
-      @pattern = self.class.deatomize(pattern)
+      @pattern = pattern
       @literals = literals.map(&:to_s)
     end
 
     def match(expr)
-      expr = self.class.deatomize(expr)
       return if @pattern.first != expr.first
       match_sub(expr.dup[1..-1], @pattern[1..-1])
-    end
-
-    def self.deatomize(sexp)
-      if sexp.is_a?(Array)
-        sexp.map { |s| deatomize(s) }
-      elsif sexp.is_a?(Parslet::Slice)
-        sexp.to_s
-      else
-        sexp
-      end
     end
 
     private
@@ -35,7 +24,7 @@ class Compiler
         elsif identifier.is_a?(Array)
           sub_expr = expr.shift
           return unless sub_expr.is_a?(Array)
-          if (sub_match = match_sub(sub_expr, identifier.dup))
+          if (sub_match = match_sub(sub_expr.dup, identifier.dup))
             hash.merge!(sub_match)
           else
             return

@@ -102,11 +102,7 @@ class VM
   end
 
   def execute(instructions = nil, debug: 0)
-    @start = 0
-    if instructions
-      @start = @heap.size + 1
-      load_code(instructions)
-    end
+    load_code(instructions) if instructions
     while (instruction = fetch)
       break if instruction == HALT
       execute_instruction(instruction, debug: debug)

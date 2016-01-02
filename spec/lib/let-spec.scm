@@ -11,4 +11,3 @@
                 #f
                 (even? (- n 1))))))
   (assert (even? 88)))
-

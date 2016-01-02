@@ -1,55 +1,18 @@
 require_relative './spec_helper'
 
 describe Compiler do
+  subject { described_class.new(filename: 'compiler_spec.rb') }
+
   def d(instructions)
     subject.pretty_format(instructions)
   end
 
   describe '#compile' do
-    context 'nil' do
-      before do
-        @result = subject.compile([
-          'foo',
-          nil,
-          'bar'
-        ])
-      end
-
-      it 'ignores nil' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_REMOTE', 'foo',
-          'VM::POP',
-          'VM::PUSH_REMOTE', 'bar',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
-    context 'identifier' do
-      before do
-        @result = subject.compile([
-          'foo',
-          'bar baz'
-        ])
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_REMOTE', 'foo',
-          'VM::POP',
-          'VM::PUSH_REMOTE', 'bar baz',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'number' do
       before do
-        @result = subject.compile([
-          '1'
-        ])
+        @result = subject.compile(<<-END)
+          1
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -63,10 +26,10 @@ describe Compiler do
 
     context '#t' do
       before do
-        @result = subject.compile([
-          '#t',
-          '#true'
-        ])
+        @result = subject.compile(<<-END)
+          #t
+          #true
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -82,10 +45,10 @@ describe Compiler do
 
     context '#f' do
       before do
-        @result = subject.compile([
-          '#f',
-          '#false'
-        ])
+        @result = subject.compile(<<-END)
+          #f
+          #false
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -101,9 +64,9 @@ describe Compiler do
 
     context '"a string"' do
       before do
-        @result = subject.compile([
-          '"a string"'
-        ])
+        @result = subject.compile(<<-END)
+          "a string"
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -116,9 +79,9 @@ describe Compiler do
 
     context 'a . pair' do
       before do
-        @result = subject.compile([
-          ['quote', ['1', '.', '2']]
-        ])
+        @result = subject.compile(<<-END)
+          (quote (1 . 2))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -134,11 +97,11 @@ describe Compiler do
 
     context 'character #\c' do
       before do
-        @result = subject.compile([
-          '#\c',
-          '#\space',
-          '#\newline'
-        ])
+        @result = subject.compile(<<-END)
+          #\\c
+          #\\space
+          #\\newline
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -156,9 +119,9 @@ describe Compiler do
 
     context 'string-ref' do
       before do
-        @result = subject.compile([
-          ['string-ref', '"hello world"', '4']
-        ])
+        @result = subject.compile(<<-END)
+          (string-ref "hello world" 4)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -174,9 +137,9 @@ describe Compiler do
 
     context 'string-length' do
       before do
-        @result = subject.compile([
-          ['string-length', '"hello world"']
-        ])
+        @result = subject.compile(<<-END)
+          (string-length "hello world")
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -191,9 +154,9 @@ describe Compiler do
 
     context 'list->string' do
       before do
-        @result = subject.compile([
-          ['list->string', ['list', '#\a', '#\b']]
-        ])
+        @result = subject.compile(<<-END)
+          (list->string (list #\\a #\\b))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -211,9 +174,9 @@ describe Compiler do
 
     context 'append' do
       before do
-        @result = subject.compile([
-          ['append', ['list', '1', '2'], ['list', '3', '4']]
-        ])
+        @result = subject.compile(<<-END)
+          (append (list 1 2) (list 3 4))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -236,9 +199,9 @@ describe Compiler do
 
     context 'car' do
       before do
-        @result = subject.compile([
-          ['car', ['list', '1', '2', '3']]
-        ])
+        @result = subject.compile(<<-END)
+          (car (list 1 2 3))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -257,9 +220,9 @@ describe Compiler do
 
     context 'cdr' do
       before do
-        @result = subject.compile([
-          ['cdr', ['list', '1', '2', '3']]
-        ])
+        @result = subject.compile(<<-END)
+          (cdr (list 1 2 3))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -278,9 +241,9 @@ describe Compiler do
 
     context 'cons' do
       before do
-        @result = subject.compile([
-          ['cons', '1', ['list', '2', '3']]
-        ])
+        @result = subject.compile(<<-END)
+          (cons 1 (list 2 3))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -299,9 +262,9 @@ describe Compiler do
 
     context 'set-car!' do
       before do
-        @result = subject.compile([
-          ['set-car!', ['quote', ['1', '.', '2']], '3']
-        ])
+        @result = subject.compile(<<-END)
+          (set-car! (quote (1 . 2)) 3)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -318,9 +281,9 @@ describe Compiler do
 
     context 'set-cdr!' do
       before do
-        @result = subject.compile([
-          ['set-cdr!', ['quote', ['1', '.', '2']], '3']
-        ])
+        @result = subject.compile(<<-END)
+          (set-cdr! (quote (1 . 2)) 3)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -337,9 +300,9 @@ describe Compiler do
 
     context 'null?' do
       before do
-        @result = subject.compile([
-          ['null?', ['list']]
-        ])
+        @result = subject.compile(<<-END)
+          (null? (list))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -355,13 +318,13 @@ describe Compiler do
 
     context 'variables' do
       before do
-        @result = subject.compile([
-          ['define', 'y', '10'],
-          ['set!', 'y', '11'],
-          ['set!', 'x', '9'],
-          'y',
-          'x'
-        ])
+        @result = subject.compile(<<-END)
+          (define y 10)
+          (set! y 11)
+          (set! x 9)
+          y
+          x
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -383,11 +346,11 @@ describe Compiler do
 
     context 'remote variable' do
       before do
-        @result = subject.compile([
-          ['define', 'n', '10'],
-          ['lambda', [],
-            'n']
-        ])
+        @result = subject.compile(<<-END)
+          (define n 10)
+          (lambda ()
+            n)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -407,9 +370,9 @@ describe Compiler do
     context 'quote' do
       context 'given a list' do
         before do
-          @result = subject.compile([
-            ['quote', ['foo', '2', '3', ['write', '4']]]
-          ])
+          @result = subject.compile(<<-END)
+            (quote (foo 2 3 (write 4)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -431,9 +394,9 @@ describe Compiler do
 
       context 'given an atom' do
         before do
-          @result = subject.compile([
-            ['quote', 'foo']
-          ])
+          @result = subject.compile(<<-END)
+            (quote foo)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -448,9 +411,9 @@ describe Compiler do
     context 'quasiquote' do
       context 'given a simple list' do
         before do
-          @result = subject.compile([
-            ['quasiquote', ['foo', '2', '3', ['write', '4']]]
-          ])
+          @result = subject.compile(<<-END)
+            (quasiquote (foo 2 3 (write 4)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -472,9 +435,9 @@ describe Compiler do
 
       context 'given a list containing an unquote expression' do
         before do
-          @result = subject.compile([
-            ['quasiquote', ['list', '1', ['unquote', ['+', '2', '3']]]]
-          ])
+          @result = subject.compile(<<-END)
+            (quasiquote (list 1 (unquote (+ 2 3))))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -494,9 +457,9 @@ describe Compiler do
 
       context 'given a list containing an unquote-splicing expression' do
         before do
-          @result = subject.compile([
-            ['quasiquote', ['list', '1', ['unquote-splicing', ['list', '2', '3']]]]
-          ])
+          @result = subject.compile(<<-END)
+            (quasiquote (list 1 (unquote-splicing (list 2 3))))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -515,10 +478,10 @@ describe Compiler do
 
       context 'given a list containing an unquoted variable' do
         before do
-          @result = subject.compile([
-            ['define', 'foo', '2'],
-            ['quasiquote', ['list', '1', ['unquote', 'foo']]]
-          ])
+          @result = subject.compile(<<-END)
+            (define foo 2)
+            (quasiquote (list 1 (unquote foo)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -540,9 +503,9 @@ describe Compiler do
     context 'define' do
       context '<variable> <expression>' do
         before do
-          @result = subject.compile([
-            ['define', 'x', '1']
-          ])
+          @result = subject.compile(<<-END)
+            (define x 1)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -556,10 +519,10 @@ describe Compiler do
 
       context '(<variable> <formals>) <body>' do
         before do
-          @result = subject.compile([
-            ['define', ['fn', 'x', 'y'],
-              ['list', 'x', 'y']]
-          ])
+          @result = subject.compile(<<-END)
+            (define (fn x y)
+              (list x y))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -583,10 +546,10 @@ describe Compiler do
 
       context '(<variable> . <formal>) <body>' do
         before do
-          @result = subject.compile([
-            ['define', ['fn', '.', 'x'],
-              'x']
-          ])
+          @result = subject.compile(<<-END)
+            (define (fn . x)
+              x)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -606,9 +569,9 @@ describe Compiler do
 
     context 'write' do
       before do
-        @result = subject.compile([
-          ['write', '1']
-        ])
+        @result = subject.compile(<<-END)
+          (write 1)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -623,10 +586,10 @@ describe Compiler do
     context 'lambda' do
       context 'not storing in a variable or passing to a function' do
         before do
-          @result = subject.compile([
-            ['lambda', [],
-              ['define', 'x', '1']]
-          ])
+          @result = subject.compile(<<-END)
+            (lambda ()
+              (define x 1))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -644,11 +607,11 @@ describe Compiler do
 
       context 'storing in a variable' do
         before do
-          @result = subject.compile([
-            ['define', 'myfn',
-              ['lambda', [],
-                ['define', 'x', '1']]]
-          ])
+          @result = subject.compile(<<-END)
+            (define myfn
+              (lambda ()
+                (define x 1)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -666,14 +629,14 @@ describe Compiler do
 
       context 'mixed variable storage' do
         before do
-          @result = subject.compile([
-            ['define', 'one',
-              ['lambda', [],
-                ['lambda', [], '1'],
-                ['define', 'two',
-                  ['lambda', [], '2']],
-                ['lambda', [], '3']]]
-          ])
+          @result = subject.compile(<<-END)
+            (define one
+              (lambda ()
+                (lambda () 1)
+                (define two
+                  (lambda () 2))
+                (lambda () 3)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -703,11 +666,11 @@ describe Compiler do
 
       context 'with return value' do
         before do
-          @result = subject.compile([
-            ['lambda', [],
-              '1',
-              '2']
-          ])
+          @result = subject.compile(<<-END)
+            (lambda ()
+              1
+              2)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -728,12 +691,12 @@ describe Compiler do
     context 'call' do
       context 'without args' do
         before do
-          @result = subject.compile([
-            ['define', 'x',
-              ['lambda', [],
-                '1']],
-            ['x']
-          ])
+          @result = subject.compile(<<-END)
+            (define x
+              (lambda ()
+                1))
+            (x)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -752,11 +715,11 @@ describe Compiler do
 
       context 'with args' do
         before do
-          @result = subject.compile([
-            ['define', 'x',
-              ['lambda', ['y', 'z'], []]],
-            ['x', '2', '4']
-          ])
+          @result = subject.compile(<<-END)
+            (define x
+              (lambda (y z) ()))
+            (x 2 4)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -783,11 +746,11 @@ describe Compiler do
 
       context 'with variable args' do
         before do
-          @result = subject.compile([
-            ['define', 'x',
-              ['lambda', 'args', []]],
-            ['x', '2', '4']
-          ])
+          @result = subject.compile(<<-END)
+            (define x
+              (lambda args ()))
+            (x 2 4)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -812,11 +775,11 @@ describe Compiler do
 
       context 'with destructuring args' do
         before do
-          @result = subject.compile([
-            ['define', 'x',
-              ['lambda', ['first', 'second', '.', 'rest'], []]],
-            ['x', '2', '3', '4', '5']
-          ])
+          @result = subject.compile(<<-END)
+            (define x
+              (lambda (first second . rest) ()))
+            (x 2 3 4 5)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -847,9 +810,9 @@ describe Compiler do
 
       context 'calling immediately' do
         before do
-          @result = subject.compile([
-            [['lambda', ['x'], 'x'], '1']
-          ])
+          @result = subject.compile(<<-END)
+            ((lambda (x) x) 1)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -871,11 +834,11 @@ describe Compiler do
 
       context 'calling self' do
         before do
-          @result = subject.compile([
-            ['define', 'x',
-              ['lambda', [],
-                ['x']]]
-          ])
+          @result = subject.compile(<<-END)
+            (define x
+              (lambda ()
+                (x)))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -894,9 +857,9 @@ describe Compiler do
 
     context 'apply' do
       before do
-        @result = subject.compile([
-          ['apply', 'foo', ['list', '1', '2']]
-        ])
+        @result = subject.compile(<<-END)
+          (apply foo (list 1 2))
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -916,9 +879,9 @@ describe Compiler do
 
     context 'list' do
       before do
-        @result = subject.compile([
-          ['list', '1', '2']
-        ])
+        @result = subject.compile(<<-END)
+          (list 1 2)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -935,9 +898,9 @@ describe Compiler do
 
     context 'eq?' do
       before do
-        @result = subject.compile([
-          ['eq?', '1', '1']
-        ])
+        @result = subject.compile(<<-END)
+          (eq? 1 1)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -953,9 +916,9 @@ describe Compiler do
 
     context 'eqv?' do
       before do
-        @result = subject.compile([
-          ['eqv?', '1', '1']
-        ])
+        @result = subject.compile(<<-END)
+          (eqv? 1 1)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -971,9 +934,9 @@ describe Compiler do
 
     context '=' do
       before do
-        @result = subject.compile([
-          ['=', '1', '1']
-        ])
+        @result = subject.compile(<<-END)
+          (= 1 1)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -990,10 +953,10 @@ describe Compiler do
     context 'if' do
       context 'given value is not used' do
         before do
-          @result = subject.compile([
-            ['if', '#t', '2', '3'],
-            '0'
-          ])
+          @result = subject.compile(<<-END)
+            (if #t 2 3)
+            0
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -1013,9 +976,9 @@ describe Compiler do
 
       context 'given value is used' do
         before do
-          @result = subject.compile([
-            ['write', ['if', '#t', '2', '3']]
-          ])
+          @result = subject.compile(<<-END)
+            (write (if #t 2 3))
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -1033,10 +996,10 @@ describe Compiler do
 
       context 'inside a function body' do
         before do
-          @result = subject.compile([
-            ['lambda', [],
-              ['if', '#t', '2', '3']]
-          ])
+          @result = subject.compile(<<-END)
+            (lambda ()
+              (if #t 2 3))
+          END
         end
 
         it 'compiles into vm instructions, optimizing out the JUMP with a RETURN' do
@@ -1060,12 +1023,12 @@ describe Compiler do
     context 'define-syntax' do
       context 'at the top level' do
         before do
-          @result = subject.compile([
-            ['define-syntax', 'and',
-              ['syntax-rules', [],
-                [['and'], '#t']]],
-            ['and']
-          ])
+          @result = subject.compile(<<-END)
+            (define-syntax and
+              (syntax-rules ()
+                ((and) #t)))
+            (and)
+          END
         end
 
         it 'stores the transformer in the top-level syntax accessor' do
@@ -1087,13 +1050,13 @@ describe Compiler do
 
       context 'inside a lambda' do
         before do
-          @result = subject.compile([
-            ['lambda', [],
-              ['define-syntax', 'and',
-                ['syntax-rules', [],
-                  [['and'], '#t']]],
-              ['and']]
-          ])
+          @result = subject.compile(<<-END)
+            (lambda ()
+              (define-syntax and
+                (syntax-rules ()
+                  ((and) #t)))
+              (and))
+          END
         end
 
         it 'does not store the transformer in the top-level syntax accessor' do
@@ -1116,9 +1079,9 @@ describe Compiler do
     context 'include' do
       context 'given a library name' do
         before do
-          @result = subject.compile([
-            ['include', '"list"']
-          ])
+          @result = subject.compile(<<-END)
+            (include "list")
+          END
         end
 
         it 'includes the code' do
@@ -1130,9 +1093,9 @@ describe Compiler do
     context 'exit' do
       context 'given no arguments' do
         before do
-          @result = subject.compile([
-            ['exit']
-          ])
+          @result = subject.compile(<<-END)
+            (exit)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -1145,9 +1108,9 @@ describe Compiler do
 
       context 'given an integer argument' do
         before do
-          @result = subject.compile([
-            ['exit', '10']
-          ])
+          @result = subject.compile(<<-END)
+            (exit 10)
+          END
         end
 
         it 'compiles into vm instructions' do
@@ -1162,15 +1125,15 @@ describe Compiler do
 
     context 'macro expansion' do
       before do
-        @result = subject.compile([
-          ['define-syntax', 'foo',
-            ['syntax-rules', [],
-              [['foo', [['name1', 'val1'], '...']],
-                ['list',
-                  ['list', '"names"', ['quote', 'name1']], '...',
-                  ['list', '"vals"', ['quote', 'val1']], '...']]]],
-          ['foo', [['x', '"foo"'], ['y', '"bar"'], ['z', '"baz"']]]
-        ])
+        @result = subject.compile(<<-END)
+          (define-syntax foo
+            (syntax-rules ()
+              ((foo ((name1 val1) ...))
+                (list
+                  (list "names" (quote name1)) ...
+                  (list "vals" (quote val1)) ...))))
+          (foo ((x "foo") (y "bar") (z "baz")))
+        END
       end
 
       it 'expands the macro' do

@@ -77,7 +77,7 @@ describe Program do
       end
     end
 
-    context 'exception' do
+    context 'exception in program code' do
       let(:code) do
         "; undefined variable\n" \
         '(foo)'
@@ -92,6 +92,25 @@ describe Program do
             "  ; undefined variable\n" \
             "  (foo)\n" \
             "   ^ foo is not defined\n"
+        )
+      end
+    end
+
+    context 'exception in macro in another file' do
+      let(:code) do
+        '(include "../spec/fixtures/bad-macro")' \
+        '(bad-macro)'
+      end
+
+      it 'shows the filename, line and column number' do
+        subject.run
+        stdout.rewind
+        expect(stdout.read).to eq(
+          "Error: foo is not defined\n\n" \
+            "../spec/fixtures/bad-macro.scm#3\n\n" \
+            "    (syntax-rules ()\n" \
+            "      ((bad-macro) (foo))))\n" \
+            "                    ^ foo is not defined\n"
         )
       end
     end

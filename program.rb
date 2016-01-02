@@ -18,11 +18,8 @@ class Program
     @filename = filename
     @args = args
     @stdout = stdout
-    @code = code
-    @sexps = Parser.new(code).parse
-    @compiler = Compiler.new(filename: filename)
-    @compiler.include_code(INCLUDES)
-    @instr = @compiler.compile(@sexps)
+    @compiler = Compiler.new(code, filename: filename, includes: INCLUDES)
+    @instr = @compiler.compile
   end
 
   def run(debug: 0)
@@ -45,20 +42,11 @@ class Program
   end
 
   def error_details_to_s(e)
-    details = error_details(e)
-    return '' unless details
-    lines_range = (details[:line] - 2)..(details[:line] - 1)
-    code = @code.split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
-    line = "#{@filename}##{details[:line]}"
-    pointer = " #{' ' * details[:column]}^ #{e.message}"
+    return '' unless e.filename && @compiler.source[e.filename]
+    lines_range = (e.line - 2)..(e.line - 1)
+    code = @compiler.source[e.filename].split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
+    line = "#{e.filename}##{e.line}"
+    pointer = " #{' ' * e.column}^ #{e.message}"
     "\n\n#{line}\n\n#{code}\n#{pointer}"
-  rescue
-    ''
-  end
-
-  def error_details(e)
-    source = @compiler.source[@filename]
-    nearest = source.keys.reverse.find { |i| i <= e.ip }
-    source[nearest]
   end
 end

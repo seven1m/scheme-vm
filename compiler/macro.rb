@@ -9,6 +9,7 @@ class Compiler
       @compiler = compiler
     end
 
+    # TODO: rename to #expand
     def compile(sexp)
       (@values, @template) = match_template(sexp)
       sexp = expand_template(@template)
@@ -21,16 +22,16 @@ class Compiler
     def match_template(sexp)
       @patterns.each do |pattern, template|
         values = Pattern.new(pattern, literals: @literals).match(sexp)
-        return [values, Pattern.deatomize(template)] if values
+        return [values, template] if values
       end
       fail "Could not match any template for #{sexp.inspect}"
     end
 
     def expand_template(template)
-      return @values[template.to_s] if @values.key?(template.to_s)
-      return template.to_s unless template.is_a?(Array)
+      return @values[template] if @values.key?(template)
+      return template unless template.is_a?(Array)
       ([nil] + template).each_cons(2).flat_map do |(prev, part)|
-        if part.to_s == '...' && prev
+        if part == '...' && prev
           expand_elipsis_template(prev)
         else
           [expand_template(part)].compact
@@ -66,7 +67,7 @@ class Compiler
       sexp.map do |part|
         if part.is_a?(Array)
           mangle_macro_bindings(part)
-        elsif mangled_identifiers.key?(part.to_s)
+        elsif mangled_identifiers.key?(part)
           mangled_identifiers[part]
         else
           part

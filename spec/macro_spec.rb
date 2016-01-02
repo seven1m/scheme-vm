@@ -1,6 +1,8 @@
 require_relative './spec_helper'
 
 describe Compiler do
+  subject { described_class.new(filename: 'macro_spec.rb') }
+
   def d(instructions)
     subject.pretty_format(instructions)
   end
@@ -8,12 +10,12 @@ describe Compiler do
   context 'define-syntax and syntax-rules' do
     context 'given a template with two arguments and a nested template' do
       before do
-        @result = subject.compile([
-          ['define-syntax', 'listify',
-            ['syntax-rules', [],
-              [['listify', 'first', 'second'], ['list', ['list', 'first'], ['list', 'second']]]]],
-          ['listify', '1', '2']
-        ])
+        @result = subject.compile(<<-END)
+          (define-syntax listify
+            (syntax-rules ()
+              ((listify first second) (list (list first) (list second)))))
+          (listify 1 2)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -34,15 +36,15 @@ describe Compiler do
 
     context 'given multiple templates, recursive expansion' do
       before do
-        @result = subject.compile([
-          ['define-syntax', 'and',
-            ['syntax-rules', [],
-              [['and'], '#t'],
-              [['and', 'test'], 'test'],
-              [['and', 'test1', 'test2', '...'],
-                ['if', 'test1', ['and', 'test2', '...'], '#f']]]],
-          ['and', '1', '2', '3']
-        ])
+        @result = subject.compile(<<-END)
+          (define-syntax and
+            (syntax-rules ()
+              ((and) #t)
+              ((and test) test)
+              ((and test1 test2 ...)
+                (if test1 (and test2 ...) #f))))
+          (and 1 2 3)
+        END
       end
 
       it 'compiles into vm instructions' do
@@ -64,14 +66,14 @@ describe Compiler do
 
     context 'given multiple templates, recursive expansion' do
       before do
-        @result = subject.compile([
-          ['define-syntax', 'let',
-            ['syntax-rules', [],
-              [['let', [['name', 'val'], '...'], 'body1', 'body2', '...'],
-                [['lambda', ['name', '...'], 'body1', 'body2', '...'],
-                'val', '...']]]],
-          ['let', [['x', '1'], ['y', '2'], ['z', '3']], ['list', 'x', 'y', 'z']]
-        ])
+        @result = subject.compile(<<-END)
+          (define-syntax let
+            (syntax-rules ()
+              ((let ((name val) ...) body1 body2 ...)
+                ((lambda (name ...) body1 body2 ...)
+                val ...))))
+          (let ((x 1) (y 2) (z 3)) (list x y z))
+        END
       end
 
       it 'compiles into vm instructions' do

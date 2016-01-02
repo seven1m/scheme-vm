@@ -1,7 +1,7 @@
 # TODO
 
 - [x] GC
-- [ ] show proper error when source is another file
+- [x] show proper error when source is another file
 - [x] optimize `JUMP` to `RETURN` if jump lands on a return (fixes TCE in some cases)
 
 ## Missing things from R7RS:

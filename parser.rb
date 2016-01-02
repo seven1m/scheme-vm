@@ -1,3 +1,4 @@
+require_relative 'vm/atom'
 require 'parslet'
 
 module LISP
@@ -76,15 +77,17 @@ module LISP
 
     rule(quote: simple(:quote), atom: simple(:atom)) do
       method = QUOTE_METHOD[quote.to_s]
-      [method, atom]
+      (line, column) = atom.line_and_column
+      [method, VM::Atom.new(atom, filename: filename, line: line, column: column)]
     end
 
     rule(atom: simple(:atom)) do
-      atom
+      (line, column) = atom.line_and_column
+      VM::Atom.new(atom, filename: filename, line: line, column: column)
     end
 
     rule(string: simple(:string)) do
-      string
+      string.to_s
     end
 
     rule(quote: simple(:quote), sexp: subtree(:sexp)) do
@@ -107,8 +110,9 @@ module LISP
 end
 
 class Parser
-  def initialize(code = nil)
+  def initialize(code = nil, filename: nil)
     @code = code
+    @filename = filename
     @parser = LISP::Parser.new
     @transform = LISP::Transform.new
   end
@@ -117,6 +121,6 @@ class Parser
     code.strip!
     return [] if code.empty?
     result = @parser.parse(code)
-    @transform.apply(result)
+    @transform.apply(result, filename: @filename)
   end
 end
