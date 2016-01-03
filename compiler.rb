@@ -505,21 +505,40 @@ class Compiler
       path = '../' + name # FIXME: remove the ../
       [
         do_include(["\"#{path}\""], relative_to, options),
-        @libs[name].map do |export|
-          [VM::IMPORT_LIB, name, export]
+        @libs[name].map do |external_name, internal_name|
+          [VM::IMPORT_LIB, name, internal_name, external_name]
         end
       ]
     end
   end
 
   def do_define_library((name, *declarations), options)
-    @libs[name.join('/')] = declarations.flat_map { |(type, *args)| args if type == 'export' }.compact
-    begins = declarations.flat_map { |(type, *body)| body if type == 'begin' }.compact
+    exports = @libs[name.join('/')] = {}
+    begins = []
+    declarations.each do |(type, *args)|
+      case type
+      when 'export'
+        exports.merge!(library_exports_as_hash(args))
+      when 'begin'
+        begins += args
+      end
+    end
     [
       VM::SET_LIB, name.join('/'),
       begins.map { |s| compile_sexp(s, options) },
       VM::ENDL
     ]
+  end
+
+  def library_exports_as_hash(exports)
+    exports.each_with_object({}) do |export, hash|
+      if export.is_a?(Array)
+        (_, old_name, new_name) = export
+        hash[new_name] = old_name
+      else
+        hash[export] = export
+      end
+    end
   end
 
   def do_write(args, options)

@@ -104,8 +104,9 @@ class VM
 
     def do_import_lib
       lib = fetch
+      internal_name = fetch
       binding = fetch
-      locals[binding] = @libs[lib][:locals][binding]
+      locals[binding] = @libs[lib][:locals][internal_name]
     end
 
     def do_str_ref

@@ -1201,13 +1201,16 @@ describe Compiler do
           (define-library (my-lib 1)
             (begin
               (define foo "foo"))
-            (export foo))
+            (export foo (rename foo bar)))
         END
       end
 
       it 'records export names for the library' do
         expect(subject.libs).to eq({
-          'my-lib/1' => ['foo']
+          'my-lib/1' => {
+            'foo' => 'foo',
+            'bar' => 'foo'
+          }
         })
       end
 

@@ -2,4 +2,7 @@
   (export foo)
   (begin
     (define (foo)
-      12)))
+      12)
+    (define (bar)
+      13))
+  (export bar (rename bar baz)))

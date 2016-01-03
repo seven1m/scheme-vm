@@ -70,7 +70,7 @@ class VM
     ['SET_ARGS',      0],
     ['SET_CAR',       0],
     ['SET_CDR',       0],
-    ['IMPORT_LIB',    2],
+    ['IMPORT_LIB',    3],
     ['HALT',          0],
     ['DEBUG',         0]
   ]

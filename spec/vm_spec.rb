@@ -1169,7 +1169,7 @@ describe VM do
     it 'imports the named binding into the local frame' do
       expect(subject.locals).to eq({})
       subject.execute([
-        VM::IMPORT_LIB, 'my-lib', 'foo',
+        VM::IMPORT_LIB, 'my-lib', 'foo', 'foo',
         VM::PUSH_LOCAL, 'foo',
         VM::HALT
       ])
@@ -1179,10 +1179,23 @@ describe VM do
       expect(subject.locals.keys).to eq(['foo'])
     end
 
+    it 'allows an imported binding to be renamed' do
+      expect(subject.locals).to eq({})
+      subject.execute([
+        VM::IMPORT_LIB, 'my-lib', 'foo', 'my-foo',
+        VM::PUSH_LOCAL, 'my-foo',
+        VM::HALT
+      ])
+      expect(subject.stack_values).to eq([
+        VM::ByteArray.new('foo')
+      ])
+      expect(subject.locals.keys).to eq(['my-foo'])
+    end
+
     it 'allows an imported binding to reference a non-imported one' do
       expect(subject.locals).to eq({})
       subject.execute([
-        VM::IMPORT_LIB, 'my-lib', 'bar-fn',
+        VM::IMPORT_LIB, 'my-lib', 'bar-fn', 'bar-fn',
         VM::PUSH_LOCAL, 'bar-fn',
         VM::CALL,
         VM::HALT
