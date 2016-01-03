@@ -501,15 +501,68 @@ class Compiler
 
   def do_import((*sets), relative_to, options)
     sets.map do |set|
-      name = set.join('/')
-      path = '../' + name # FIXME: remove the ../
-      [
-        do_include(["\"#{path}\""], relative_to, options),
-        @libs[name].map do |external_name, internal_name|
-          [VM::IMPORT_LIB, name, internal_name, external_name]
-        end
-      ]
+      import_set(set, relative_to, options)
     end
+  end
+
+  def import_set(set, relative_to, options)
+    (include, bindings) = import_set_bindings(set, relative_to, options)
+    [
+      include,
+      bindings.map do |binding|
+        [VM::IMPORT_LIB, binding]
+      end
+    ]
+  end
+
+  # This method and import_set_all below return an array [include, bindings];
+  # bindings is an array that looks like this:
+  #
+  #     [library_name, internal_binding_name, external_binding_name]
+  #
+  # which is shortened as:
+  #
+  #     [n, i, e]
+  #
+  def import_set_bindings(set, relative_to, options)
+    return import_set_all(set, relative_to, options) unless set[1].is_a?(Array)
+    (directive, source, *identifiers) = set
+    (include, bindings) = import_set_bindings(source, relative_to, options)
+    available = bindings.each_with_object({}) { |(n, i, e), h| h[e] = [n, i, e] }
+    case directive
+    when 'only'
+      bindings = available.values_at(*identifiers)
+    when 'except'
+      bindings = available.values_at(*(available.keys - identifiers))
+    when 'prefix'
+      prefix = identifiers.first
+      bindings = bindings.map { |(n, i, e)| [n, i, prefix + e] }
+    when 'rename'
+      bindings = identifiers.map do |(internal_name, external_name)|
+        (n, i, _e) = available.fetch(internal_name)
+        [n, i, external_name]
+      end
+    else
+      fail "unknown import directive #{directive}"
+    end
+    [include, bindings]
+  end
+
+  def import_set_all(set, relative_to, options)
+    name = set.join('/')
+    include = include_library_if_needed(name, relative_to, options)
+    [
+      include,
+      @libs[name].map do |external_name, internal_name|
+        [name, internal_name, external_name]
+      end
+    ]
+  end
+
+  def include_library_if_needed(name, relative_to, options)
+    return [] if @libs.key?(name)
+    path = '../' + name # FIXME: remove the ../ (need some sort of load path variable)
+    do_include(["\"#{path}\""], relative_to, options)
   end
 
   def do_define_library((name, *declarations), options)

@@ -1195,23 +1195,29 @@ describe Compiler do
       end
     end
 
-    context 'define-library' do
+    context 'define-library and import' do
       before do
         @result = subject.compile(<<-END)
           (define-library (my-lib 1)
             (begin
               (define foo "foo"))
             (export foo (rename foo bar)))
+          (import (my-lib 1))
+          (import (only (my-lib 1) bar))
+          (import (except (my-lib 1) bar))
+          (import (prefix (my-lib 1) my-))
+          (import (rename (my-lib 1) (foo baz)))
+          (import (rename (prefix (except (my-lib 1) bar) my-) (my-foo my-baz)))
         END
       end
 
       it 'records export names for the library' do
-        expect(subject.libs).to eq({
+        expect(subject.libs).to eq(
           'my-lib/1' => {
             'foo' => 'foo',
             'bar' => 'foo'
           }
-        })
+        )
       end
 
       it 'compiles into vm instructions' do
@@ -1220,6 +1226,14 @@ describe Compiler do
           'VM::PUSH_STR', 'foo',
           'VM::SET_LOCAL', 'foo',
           'VM::ENDL',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-foo',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-bar',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'baz',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-baz',
           'VM::HALT'
         ])
       end
