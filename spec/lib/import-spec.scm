@@ -38,4 +38,5 @@
             (except (fixtures library-test) bar)
             my-)
            (my-foo my-fooz)))
-  (assert (eq? 12 (my-fooz))))
+  (assert (eq? 12 (my-fooz)))
+  (assert (eq? 13 (my-baz))))

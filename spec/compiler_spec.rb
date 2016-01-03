@@ -1233,6 +1233,7 @@ describe Compiler do
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-foo',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-bar',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'baz',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-baz',
           'VM::HALT'
         ])

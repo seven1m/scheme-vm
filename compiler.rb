@@ -538,9 +538,9 @@ class Compiler
       prefix = identifiers.first
       bindings = bindings.map { |(n, i, e)| [n, i, prefix + e] }
     when 'rename'
-      bindings = identifiers.map do |(internal_name, external_name)|
-        (n, i, _e) = available.fetch(internal_name)
-        [n, i, external_name]
+      renamed = Hash[identifiers]
+      bindings = bindings.map do |name, internal_name, external_name|
+        [name, internal_name, renamed[external_name] || external_name]
       end
     else
       fail "unknown import directive #{directive}"
