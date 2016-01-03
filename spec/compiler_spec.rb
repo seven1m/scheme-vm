@@ -1194,5 +1194,32 @@ describe Compiler do
         ])
       end
     end
+
+    context 'define-library' do
+      before do
+        @result = subject.compile(<<-END)
+          (define-library (my-lib 1)
+            (begin
+              (define foo "foo"))
+            (export foo))
+        END
+      end
+
+      it 'records export names for the library' do
+        expect(subject.libs).to eq({
+          'my-lib/1' => ['foo']
+        })
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::SET_LIB', 'my-lib/1',
+          'VM::PUSH_STR', 'foo',
+          'VM::SET_LOCAL', 'foo',
+          'VM::ENDL',
+          'VM::HALT'
+        ])
+      end
+    end
   end
 end

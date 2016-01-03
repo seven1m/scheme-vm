@@ -39,6 +39,9 @@ class VM
     ['PUSH_ARG',      0],
     ['PUSH_ARGS',     0],
     ['PUSH_FUNC',     0],
+    ['ENDF',          0],
+    ['PUSH_LIB',      0],
+    ['ENDL',          0],
     ['STR_REF',       0],
     ['STR_LEN',       0],
     ['LIST_TO_STR',   0],
@@ -55,18 +58,19 @@ class VM
     ['CMP_EQ_NUM',    0],
     ['CMP_NULL',      0],
     ['DUP',           0],
-    ['ENDF',          0],
     ['INT',           1],
     ['JUMP',          1],
     ['JUMP_IF_FALSE', 1],
     ['CALL',          0],
     ['APPLY',         0],
     ['RETURN',        0],
+    ['SET_LIB',       1],
     ['SET_LOCAL',     1],
     ['SET_REMOTE',    1],
     ['SET_ARGS',      0],
     ['SET_CAR',       0],
     ['SET_CDR',       0],
+    ['IMPORT_LIB',    2],
     ['HALT',          0],
     ['DEBUG',         0]
   ]
@@ -87,15 +91,17 @@ class VM
     VM::Pair
   ]
 
-  attr_reader :stack, :heap, :stdout, :ip, :call_stack, :call_args
+  attr_reader :stack, :heap, :stdout, :ip, :call_stack, :closures, :call_args, :libs
 
   def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0              # instruction pointer
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
     @call_stack << { locals: {}, args: args }
+    @libs = {}           # library definitions
     @heap = []           # a heap "address" is an index into this array
     @call_args = []      # used for next CALL
+    @closures = {}       # store function ip and locals available
     @stdout = stdout
     @executable = []     # ranges of executable heap (w^x)
     load_code(instructions)
@@ -258,12 +264,13 @@ class VM
     stdout.print(val.to_s)
   end
 
-  def fetch_func_body
+  def fetch_until(end_instruction)
     body = []
-    while (instruction = fetch) != ENDF
+    while (instruction = fetch) != end_instruction
       (_name, arity) = INSTRUCTIONS[instruction]
       body << instruction
-      body << fetch_func_body + [ENDF] if instruction == PUSH_FUNC
+      body << fetch_until(ENDF) + [ENDF] if instruction == PUSH_FUNC
+      body << fetch_until(ENDL) + [ENDL] if instruction == PUSH_LIB
       arity.times { body << fetch } # skip args
     end
     body.flatten

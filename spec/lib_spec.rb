@@ -3,10 +3,13 @@ require 'stringio'
 
 Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
   describe File.split(path).last do
-    it 'passes all tests' do
+    code = File.read(path)
+    focus = !(code =~ /^; focus/).nil?
+    skip = !(code =~ /^; skip/).nil?
+    it 'passes all tests', focus: focus, skip: skip do
       failed = false
       out = StringIO.new
-      Program.new(File.read(path), filename: File.split(path).last, stdout: out).run
+      Program.new(code, filename: path, stdout: out).run
       out.rewind
       result = out.read
       if result != ''

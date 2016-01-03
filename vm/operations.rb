@@ -58,15 +58,21 @@ class VM
     def do_push_local
       name = fetch
       address = locals[name]
-      fail VariableUndefined.new(name) unless address
+      fail VariableUndefined, name unless address
       push(address)
     end
 
     def do_push_remote
       name = fetch
-      frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l[name] }
-      fail VariableUndefined.new(name) unless frame_locals
-      address = frame_locals.fetch(name)
+      func = @call_stack.last[:func]
+      closure_locals = func ? @closures[func][:locals] : {}
+      if closure_locals.key?(name)
+        address = closure_locals.fetch(name)
+      else
+        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l.key?(name) }
+        fail VariableUndefined, name unless frame_locals
+        address = frame_locals.fetch(name)
+      end
       push(address)
     end
 
@@ -82,7 +88,24 @@ class VM
 
     def do_push_func
       push(@ip)
-      fetch_func_body # discard
+      @closures[@ip] = { locals: locals }
+      fetch_until(ENDF) # discard
+    end
+
+    def do_set_lib
+      name = fetch
+      @call_stack << { lib: name, locals: {} }
+    end
+
+    def do_endl
+      frame = @call_stack.pop
+      @libs[frame[:lib]] = { locals: frame[:locals] }
+    end
+
+    def do_import_lib
+      lib = fetch
+      binding = fetch
+      locals[binding] = @libs[lib][:locals][binding]
     end
 
     def do_str_ref
@@ -103,13 +126,15 @@ class VM
     end
 
     def do_call
+      new_ip = pop
       if @heap[@ip] == RETURN
+        @call_stack.last[:func] = new_ip
         @call_stack.last[:args] = @call_args
       else
-        @call_stack << { return: @ip, locals: {}, args: @call_args }
+        @call_stack << { func: new_ip, return: @ip, locals: {}, args: @call_args }
       end
       fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
-      @ip = pop
+      @ip = new_ip
     end
 
     def do_apply
@@ -118,9 +143,10 @@ class VM
         @call_args.push(pair.address)
         pair = @heap[pair.next_node]
       end
-      @call_stack << { return: @ip, locals: {}, args: @call_args }
+      new_ip = pop
+      @call_stack << { func: new_ip, return: @ip, locals: {}, args: @call_args }
       fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
-      @ip = pop
+      @ip = new_ip
     end
 
     def do_return(debug)

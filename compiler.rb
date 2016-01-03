@@ -11,6 +11,7 @@ class Compiler
     @filename = filename
     @arguments = arguments
     @syntax = {}              # macro transformers
+    @libs = {}                # loaded libraries
     @mangled_identifiers = {} # used for macro hygiene
     @source = {}              # store source code for each file compiled
     @source[filename] = code
@@ -19,13 +20,11 @@ class Compiler
     @sexps += Parser.new(code, filename: filename).parse if code
   end
 
-  attr_reader :variables, :filename, :arguments, :syntax, :source
+  attr_reader :variables, :filename, :arguments, :syntax, :source, :libs
 
   def compile(code = nil, keep_last: false, halt: true)
     @sexps += Parser.new(code, filename: filename).parse if code
-    instructions = compile_sexps(@sexps, { syntax: @syntax }, filename: filename, keep_last: keep_last)
-    instructions << VM::HALT if halt
-    optimize(instructions)
+    compile_sexps(@sexps, options: { syntax: @syntax }, halt: halt, keep_last: keep_last)
   end
 
   def include_code(paths)
@@ -76,13 +75,15 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps, options = {}, filename:, keep_last: false)
+  def compile_sexps(sexps, options: {}, halt: false, keep_last: false)
     options[:locals] ||= {}
-    sexps
+    instructions = sexps
       .each_with_index
       .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1 && keep_last)) }
       .flatten
       .compact
+    instructions << VM::HALT if halt
+    optimize(instructions)
   end
 
   def optimize(instructions)
@@ -102,6 +103,8 @@ class Compiler
       call(sexp, options)
     elsif name == 'include'
       do_include(args, name.filename, options)
+    elsif name == 'import'
+      do_import(args, name.filename, options)
     elsif (built_in_name = built_in_function_name(name))
       send(built_in_name, args, options)
     elsif (macro = find_syntax(name, options))
@@ -492,8 +495,31 @@ class Compiler
       fail "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
       filename = "#{$1}.scm"
       sexps = parse_file(filename, relative_to: relative_to)
-      compile_sexps(sexps, { syntax: options[:syntax], locals: options[:locals] }, filename: filename)
+      compile_sexps(sexps, options: { syntax: options[:syntax], locals: options[:locals] })
     end
+  end
+
+  def do_import((*sets), relative_to, options)
+    sets.map do |set|
+      name = set.join('/')
+      path = '../' + name # FIXME: remove the ../
+      [
+        do_include(["\"#{path}\""], relative_to, options),
+        @libs[name].map do |export|
+          [VM::IMPORT_LIB, name, export]
+        end
+      ]
+    end
+  end
+
+  def do_define_library((name, *declarations), options)
+    @libs[name.join('/')] = declarations.flat_map { |(type, *args)| args if type == 'export' }.compact
+    begins = declarations.flat_map { |(type, *body)| body if type == 'begin' }.compact
+    [
+      VM::SET_LIB, name.join('/'),
+      begins.map { |s| compile_sexp(s, options) },
+      VM::ENDL
+    ]
   end
 
   def do_write(args, options)

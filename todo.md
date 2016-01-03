@@ -3,6 +3,7 @@
 - [x] GC
 - [x] show proper error when source is another file
 - [x] optimize `JUMP` to `RETURN` if jump lands on a return (fixes TCE in some cases)
+- [x] proper closures
 
 ## Missing things from R7RS:
 

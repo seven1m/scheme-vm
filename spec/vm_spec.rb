@@ -382,7 +382,7 @@ describe VM do
   end
 
   describe 'PUSH_REMOTE' do
-    context 'pushing a local defined prior to this function (closure)' do
+    context 'pushing a local defined prior to this function' do
       before do
         subject.execute([
           VM::PUSH_NUM, 10,
@@ -404,6 +404,36 @@ describe VM do
       it 'pushes the address of the variable defined outside this function onto the stack' do
         stdout.rewind
         expect(stdout.read).to eq('10')
+      end
+    end
+
+    context 'referencing a variable in lexical scope but not in dynamic scope (closure)' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+
+          VM::PUSH_NUM, '10',
+          VM::SET_LOCAL, 'x',
+
+          VM::PUSH_FUNC,
+          VM::PUSH_REMOTE, 'x',
+          VM::RETURN,
+          VM::ENDF,
+
+          VM::RETURN,
+          VM::ENDF,
+
+          VM::CALL, # call the outer function
+          VM::CALL, # call the inner function
+
+          VM::HALT
+        ])
+      end
+
+      it 'captures the variable' do
+        expect(subject.stack_values).to eq([
+          VM::Int.new(10)
+        ])
       end
     end
   end
@@ -1106,6 +1136,61 @@ describe VM do
       subject.execute
       expect(subject.call_stack.size).to eq(1)
       expect(subject.pop_val).to eq(VM::Int.new(0))
+    end
+  end
+
+  describe 'SET_LIB and IMPORT_LIB' do
+    before do
+      subject.execute([
+        VM::SET_LIB, 'my-lib',
+
+        VM::PUSH_STR, 'foo',
+        VM::SET_LOCAL, 'foo',
+
+        VM::PUSH_STR, 'bar',
+        VM::SET_LOCAL, 'private',
+
+        VM::PUSH_FUNC,
+        VM::PUSH_REMOTE, 'private',
+        VM::RETURN,
+        VM::ENDF,
+        VM::SET_LOCAL, 'bar-fn',
+
+        VM::ENDL,
+        VM::HALT # pause here
+      ])
+    end
+
+    it 'stores the library context and locals defined within' do
+      expect(subject.libs['my-lib']).to be
+      expect(subject.libs['my-lib'][:locals].keys).to eq(['foo', 'private', 'bar-fn'])
+    end
+
+    it 'imports the named binding into the local frame' do
+      expect(subject.locals).to eq({})
+      subject.execute([
+        VM::IMPORT_LIB, 'my-lib', 'foo',
+        VM::PUSH_LOCAL, 'foo',
+        VM::HALT
+      ])
+      expect(subject.stack_values).to eq([
+        VM::ByteArray.new('foo')
+      ])
+      expect(subject.locals.keys).to eq(['foo'])
+    end
+
+    it 'allows an imported binding to reference a non-imported one' do
+      expect(subject.locals).to eq({})
+      subject.execute([
+        VM::IMPORT_LIB, 'my-lib', 'bar-fn',
+        VM::PUSH_LOCAL, 'bar-fn',
+        VM::CALL,
+        VM::HALT
+      ])
+      expect(subject.stack_values).to eq([
+        VM::ByteArray.new('bar')
+      ])
+      expect(subject.locals.keys).to eq(['bar-fn'])
     end
   end
 end
