@@ -39,3 +39,6 @@ Style/IfUnlessModifier:
 
 Style/WhileUntilModifier:
   Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false

@@ -31,7 +31,7 @@ describe Program do
 
     describe 'exit' do
       context 'when the program calls (exit)' do
-        let(:code) { '(exit) foo' }
+        let(:code) { '(exit) (exit 1)' }
 
         it 'returns 0' do
           expect(subject.run).to eq(0)
@@ -39,7 +39,7 @@ describe Program do
       end
 
       context 'when the program calls (exit #t)' do
-        let(:code) { '(exit #t) foo' }
+        let(:code) { '(exit #t) (exit)' }
 
         it 'returns 0' do
           expect(subject.run).to eq(0)
@@ -47,7 +47,7 @@ describe Program do
       end
 
       context 'when the program calls (exit 10)' do
-        let(:code) { '(exit 10) foo' }
+        let(:code) { '(exit 10) (exit)' }
 
         it 'returns 10' do
           expect(subject.run).to eq(10)
@@ -55,7 +55,7 @@ describe Program do
       end
 
       context 'when the program calls (exit #f)' do
-        let(:code) { '(exit #f) foo' }
+        let(:code) { '(exit #f) (exit)' }
 
         it 'returns 1' do
           expect(subject.run).to eq(1)

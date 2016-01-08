@@ -319,16 +319,21 @@ describe Compiler do
     context 'variables' do
       before do
         @result = subject.compile(<<-END)
-          (define y 10)
-          (set! y 11)
-          (set! x 9)
-          y
+          (define x 8)
+          ((lambda ()
+            (define y 10)
+            (set! y 11)
+            (set! x 9)
+            y))
           x
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::PUSH_NUM', '8',
+          'VM::DEFINE_VAR', 'x',
+          'VM::PUSH_FUNC',
           'VM::PUSH_NUM', '10',
           'VM::DEFINE_VAR', 'y',
           'VM::PUSH_NUM', '11',
@@ -336,7 +341,9 @@ describe Compiler do
           'VM::PUSH_NUM', '9',
           'VM::SET_VAR', 'x',
           'VM::PUSH_VAR', 'y',
-          'VM::POP',
+          'VM::RETURN',
+          'VM::ENDF',
+          'VM::CALL',
           'VM::PUSH_VAR', 'x',
           'VM::POP',
           'VM::HALT'
@@ -344,26 +351,15 @@ describe Compiler do
       end
     end
 
-    context 'remote variable' do
-      before do
-        @result = subject.compile(<<-END)
-          (define n 10)
-          (lambda ()
-            n)
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '10',
-          'VM::DEFINE_VAR', 'n',
-          'VM::PUSH_FUNC',
-          'VM::PUSH_VAR', 'n',
-          'VM::RETURN',
-          'VM::ENDF',
-          'VM::POP',
-          'VM::HALT'
-        ])
+    context 'variable out of scope' do
+      it 'fails to compile' do
+        expect {
+          subject.compile(<<-END)
+            (lambda ()
+              n)
+            (define n 10)
+          END
+        }.to raise_error(VM::VariableUndefined)
       end
     end
 
@@ -858,12 +854,17 @@ describe Compiler do
     context 'apply' do
       before do
         @result = subject.compile(<<-END)
+          (define (foo))
           (apply foo (list 1 2))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::PUSH_FUNC',
+          'VM::RETURN',
+          'VM::ENDF',
+          'VM::DEFINE_VAR', 'foo',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', 2, # arg count
@@ -1090,7 +1091,7 @@ describe Compiler do
         before do
           @result = subject.compile(<<-END)
             (include "./fixtures/include-test")
-            (print "hello from main")
+            "hello from main"
           END
         end
 
@@ -1099,10 +1100,6 @@ describe Compiler do
             'VM::PUSH_STR', 'hello from include-test',
             'VM::INT', 1,
             'VM::PUSH_STR', 'hello from main',
-            'VM::PUSH_NUM', 1,
-            'VM::SET_ARGS',
-            'VM::PUSH_VAR', 'print',
-            'VM::CALL',
             'VM::HALT'
           ])
         end

@@ -7,14 +7,14 @@ class Program
     @args = args
     @stdout = stdout
     @compiler = Compiler.new(code, filename: filename)
-    @instr = @compiler.compile
   end
 
   def run(debug: 0)
+    @instr = @compiler.compile
     @compiler.pretty_print(@instr) if debug >= 1
     vm.execute(@instr, debug: debug)
     vm.return_value
-  rescue VM::VariableUndefined => e
+  rescue VM::VariableUndefined, Compiler::VariableUndefined => e
     print_error_message(e)
     1
   end

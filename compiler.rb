@@ -80,10 +80,10 @@ class Compiler
   def compile_sexps(sexps, options: {}, halt: false, keep_last: false)
     options[:locals] ||= {}
     instructions = sexps
-      .each_with_index
-      .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1 && keep_last)) }
-      .flatten
-      .compact
+                   .each_with_index
+                   .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1 && keep_last)) }
+                   .flatten
+                   .compact
     instructions << VM::HALT if halt
     optimize(instructions)
   end
@@ -357,7 +357,7 @@ class Compiler
 
   def do_lambda((args, *body), options)
     (locals, args) = compile_lambda_args(args)
-    body = compile_lambda_body(body, locals, options)
+    body = compile_lambda_body(body, options[:locals].merge(locals), options)
     [
       VM::PUSH_FUNC,
       args,
@@ -509,6 +509,7 @@ class Compiler
 
   def import_set(set, relative_to, options)
     (include, bindings) = import_set_bindings(set, relative_to, options)
+    bindings.map(&:last).each { |name| options[:locals][name] = true }
     [
       include,
       bindings.map do |binding|
@@ -603,6 +604,7 @@ class Compiler
   end
 
   def push_var(name, options)
+    fail VM::VariableUndefined, name unless options[:locals][name]
     [
       VM::PUSH_VAR,
       name
