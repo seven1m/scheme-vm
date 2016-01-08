@@ -8,35 +8,35 @@ describe GC do
       VM::PUSH_FUNC,
 
       VM::PUSH_ARG,
-      VM::SET_LOCAL, 'my-2',
+      VM::SET_ARG, 'my-2',
 
       VM::PUSH_ARG,
-      VM::SET_LOCAL, 'my-3',
+      VM::SET_ARG, 'my-3',
 
-      VM::PUSH_REMOTE, 'y',
-      VM::SET_LOCAL, 'my-y',
+      VM::PUSH_VAR, 'y',
+      VM::DEFINE_VAR, 'my-y',
 
       VM::HALT, # pause execution here
       VM::RETURN,
       VM::ENDF,
-      VM::SET_LOCAL, 'fn',
+      VM::DEFINE_VAR, 'fn',
 
       # # # # # #
 
       VM::PUSH_NUM, '1',
-      VM::SET_LOCAL, 'y',
+      VM::DEFINE_VAR, 'y',
 
       VM::PUSH_NUM, '2',
       VM::DUP,                # save this for an arg below
       VM::PUSH_NUM, 1,
       VM::PUSH_LIST,
-      VM::SET_LOCAL, 'z',
+      VM::DEFINE_VAR, 'z',
 
       VM::PUSH_NUM, '3',
       VM::PUSH_NUM, 2,
       VM::SET_ARGS,           # [2, 3]
 
-      VM::PUSH_LOCAL, 'fn',
+      VM::PUSH_VAR, 'fn',
       VM::CALL,
       VM::HALT
     ]

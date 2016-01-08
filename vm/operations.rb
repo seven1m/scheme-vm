@@ -57,23 +57,22 @@ class VM
 
     def do_push_local
       name = fetch
-      address = locals[name]
+      address = named_args[name] || locals[name]
       fail VariableUndefined, name unless address
       push(address)
     end
 
-    def do_push_remote
+    def do_push_var
       name = fetch
-      func = @call_stack.last[:func]
-      closure_locals = func ? @closures[func][:locals] : {}
-      if closure_locals.key?(name)
-        address = closure_locals.fetch(name)
+      if (frame = find_call_stack_frame_with_symbol(name))
+        address = frame[:named_args][name]
+        push(address)
+      elsif (c = find_closure_with_symbol(name))
+        address = c[:locals][name]
+        push(address)
       else
-        frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l.key?(name) }
-        fail VariableUndefined, name unless frame_locals
-        address = frame_locals.fetch(name)
+        fail VariableUndefined, name
       end
-      push(address)
     end
 
     def do_push_args
@@ -88,18 +87,19 @@ class VM
 
     def do_push_func
       push(@ip)
-      @closures[@ip] = { locals: locals }
+      @closures[@ip] = { locals: {}, parent: closure }
       fetch_until(ENDF) # discard
     end
 
     def do_set_lib
       name = fetch
-      @call_stack << { lib: name, locals: {} }
+      @closures[name] = { locals: {} }
+      @call_stack << { func: name, lib: name }
     end
 
     def do_endl
       frame = @call_stack.pop
-      @libs[frame[:lib]] = { locals: frame[:locals] }
+      @libs[frame[:lib]] = @closures[frame[:func]]
     end
 
     def do_import_lib
@@ -132,8 +132,9 @@ class VM
         @call_stack.last[:func] = new_ip
         @call_stack.last[:args] = @call_args
       else
-        @call_stack << { func: new_ip, return: @ip, locals: {}, args: @call_args }
+        @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
       end
+      pp @call_stack if @call_stack.size > MAX_CALL_DEPTH
       fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
     end
@@ -145,7 +146,7 @@ class VM
         pair = @heap[pair.next_node]
       end
       new_ip = pop
-      @call_stack << { func: new_ip, return: @ip, locals: {}, args: @call_args }
+      @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
       fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
     end
@@ -276,21 +277,31 @@ class VM
       end
     end
 
-    def do_set_local
+    def do_define_var
       name = fetch
       locals[name] = pop
     end
 
-    def do_set_remote
+    def do_set_var
       name = fetch
-      frame_locals = @call_stack.reverse.lazy.map { |f| f[:locals] }.detect { |l| l.key?(name) }
-      fail VariableUndefined.new(name) unless frame_locals
-      frame_locals[name] = pop
+      if (frame = find_call_stack_frame_with_symbol(name))
+        frame[:named_args][name] = pop
+      elsif (c = find_closure_with_symbol(name))
+        c[:locals][name] = pop
+      else
+        fail VariableUndefined, name
+      end
     end
 
     def do_set_args
       count = pop_raw
       @call_args = (0...count).map { pop }.reverse
+    end
+
+    def do_set_arg
+      address = pop
+      name = fetch
+      named_args[name] = address
     end
 
     def do_set_car

@@ -19,7 +19,7 @@ class VM
 
   ROOT_PATH = File.expand_path('..', __FILE__)
 
-  MAX_CALL_DEPTH = 50
+  MAX_CALL_DEPTH = 10
 
   INSTRUCTIONS = [
     ['NOOP',          0],
@@ -34,8 +34,7 @@ class VM
     ['PUSH_CDR',      0],
     ['PUSH_CONS',     0],
     ['PUSH_LIST',     0],
-    ['PUSH_LOCAL',    1],
-    ['PUSH_REMOTE',   1],
+    ['PUSH_VAR',   1],
     ['PUSH_ARG',      0],
     ['PUSH_ARGS',     0],
     ['PUSH_FUNC',     0],
@@ -65,9 +64,10 @@ class VM
     ['APPLY',         0],
     ['RETURN',        0],
     ['SET_LIB',       1],
-    ['SET_LOCAL',     1],
-    ['SET_REMOTE',    1],
+    ['DEFINE_VAR',    1],
+    ['SET_VAR',       1],
     ['SET_ARGS',      0],
+    ['SET_ARG',       1],
     ['SET_CAR',       0],
     ['SET_CDR',       0],
     ['IMPORT_LIB',    3],
@@ -97,11 +97,12 @@ class VM
     @ip = 0              # instruction pointer
     @stack = []          # operand stack
     @call_stack = []     # call frame stack
-    @call_stack << { locals: {}, args: args }
+    @call_stack << { args: args, named_args: {} }
     @libs = {}           # library definitions
     @heap = []           # a heap "address" is an index into this array
     @call_args = []      # used for next CALL
     @closures = {}       # store function ip and locals available
+    @closures[:global] = { locals: {} } # global variables
     @stdout = stdout
     @executable = []     # ranges of executable heap (w^x)
     load_code(instructions)
@@ -234,7 +235,7 @@ class VM
 
   def stack_values
     @stack.map do |address|
-      resolve(address)
+      address && resolve(address)
     end
   end
 
@@ -242,12 +243,34 @@ class VM
     @heap.index(nil) || @heap.size
   end
 
+  def closure
+    key = @call_stack.last[:func] || :global
+    @closures[key]
+  end
+
   def locals
-    @call_stack.last[:locals]
+    closure[:locals]
+  end
+
+  def find_closure_with_symbol(name)
+    c = closure
+    loop do
+      break unless c
+      return c if c[:locals].key?(name)
+      c = c[:parent]
+    end
   end
 
   def args
     @call_stack.last[:args]
+  end
+
+  def named_args
+    @call_stack.last[:named_args]
+  end
+
+  def find_call_stack_frame_with_symbol(name)
+    @call_stack.reverse.detect { |f| f[:named_args].key?(name) }
   end
 
   def build_pair(car, cdr)

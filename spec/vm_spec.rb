@@ -320,14 +320,14 @@ describe VM do
     end
   end
 
-  describe 'PUSH_LOCAL' do
+  describe 'PUSH_VAR' do
     context do
       before do
         address = subject.alloc
         subject.heap[address] = VM::Int.new(9)
         subject.locals[0] = address
         subject.execute([
-          VM::PUSH_LOCAL, 0,
+          VM::PUSH_VAR, 0,
           VM::HALT
         ])
       end
@@ -343,11 +343,11 @@ describe VM do
       let(:instructions) do
         [
           VM::PUSH_FUNC,
-          VM::PUSH_REMOTE, 'my_func',
+          VM::PUSH_VAR, 'my_func',
           VM::RETURN,
           VM::ENDF,
-          VM::SET_LOCAL, 'my_func',
-          VM::PUSH_LOCAL, 'my_func',
+          VM::DEFINE_VAR, 'my_func',
+          VM::PUSH_VAR, 'my_func',
           VM::CALL,
           VM::HALT
         ]
@@ -367,7 +367,7 @@ describe VM do
     context 'pushing undefined local variable' do
       it 'raises an error' do
         expect do
-          subject.execute([VM::PUSH_LOCAL, 'x', VM::HALT])
+          subject.execute([VM::PUSH_VAR, 'x', VM::HALT])
         end.to raise_error(VM::VariableUndefined, 'x is not defined')
       end
     end
@@ -375,48 +375,42 @@ describe VM do
     context 'pushing undefined remote variable' do
       it 'raises an error' do
         expect do
-          subject.execute([VM::PUSH_REMOTE, 'x', VM::HALT])
+          subject.execute([VM::PUSH_VAR, 'x', VM::HALT])
         end.to raise_error(VM::VariableUndefined, 'x is not defined')
       end
     end
   end
 
-  describe 'PUSH_REMOTE' do
-    context 'pushing a local defined prior to this function' do
+  describe 'PUSH_VAR' do
+    context 'referencing variable in lexical scope' do
       before do
         subject.execute([
-          VM::PUSH_NUM, 10,
-          VM::SET_LOCAL, 0, # x
+          VM::PUSH_NUM, '9',
+          VM::DEFINE_VAR, 'x',
 
-          VM::PUSH_FUNC,
-          VM::PUSH_REMOTE, 0, # x
-          VM::INT, VM::INT_WRITE,
-          VM::RETURN,
-          VM::ENDF,
-          VM::SET_LOCAL, 1, # my_func
-
-          VM::PUSH_LOCAL, 1,
-          VM::CALL,
-          VM::HALT
-        ])
-      end
-
-      it 'pushes the address of the variable defined outside this function onto the stack' do
-        stdout.rewind
-        expect(stdout.read).to eq('10')
-      end
-    end
-
-    context 'referencing a variable in lexical scope but not in dynamic scope (closure)' do
-      before do
-        subject.execute([
           VM::PUSH_FUNC,
 
           VM::PUSH_NUM, '10',
-          VM::SET_LOCAL, 'x',
+          VM::SET_VAR, 'x',
+
+          VM::PUSH_NUM, '11',
+          VM::DEFINE_VAR, 'y',
+
+          VM::PUSH_NUM, '12',
+          VM::DEFINE_VAR, 'z',
 
           VM::PUSH_FUNC,
-          VM::PUSH_REMOTE, 'x',
+          VM::PUSH_VAR, 'x',
+
+          VM::PUSH_NUM, '13',
+          VM::DEFINE_VAR, 'z',
+
+          VM::PUSH_FUNC,
+          VM::PUSH_VAR, 'y',
+          VM::PUSH_VAR, 'z',
+          VM::RETURN,
+          VM::ENDF,
+
           VM::RETURN,
           VM::ENDF,
 
@@ -424,6 +418,11 @@ describe VM do
           VM::ENDF,
 
           VM::CALL, # call the outer function
+          VM::CALL, # call the middle function
+
+          VM::PUSH_NUM, '12',
+          VM::DEFINE_VAR, 'y',
+
           VM::CALL, # call the inner function
 
           VM::HALT
@@ -432,7 +431,9 @@ describe VM do
 
       it 'captures the variable' do
         expect(subject.stack_values).to eq([
-          VM::Int.new(10)
+          VM::Int.new(10),
+          VM::Int.new(11),
+          VM::Int.new(13)
         ])
       end
     end
@@ -443,20 +444,20 @@ describe VM do
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_ARG,
-        VM::SET_LOCAL, 'x',            # first arg
+        VM::DEFINE_VAR, 'x',            # first arg
         VM::PUSH_ARG,
-        VM::SET_LOCAL, 'y',            # second arg
+        VM::DEFINE_VAR, 'y',            # second arg
         VM::PUSH_ARGS,
-        VM::SET_LOCAL, 'z',            # list containing third and fourth args
-        VM::PUSH_LOCAL, 'x',
+        VM::DEFINE_VAR, 'z',            # list containing third and fourth args
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
-        VM::PUSH_LOCAL, 'y',
+        VM::PUSH_VAR, 'y',
         VM::INT, VM::INT_WRITE,
-        VM::PUSH_LOCAL, 'z',
+        VM::PUSH_VAR, 'z',
         VM::INT, VM::INT_WRITE,
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 'fn',
+        VM::DEFINE_VAR, 'fn',
 
         VM::PUSH_NUM, 2,             # first arg
         VM::PUSH_NUM, 3,             # second arg
@@ -464,7 +465,7 @@ describe VM do
         VM::PUSH_NUM, 5,             # fourth arg
         VM::PUSH_NUM, 4,             # arg count
         VM::SET_ARGS,
-        VM::PUSH_LOCAL, 'fn',
+        VM::PUSH_VAR, 'fn',
         VM::CALL,
         VM::HALT
       ])
@@ -699,17 +700,17 @@ describe VM do
         subject.execute([
           VM::PUSH_FUNC,
           VM::PUSH_ARGS,
-          VM::SET_LOCAL, 'x',
-          VM::PUSH_LOCAL, 'x',
+          VM::DEFINE_VAR, 'x',
+          VM::PUSH_VAR, 'x',
           VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
-          VM::SET_LOCAL, 'foo',
+          VM::DEFINE_VAR, 'foo',
           VM::PUSH_NUM, 0,
           VM::PUSH_LIST,
           VM::PUSH_NUM, 1, # arg count
           VM::SET_ARGS,
-          VM::PUSH_LOCAL, 'foo',
+          VM::PUSH_VAR, 'foo',
           VM::APPLY,
           VM::HALT
         ])
@@ -726,23 +727,23 @@ describe VM do
         subject.execute([
           VM::PUSH_FUNC,
           VM::PUSH_ARG,
-          VM::SET_LOCAL, 'x',
+          VM::DEFINE_VAR, 'x',
           VM::PUSH_ARG,
-          VM::SET_LOCAL, 'y',
-          VM::PUSH_LOCAL, 'x',
+          VM::DEFINE_VAR, 'y',
+          VM::PUSH_VAR, 'x',
           VM::INT, VM::INT_WRITE,
-          VM::PUSH_LOCAL, 'y',
+          VM::PUSH_VAR, 'y',
           VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
-          VM::SET_LOCAL, 'foo',
+          VM::DEFINE_VAR, 'foo',
           VM::PUSH_NUM, '1',
           VM::PUSH_NUM, '2',
           VM::PUSH_NUM, 2,
           VM::PUSH_LIST,
           VM::PUSH_NUM, 1, # arg count
           VM::SET_ARGS,
-          VM::PUSH_LOCAL, 'foo',
+          VM::PUSH_VAR, 'foo',
           VM::APPLY,
           VM::HALT
         ])
@@ -759,20 +760,20 @@ describe VM do
         subject.execute([
           VM::PUSH_FUNC,
           VM::PUSH_ARG,
-          VM::SET_LOCAL, 'x',
+          VM::DEFINE_VAR, 'x',
           VM::PUSH_ARG,
-          VM::SET_LOCAL, 'y',
+          VM::DEFINE_VAR, 'y',
           VM::PUSH_ARG,
-          VM::SET_LOCAL, 'z',
-          VM::PUSH_LOCAL, 'x',
+          VM::DEFINE_VAR, 'z',
+          VM::PUSH_VAR, 'x',
           VM::INT, VM::INT_WRITE,
-          VM::PUSH_LOCAL, 'z',
+          VM::PUSH_VAR, 'z',
           VM::INT, VM::INT_WRITE,
-          VM::PUSH_LOCAL, 'y',
+          VM::PUSH_VAR, 'y',
           VM::INT, VM::INT_WRITE,
           VM::RETURN,
           VM::ENDF,
-          VM::SET_LOCAL, 'foo',
+          VM::DEFINE_VAR, 'foo',
           VM::PUSH_NUM, '1',
           VM::PUSH_NUM, '2',
           VM::PUSH_NUM, 2,
@@ -783,7 +784,7 @@ describe VM do
           VM::PUSH_LIST,
           VM::PUSH_NUM, 2, # arg count
           VM::SET_ARGS,
-          VM::PUSH_LOCAL, 'foo',
+          VM::PUSH_VAR, 'foo',
           VM::APPLY,
           VM::HALT
         ])
@@ -1027,30 +1028,30 @@ describe VM do
     end
   end
 
-  describe 'SET_LOCAL' do
+  describe 'DEFINE_VAR' do
     before do
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_STR, 'func.',
-        VM::SET_LOCAL, 'x',
-        VM::PUSH_LOCAL, 'x',
+        VM::DEFINE_VAR, 'x',
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 'fn',
+        VM::DEFINE_VAR, 'fn',
 
-        VM::PUSH_LOCAL, 'fn',
+        VM::PUSH_VAR, 'fn',
         VM::CALL,
 
         VM::PUSH_STR, 'main.',
-        VM::SET_LOCAL, 'x',
+        VM::DEFINE_VAR, 'x',
 
-        VM::PUSH_LOCAL, 'x',
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
 
-        VM::PUSH_LOCAL, 'fn',
+        VM::PUSH_VAR, 'fn',
         VM::CALL,
 
         VM::HALT
@@ -1069,30 +1070,30 @@ describe VM do
     end
   end
 
-  describe 'SET_REMOTE' do
+  describe 'SET_VAR' do
     before do
       subject.execute([
         VM::PUSH_FUNC,
         VM::PUSH_STR, 'func.',
-        VM::SET_REMOTE, 'x',
-        VM::PUSH_REMOTE, 'x',
+        VM::SET_VAR, 'x',
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 'fn',
+        VM::DEFINE_VAR, 'fn',
 
         VM::PUSH_STR, 'main.',
-        VM::SET_LOCAL, 'x',
+        VM::DEFINE_VAR, 'x',
 
-        VM::PUSH_LOCAL, 'x',
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
 
-        VM::PUSH_LOCAL, 'fn',
+        VM::PUSH_VAR, 'fn',
         VM::CALL,
 
-        VM::PUSH_LOCAL, 'x',
+        VM::PUSH_VAR, 'x',
         VM::INT, VM::INT_WRITE,
         VM::POP,
 
@@ -1145,16 +1146,16 @@ describe VM do
         VM::SET_LIB, 'my-lib',
 
         VM::PUSH_STR, 'foo',
-        VM::SET_LOCAL, 'foo',
+        VM::DEFINE_VAR, 'foo',
 
         VM::PUSH_STR, 'bar',
-        VM::SET_LOCAL, 'private',
+        VM::DEFINE_VAR, 'private',
 
         VM::PUSH_FUNC,
-        VM::PUSH_REMOTE, 'private',
+        VM::PUSH_VAR, 'private',
         VM::RETURN,
         VM::ENDF,
-        VM::SET_LOCAL, 'bar-fn',
+        VM::DEFINE_VAR, 'bar-fn',
 
         VM::ENDL,
         VM::HALT # pause here
@@ -1170,7 +1171,7 @@ describe VM do
       expect(subject.locals).to eq({})
       subject.execute([
         VM::IMPORT_LIB, 'my-lib', 'foo', 'foo',
-        VM::PUSH_LOCAL, 'foo',
+        VM::PUSH_VAR, 'foo',
         VM::HALT
       ])
       expect(subject.stack_values).to eq([
@@ -1183,7 +1184,7 @@ describe VM do
       expect(subject.locals).to eq({})
       subject.execute([
         VM::IMPORT_LIB, 'my-lib', 'foo', 'my-foo',
-        VM::PUSH_LOCAL, 'my-foo',
+        VM::PUSH_VAR, 'my-foo',
         VM::HALT
       ])
       expect(subject.stack_values).to eq([
@@ -1196,7 +1197,7 @@ describe VM do
       expect(subject.locals).to eq({})
       subject.execute([
         VM::IMPORT_LIB, 'my-lib', 'bar-fn', 'bar-fn',
-        VM::PUSH_LOCAL, 'bar-fn',
+        VM::PUSH_VAR, 'bar-fn',
         VM::CALL,
         VM::HALT
       ])

@@ -2,15 +2,11 @@ require_relative 'parser'
 require_relative 'compiler'
 
 class Program
-  INCLUDES = %w(
-    base
-  )
-
   def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
     @filename = filename
     @args = args
     @stdout = stdout
-    @compiler = Compiler.new(code, filename: filename, includes: INCLUDES)
+    @compiler = Compiler.new(code, filename: filename)
     @instr = @compiler.compile
   end
 

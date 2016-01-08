@@ -1,3 +1,5 @@
+(import (scheme base))
+
 (include "assert")
 
 (assert (eq? #t (cond (else #t))))

@@ -1,3 +1,5 @@
+(import (scheme base))
+
 (include "assert")
 
 ; import all

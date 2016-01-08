@@ -18,7 +18,7 @@ class VM
 
     def active?(candidate)
       return true if singleton?(candidate)
-      (closure_locations + call_stack_locations + op_stack_locations).uniq.each do |location|
+      (closure_locations + call_stack_locations + op_stack_locations).uniq.compact.each do |location|
         return true if location == candidate
         value = @vm.heap[location]
         return true if value.is_a?(VM::Pair) && active_in_pair?(candidate, value)
@@ -26,12 +26,16 @@ class VM
       false
     end
 
+    # def lib_locations
+    #   @vm.libs.values.flat_map { |l| l[:locals].keys }
+    # end
+
     def closure_locations
       @vm.closures.values.flat_map { |c| c[:locals].values }.uniq
     end
 
     def call_stack_locations
-      @vm.call_stack.flat_map { |f| f[:locals].values }.uniq
+      @vm.call_stack.flat_map { |f| f[:named_args].values }.uniq
     end
 
     def op_stack_locations

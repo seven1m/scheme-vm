@@ -5,11 +5,13 @@ require 'pp'
 
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
+  LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')]
 
-  def initialize(code = nil, filename:, includes: [], arguments: {})
+  def initialize(code = nil, filename:, includes: [], arguments: {}, load_path: LOAD_PATH)
     @variables = {}
     @filename = filename
     @arguments = arguments
+    @load_path = load_path
     @syntax = {}              # macro transformers
     @libs = {}                # loaded libraries
     @mangled_identifiers = {} # used for macro hygiene
@@ -334,22 +336,22 @@ class Compiler
       args = args.last if args.size == 2 && args.first == '.'
       options[:locals][name] = true
       do_lambda([args, *body], options.merge(use: true)) + [
-        VM::SET_LOCAL, name
+        VM::DEFINE_VAR, name
       ]
     else
       options[:locals][name] = true
       [
         compile_sexp(body.first, options.merge(use: true)),
-        VM::SET_LOCAL, name
+        VM::DEFINE_VAR, name
       ]
     end
   end
 
   def do_set!((name, val), options)
-    op = options[:locals][name] ? VM::SET_LOCAL : VM::SET_REMOTE
     [
       compile_sexp(val, options.merge(use: true)),
-      op, name
+      VM::SET_VAR,
+      name
     ]
   end
 
@@ -561,8 +563,7 @@ class Compiler
 
   def include_library_if_needed(name, relative_to, options)
     return [] if @libs.key?(name)
-    path = '../' + name # FIXME: remove the ../ (need some sort of load path variable)
-    do_include(["\"#{path}\""], relative_to, options)
+    do_include(["\"#{name}\""], relative_to, options)
   end
 
   def do_define_library((name, *declarations), options)
@@ -603,7 +604,7 @@ class Compiler
 
   def push_var(name, options)
     [
-      options[:locals][name] ? VM::PUSH_LOCAL : VM::PUSH_REMOTE,
+      VM::PUSH_VAR,
       name
     ]
   end
@@ -611,14 +612,14 @@ class Compiler
   def push_arg(name, _options = {})
     [
       VM::PUSH_ARG,
-      VM::SET_LOCAL, name
+      VM::SET_ARG, name
     ]
   end
 
   def push_all_args(name, _options = {})
     [
       VM::PUSH_ARGS,
-      VM::SET_LOCAL, name
+      VM::SET_ARG, name
     ]
   end
 
@@ -630,8 +631,9 @@ class Compiler
     if filename =~ /\A\./ && relative_to
       path = File.join(File.dirname(relative_to), filename)
     else
-      path = File.join(ROOT_PATH, 'lib', filename)
+      path = @load_path.map { |p| File.join(p, filename) }.detect { |p| File.exist?(p) }
     end
+    fail "File #{filename} not found in load path #{@load_path.join(';')}" unless path
     code = File.read(path)
     @source[filename] = code
     Parser.new(code, filename: filename).parse
@@ -644,5 +646,13 @@ class Compiler
       break unless (options = options[:parent_options])
     end
     nil
+  end
+
+  def lispify(sexp)
+    if sexp.is_a?(Array)
+      '(' + sexp.map { |s| lispify(s) }.join(' ') + ')'
+    else
+      sexp
+    end
   end
 end
