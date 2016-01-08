@@ -14,7 +14,7 @@ class Program
     @compiler.pretty_print(@instr) if debug >= 1
     vm.execute(@instr, debug: debug)
     vm.return_value
-  rescue VM::VariableUndefined, Compiler::VariableUndefined => e
+  rescue VM::VariableUndefined => e
     print_error_message(e)
     1
   end
