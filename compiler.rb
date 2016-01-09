@@ -1,6 +1,7 @@
 require_relative 'vm'
 require_relative 'compiler/macro'
 require_relative 'compiler/optimizer'
+require_relative 'compiler/lib/scheme/base'
 require_relative 'compiler/lib/scheme/process_context'
 require 'pp'
 
@@ -8,6 +9,7 @@ class Compiler
   ROOT_PATH = VM::ROOT_PATH
   LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')]
 
+  include Compiler::Lib::Scheme::Base
   include Compiler::Lib::Scheme::ProcessContext
 
   def initialize(code = nil, filename:, includes: [], arguments: {}, load_path: LOAD_PATH)
@@ -214,22 +216,6 @@ class Compiler
       native_transformer: method_name
     }
     []
-  end
-
-  def do_car((arg, *_rest), options)
-    [
-      compile_sexp(arg, options.merge(use: true)),
-      VM::PUSH_CAR,
-      pop_maybe(options)
-    ]
-  end
-
-  def do_cdr((arg, *_rest), options)
-    [
-      compile_sexp(arg, options.merge(use: true)),
-      VM::PUSH_CDR,
-      pop_maybe(options)
-    ]
   end
 
   def do_cons(args, options)

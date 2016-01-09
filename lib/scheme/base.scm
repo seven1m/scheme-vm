@@ -1,6 +1,8 @@
 (define-library (scheme base)
   (export
-   begin let let* letrec letrec* do
+   begin
+   car cdr
+   let let* letrec letrec* do
    and or not cond
    list? empty? length last
    boolean?
@@ -12,6 +14,9 @@
       (syntax-rules ()
         ((begin exp ...)
         ((lambda () exp ...)))))
+
+    (--define-native car base_car)
+    (--define-native cdr base_cdr)
 
     (define-syntax let
       (syntax-rules ()

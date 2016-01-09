@@ -3,7 +3,8 @@ require_relative './spec_helper'
 describe Compiler do
   subject { described_class.new(filename: __FILE__) }
 
-  def d(instructions)
+  def d(instructions, skip_libs: true)
+    instructions = instructions.slice_after(VM::ENDL).to_a.last if skip_libs
     subject.pretty_format(instructions)
   end
 
@@ -200,12 +201,14 @@ describe Compiler do
     context 'car' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) car))
           (car (list 1 2 3))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'car', 'car',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', '3',
@@ -221,12 +224,14 @@ describe Compiler do
     context 'cdr' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) cdr))
           (cdr (list 1 2 3))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'cdr', 'cdr',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', '3',
@@ -1117,7 +1122,6 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
-            'VM::SET_LIB', 'scheme/process-context', 'VM::ENDL',
             'VM::IMPORT_LIB', 'scheme/process-context', 'exit', 'exit',
             'VM::HALT',
             'VM::HALT'
@@ -1135,7 +1139,6 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
-            'VM::SET_LIB', 'scheme/process-context', 'VM::ENDL',
             'VM::IMPORT_LIB', 'scheme/process-context', 'exit', 'exit',
             'VM::PUSH_NUM', '10',
             'VM::HALT',
@@ -1224,7 +1227,7 @@ describe Compiler do
       end
 
       it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
+        expect(d(@result, skip_libs: false)).to eq([
           'VM::SET_LIB', 'my-lib/1',
           'VM::PUSH_STR', 'foo',
           'VM::DEFINE_VAR', 'foo',
