@@ -1,22 +1,58 @@
 (define-library (scheme base)
   (export
+   and
+   append
    begin
-   car cdr
-   let let* letrec letrec* do
-   and or not cond
-   list? empty? length last
    boolean?
-   string->list string-append
-   print)
+   car
+   cdr
+   cond
+   cons
+   do
+   empty?
+   last
+   length
+   let
+   let*
+   letrec
+   letrec*
+   list?
+   list->string
+   not
+   null?
+   or
+   pair?
+   print
+   quasiquote
+   quote
+   set-car!
+   set-cdr!
+   string?
+   string-length
+   string-ref
+   string->list
+   string-append)
 
   (begin
+    (--define-native append base_append)
+    (--define-native car base_car)
+    (--define-native cdr base_cdr)
+    (--define-native cons base_cons)
+    (--define-native list->string base_list_to_string)
+    (--define-native null? base_null?)
+    (--define-native pair? base_pair?)
+    (--define-native quasiquote base_quasiquote)
+    (--define-native quote base_quote)
+    (--define-native set-car! base_set_car!)
+    (--define-native set-cdr! base_set_cdr!)
+    (--define-native string? base_string?)
+    (--define-native string-length base_string_length)
+    (--define-native string-ref base_string_ref)
+
     (define-syntax begin
       (syntax-rules ()
         ((begin exp ...)
         ((lambda () exp ...)))))
-
-    (--define-native car base_car)
-    (--define-native cdr base_cdr)
 
     (define-syntax let
       (syntax-rules ()

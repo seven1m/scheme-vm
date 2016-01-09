@@ -4,8 +4,12 @@ describe Compiler do
   subject { described_class.new(filename: __FILE__) }
 
   def d(instructions, skip_libs: true)
-    instructions = instructions.slice_after(VM::ENDL).to_a.last if skip_libs
-    subject.pretty_format(instructions)
+    pretty = subject.pretty_format(instructions)
+    if skip_libs
+      pretty.slice_after('VM::ENDL').to_a.last
+    else
+      pretty
+    end
   end
 
   describe '#compile' do
@@ -81,12 +85,14 @@ describe Compiler do
     context 'a . pair' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) quote))
           (quote (1 . 2))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'quote', 'quote',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_CONS',
@@ -118,50 +124,17 @@ describe Compiler do
       end
     end
 
-    context 'string-ref' do
-      before do
-        @result = subject.compile(<<-END)
-          (string-ref "hello world" 4)
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_STR', 'hello world',
-          'VM::PUSH_NUM', '4',
-          'VM::STR_REF',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
-    context 'string-length' do
-      before do
-        @result = subject.compile(<<-END)
-          (string-length "hello world")
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_STR', 'hello world',
-          'VM::STR_LEN',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'list->string' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) list->string))
           (list->string (list #\\a #\\b))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'list->string', 'list->string',
           'VM::PUSH_CHAR', 'a',
           'VM::PUSH_CHAR', 'b',
           'VM::PUSH_NUM', 2,
@@ -176,12 +149,14 @@ describe Compiler do
     context 'append' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) append))
           (append (list 1 2) (list 3 4))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'append', 'append',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', 2,
@@ -247,12 +222,14 @@ describe Compiler do
     context 'cons' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) cons))
           (cons 1 (list 2 3))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'cons', 'cons',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_NUM', '3',
@@ -268,12 +245,14 @@ describe Compiler do
     context 'set-car!' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) set-car!))
           (set-car! (quote (1 . 2)) 3)
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'set-car!', 'set-car!',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_CONS',
@@ -287,12 +266,14 @@ describe Compiler do
     context 'set-cdr!' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) set-cdr!))
           (set-cdr! (quote (1 . 2)) 3)
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'set-cdr!', 'set-cdr!',
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
           'VM::PUSH_CONS',
@@ -306,12 +287,14 @@ describe Compiler do
     context 'null?' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) null?))
           (null? (list))
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'null?', 'null?',
           'VM::PUSH_NUM', 0,
           'VM::PUSH_LIST',
           'VM::CMP_NULL',
@@ -372,12 +355,14 @@ describe Compiler do
       context 'given a list' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quote))
             (quote (foo 2 3 (write 4)))
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quote', 'quote',
             'VM::PUSH_ATOM', 'foo',
             'VM::PUSH_NUM', '2',
             'VM::PUSH_NUM', '3',
@@ -396,12 +381,14 @@ describe Compiler do
       context 'given an atom' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quote))
             (quote foo)
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quote', 'quote',
             'VM::PUSH_ATOM', 'foo',
             'VM::HALT'
           ])
@@ -413,12 +400,14 @@ describe Compiler do
       context 'given a simple list' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quasiquote))
             (quasiquote (foo 2 3 (write 4)))
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quasiquote', 'quasiquote',
             'VM::PUSH_ATOM', 'foo',
             'VM::PUSH_NUM', '2',
             'VM::PUSH_NUM', '3',
@@ -437,12 +426,14 @@ describe Compiler do
       context 'given a list containing an unquote expression' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quasiquote))
             (quasiquote (list 1 (unquote (+ 2 3))))
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quasiquote', 'quasiquote',
             'VM::PUSH_ATOM', 'list',
             'VM::PUSH_NUM', '1',
             'VM::PUSH_NUM', '2',
@@ -459,12 +450,14 @@ describe Compiler do
       context 'given a list containing an unquote-splicing expression' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quasiquote))
             (quasiquote (list 1 (unquote-splicing (list 2 3))))
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quasiquote', 'quasiquote',
             'VM::PUSH_ATOM', 'list',
             'VM::PUSH_NUM', '1',
             'VM::PUSH_NUM', '2',
@@ -480,6 +473,7 @@ describe Compiler do
       context 'given a list containing an unquoted variable' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) quasiquote))
             (define foo 2)
             (quasiquote (list 1 (unquote foo)))
           END
@@ -487,6 +481,7 @@ describe Compiler do
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'quasiquote', 'quasiquote',
             'VM::PUSH_NUM', '2',
             'VM::DEFINE_VAR', 'foo',
             'VM::PUSH_ATOM', 'list',
@@ -1151,6 +1146,7 @@ describe Compiler do
     context 'macro expansion' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) quote))
           (define-syntax foo
             (syntax-rules ()
               ((foo ((name1 val1) ...))
@@ -1163,6 +1159,7 @@ describe Compiler do
 
       it 'expands the macro' do
         expect(d(@result)).to eq([
+          'VM::IMPORT_LIB', 'scheme/base', 'quote', 'quote',
           'VM::PUSH_STR', 'names',
           'VM::PUSH_ATOM', 'x',
           'VM::PUSH_NUM', 2,
