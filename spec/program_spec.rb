@@ -16,7 +16,7 @@ describe Program do
     let(:import_exit) { '(import (only (scheme process-context) exit)) ' }
 
     context 'when the program successfully finishes' do
-      let(:code) { '(+ 1 1)' }
+      let(:code) { '(import (only (scheme base) +)) (+ 1 1)' }
 
       it 'returns 0' do
         expect(subject.run).to eq(0)

@@ -407,7 +407,7 @@ describe Compiler do
       context 'given a list containing an unquote expression' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) quasiquote))
+            (import (only (scheme base) + quasiquote))
             (quasiquote (list 1 (unquote (+ 2 3))))
           END
         end
@@ -877,6 +877,7 @@ describe Compiler do
     context 'eq?' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) eq?))
           (eq? 1 1)
         END
       end
@@ -895,6 +896,7 @@ describe Compiler do
     context 'eqv?' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) eqv?))
           (eqv? 1 1)
         END
       end
@@ -913,6 +915,7 @@ describe Compiler do
     context '=' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) =))
           (= 1 1)
         END
       end
@@ -932,6 +935,7 @@ describe Compiler do
       context 'given value is not used' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) if))
             (if #t 2 3)
             0
           END
@@ -955,7 +959,7 @@ describe Compiler do
       context 'given value is used' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) write-string))
+            (import (only (scheme base) if write-string))
             (write-string (if #t 2 3))
           END
         end
@@ -980,7 +984,7 @@ describe Compiler do
       context 'inside a function body' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) lambda))
+            (import (only (scheme base) if lambda))
             (lambda ()
               (if #t 2 3))
           END

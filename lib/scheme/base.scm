@@ -1,5 +1,12 @@
 (define-library (scheme base)
   (export
+   +
+   -
+   >
+   >=
+   <
+   <=
+   =
    and
    append
    apply
@@ -13,6 +20,9 @@
    define-syntax
    do
    empty?
+   eq?
+   eqv?
+   if
    lambda
    last
    length
@@ -41,6 +51,13 @@
    write-string)
 
   (begin
+    (--define-native + base_+)
+    (--define-native - base_-)
+    (--define-native > base_>)
+    (--define-native >= base_>=)
+    (--define-native < base_<)
+    (--define-native <= base_<=)
+    (--define-native = base_=)
     (--define-native append base_append)
     (--define-native apply base_apply)
     (--define-native car base_car)
@@ -48,6 +65,9 @@
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native define-syntax base_define_syntax)
+    (--define-native eq? base_eq?)
+    (--define-native eqv? base_eqv?)
+    (--define-native if base_if)
     (--define-native lambda base_lambda)
     (--define-native list base_list)
     (--define-native list->string base_list_to_string)

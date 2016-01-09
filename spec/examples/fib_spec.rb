@@ -10,7 +10,7 @@ describe 'Fib' do
   context 'recursive version' do
     let(:code) do
       <<-END
-        (import (only (scheme base) define write-string))
+        (import (only (scheme base) < + - define if write-string))
         (define (fib n)
           (if (< n 2)
               n
@@ -30,7 +30,7 @@ describe 'Fib' do
   context 'recursive, tail-call version' do
     let(:code) do
       <<-END
-        (import (only (scheme base) define write-string))
+        (import (only (scheme base) < + - = define if write-string))
         (define (fib n)
           (define (f i c n)
             (if (= i 0)

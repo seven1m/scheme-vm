@@ -72,6 +72,19 @@ class Compiler
           ]
         end
 
+        def base_if((condition, true_body, false_body), options)
+          true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
+          false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
+          [
+            compile_sexp(condition, options.merge(use: true)),
+            VM::JUMP_IF_FALSE, true_instr.size + 3,
+            true_instr,
+            VM::JUMP, false_instr.size + 1,
+            false_instr,
+            pop_maybe(options)
+          ]
+        end
+
         def base_lambda((args, *body), options)
           (locals, args) = compile_lambda_args(args)
           body = compile_lambda_body(body, options[:locals].merge(locals), options)
@@ -223,6 +236,22 @@ class Compiler
               VM::PUSH_FALSE,
               pop_maybe(options)
             ]
+          end
+        end
+
+        {
+          '+'    => VM::ADD,
+          '-'    => VM::SUB,
+          '>'    => VM::CMP_GT,
+          '>='   => VM::CMP_GTE,
+          '<'    => VM::CMP_LT,
+          '<='   => VM::CMP_LTE,
+          '='    => VM::CMP_EQ_NUM,
+          'eq?'  => VM::CMP_EQ,
+          'eqv?' => VM::CMP_EQV
+        }.each do |name, instruction|
+          define_method('base_' + name) do |args, options|
+            compare(instruction, args, options)
           end
         end
       end

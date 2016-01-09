@@ -34,7 +34,7 @@ describe Compiler do
     context 'given multiple templates, recursive expansion' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define-syntax))
+          (import (only (scheme base) define-syntax if))
           (define-syntax and
             (syntax-rules ()
               ((and) #t)

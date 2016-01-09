@@ -250,35 +250,6 @@ class Compiler
     ]
   end
 
-  def do_if((condition, true_body, false_body), options)
-    true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
-    false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
-    [
-      compile_sexp(condition, options.merge(use: true)),
-      VM::JUMP_IF_FALSE, true_instr.size + 3,
-      true_instr,
-      VM::JUMP, false_instr.size + 1,
-      false_instr,
-      pop_maybe(options)
-    ]
-  end
-
-  {
-    '+'    => VM::ADD,
-    '-'    => VM::SUB,
-    '>'    => VM::CMP_GT,
-    '>='   => VM::CMP_GTE,
-    '<'    => VM::CMP_LT,
-    '<='   => VM::CMP_LTE,
-    '='    => VM::CMP_EQ_NUM,
-    'eq?'  => VM::CMP_EQ,
-    'eqv?' => VM::CMP_EQV
-  }.each do |name, instruction|
-    define_method('do_' + name) do |args, options|
-      compare(instruction, args, options)
-    end
-  end
-
   def compare(instruction, (arg1, arg2), options)
     [
       compile_sexp(arg1, options.merge(use: true)),
