@@ -7,7 +7,8 @@
   (import (fixtures library-test))
   (assert (eq? 12 (foo)))
   (assert (eq? 13 (bar)))
-  (assert (eq? 13 (baz))))
+  (assert (eq? 13 (baz)))
+  (assert (eq? 14 (macro))))
 
 ; import only
 (begin
