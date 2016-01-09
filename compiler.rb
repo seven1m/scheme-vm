@@ -46,30 +46,6 @@ class Compiler
     end
   end
 
-  def pretty_format(instructions, grouped: false, ip: false)
-    instructions = instructions.dup.flatten.compact
-    count = 0
-    [].tap do |pretty|
-      while instructions.any?
-        group = []
-        group << count if ip
-        if (instruction = instructions.shift)
-          (name, arity) = VM::INSTRUCTIONS[instruction]
-          group << "VM::#{name}"
-          arity.times { group << instructions.shift }
-          pretty << group
-          count += group.size - 1
-        else
-          pretty << nil
-        end
-      end
-    end.send(grouped ? :to_a : :flatten)
-  end
-
-  def pretty_print(instructions)
-    pp pretty_format(instructions, grouped: true, ip: true)
-  end
-
   def mangle_identifier(name)
     @mangled_identifiers[name] ||= 0
     version = @mangled_identifiers[name] += 1
@@ -102,12 +78,15 @@ class Compiler
     Optimizer.new(instructions).optimize
   end
 
-  # rubocop:disable Metrics/PerceivedComplexity
   def compile_sexp(sexp, options = { use: false, locals: {} })
     sexp = sexp.to_ruby if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     sexp.compact! # datum comments #;(...) come in as nil due to our parser :-(
     return [] if sexp.empty?
+    dispatch(sexp, options)
+  end
+
+  def dispatch(sexp, options)
     (name, *args) = sexp
     if options[:quote] || options[:quasiquote]
       compile_quoted_sexp(sexp, options)
@@ -127,7 +106,6 @@ class Compiler
       fail VM::VariableUndefined, name
     end
   end
-  # rubocop:enable Metrics/PerceivedComplexity
 
   def compile_quoted_sexp(sexp, options)
     (name, *_args) = sexp
@@ -289,13 +267,5 @@ class Compiler
       break unless (options = options[:parent_options])
     end
     nil
-  end
-
-  def lispify(sexp)
-    if sexp.is_a?(Array)
-      '(' + sexp.map { |s| lispify(s) }.join(' ') + ')'
-    else
-      sexp
-    end
   end
 end

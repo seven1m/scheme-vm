@@ -8,7 +8,7 @@ RSpec.configure do |c|
   c.run_all_when_everything_filtered = true
 
   def d(instructions, skip_libs: true)
-    pretty = subject.pretty_format(instructions)
+    pretty = VM::PrettyPrinter.new(instructions).format
     if skip_libs
       pretty.slice_after('VM::ENDL').to_a.last
     else
