@@ -1110,12 +1110,15 @@ describe Compiler do
       context 'given no arguments' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme process-context) exit))
             (exit)
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::SET_LIB', 'scheme/process-context', 'VM::ENDL',
+            'VM::IMPORT_LIB', 'scheme/process-context', 'exit', 'exit',
             'VM::HALT',
             'VM::HALT'
           ])
@@ -1125,12 +1128,15 @@ describe Compiler do
       context 'given an integer argument' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme process-context) exit))
             (exit 10)
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
+            'VM::SET_LIB', 'scheme/process-context', 'VM::ENDL',
+            'VM::IMPORT_LIB', 'scheme/process-context', 'exit', 'exit',
             'VM::PUSH_NUM', '10',
             'VM::HALT',
             'VM::HALT'

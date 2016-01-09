@@ -1116,6 +1116,7 @@ describe VM do
   describe 'tail call elimination' do
     before do
       c = Compiler.new(<<-END, filename: 'tce.scm')
+        (import (only (scheme process-context) exit))
         (define fn
           (lambda (n)
             (exit)

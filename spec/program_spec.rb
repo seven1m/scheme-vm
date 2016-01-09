@@ -13,6 +13,8 @@ describe Program do
       )
     end
 
+    let(:import_exit) { '(import (only (scheme process-context) exit)) ' }
+
     context 'when the program successfully finishes' do
       let(:code) { '(+ 1 1)' }
 
@@ -31,7 +33,7 @@ describe Program do
 
     describe 'exit' do
       context 'when the program calls (exit)' do
-        let(:code) { '(exit) (exit 1)' }
+        let(:code) { import_exit + '(exit)' }
 
         it 'returns 0' do
           expect(subject.run).to eq(0)
@@ -39,7 +41,7 @@ describe Program do
       end
 
       context 'when the program calls (exit #t)' do
-        let(:code) { '(exit #t) (exit)' }
+        let(:code) { import_exit + '(exit #t)' }
 
         it 'returns 0' do
           expect(subject.run).to eq(0)
@@ -47,7 +49,7 @@ describe Program do
       end
 
       context 'when the program calls (exit 10)' do
-        let(:code) { '(exit 10) (exit)' }
+        let(:code) { import_exit + '(exit 10)' }
 
         it 'returns 10' do
           expect(subject.run).to eq(10)
@@ -55,7 +57,7 @@ describe Program do
       end
 
       context 'when the program calls (exit #f)' do
-        let(:code) { '(exit #f) (exit)' }
+        let(:code) { import_exit + '(exit #f)' }
 
         it 'returns 1' do
           expect(subject.run).to eq(1)

@@ -1,11 +1,14 @@
 require_relative 'vm'
 require_relative 'compiler/macro'
 require_relative 'compiler/optimizer'
+require_relative 'compiler/lib/scheme/process_context'
 require 'pp'
 
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
   LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')]
+
+  include Compiler::Lib::Scheme::ProcessContext
 
   def initialize(code = nil, filename:, includes: [], arguments: {}, load_path: LOAD_PATH)
     @variables = {}
@@ -71,7 +74,7 @@ class Compiler
   end
 
   def built_in_function_name(name)
-    underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_')
+    underscored_name = 'do_' + name.gsub('->', '_to_').gsub(/([a-z])-/, '\1_').gsub(/^--/, '')
     underscored_name if respond_to?(underscored_name, :include_private)
   end
 
@@ -110,7 +113,7 @@ class Compiler
     elsif (built_in_name = built_in_function_name(name))
       send(built_in_name, args, options)
     elsif (macro = find_syntax(name, options))
-      compile_macro_sexp(name, sexp, macro, options)
+      compile_macro_sexp(sexp, macro, options)
     else
       call(sexp, options)
     end
@@ -196,16 +199,21 @@ class Compiler
     ]
   end
 
-  def compile_macro_sexp(_name, sexp, macro, options)
-    sexp = Macro.new(macro, self).compile(sexp)
-    compile_sexp(sexp, options)
+  def compile_macro_sexp(sexp, macro, options)
+    if (method_name = macro[:native_transformer])
+      send(method_name, sexp[1..-1], options)
+    else
+      sexp = Macro.new(macro, self).compile(sexp)
+      compile_sexp(sexp, options)
+    end
   end
 
-  def do_exit((arg, *_rest), _option)
-    [
-      arg && compile_sexp(arg, use: true),
-      VM::HALT
-    ]
+  def do_define_native((name, method_name), options)
+    options[:syntax][name] = {
+      locals: options[:locals].keys + options[:syntax].keys + [name],
+      native_transformer: method_name
+    }
+    []
   end
 
   def do_car((arg, *_rest), options)
