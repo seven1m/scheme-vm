@@ -1,3 +1,5 @@
+(import (only (scheme base) define))
+
 (define-library (fixtures library-test)
   (export foo macro)
   (begin

@@ -8,6 +8,7 @@
    cdr
    cond
    cons
+   define
    do
    empty?
    last
@@ -38,6 +39,7 @@
     (--define-native car base_car)
     (--define-native cdr base_cdr)
     (--define-native cons base_cons)
+    (--define-native define base_define)
     (--define-native list->string base_list_to_string)
     (--define-native null? base_null?)
     (--define-native pair? base_pair?)

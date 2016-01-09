@@ -10,6 +10,7 @@ describe 'Fib' do
   context 'recursive version' do
     let(:code) do
       <<-END
+        (import (only (scheme base) define))
         (define fib
           (lambda (n)
             (if (< n 2)
@@ -30,6 +31,7 @@ describe 'Fib' do
   context 'recursive, tail-call version' do
     let(:code) do
       <<-END
+        (import (only (scheme base) define))
         (define fib
           (lambda (n)
             (define f

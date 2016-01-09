@@ -11,6 +11,23 @@ class Compiler
           ]
         end
 
+        def base_define((name, *body), options)
+          if name.is_a?(Array)
+            (name, *args) = name
+            args = args.last if args.size == 2 && args.first == '.'
+            options[:locals][name] = true
+            do_lambda([args, *body], options.merge(use: true)) + [
+              VM::DEFINE_VAR, name
+            ]
+          else
+            options[:locals][name] = true
+            [
+              compile_sexp(body.first, options.merge(use: true)),
+              VM::DEFINE_VAR, name
+            ]
+          end
+        end
+
         def base_car((arg, *_rest), options)
           [
             compile_sexp(arg, options.merge(use: true)),
