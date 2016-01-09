@@ -18,6 +18,7 @@
    let*
    letrec
    letrec*
+   list
    list?
    list->string
    newline
@@ -44,6 +45,7 @@
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native lambda base_lambda)
+    (--define-native list base_list)
     (--define-native list->string base_list_to_string)
     (--define-native null? base_null?)
     (--define-native pair? base_pair?)

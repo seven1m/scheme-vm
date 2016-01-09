@@ -117,7 +117,7 @@ describe Compiler do
     context 'list->string' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list->string))
+          (import (only (scheme base) list list->string))
           (list->string (list #\\a #\\b))
         END
       end
@@ -138,7 +138,7 @@ describe Compiler do
     context 'append' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) append))
+          (import (only (scheme base) append list))
           (append (list 1 2) (list 3 4))
         END
       end
@@ -164,7 +164,7 @@ describe Compiler do
     context 'car' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) car))
+          (import (only (scheme base) car list))
           (car (list 1 2 3))
         END
       end
@@ -186,7 +186,7 @@ describe Compiler do
     context 'cdr' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) cdr))
+          (import (only (scheme base) cdr list))
           (cdr (list 1 2 3))
         END
       end
@@ -208,7 +208,7 @@ describe Compiler do
     context 'cons' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) cons))
+          (import (only (scheme base) cons list))
           (cons 1 (list 2 3))
         END
       end
@@ -270,7 +270,7 @@ describe Compiler do
     context 'null?' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) null?))
+          (import (only (scheme base) list null?))
           (null? (list))
         END
       end
@@ -430,7 +430,7 @@ describe Compiler do
       context 'given a list containing an unquote-splicing expression' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) quasiquote))
+            (import (only (scheme base) list quasiquote))
             (quasiquote (list 1 (unquote-splicing (list 2 3))))
           END
         end
@@ -495,7 +495,7 @@ describe Compiler do
       context '(<variable> <formals>) <body>' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define list))
             (define (fn x y)
               (list x y))
           END
@@ -829,7 +829,7 @@ describe Compiler do
     context 'apply' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define))
+          (import (only (scheme base) define list))
           (define (foo))
           (apply foo (list 1 2))
         END
@@ -857,6 +857,7 @@ describe Compiler do
     context 'list' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) list))
           (list 1 2)
         END
       end
@@ -1132,7 +1133,7 @@ describe Compiler do
     context 'macro expansion' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) quote))
+          (import (only (scheme base) list quote))
           (define-syntax foo
             (syntax-rules ()
               ((foo ((name1 val1) ...))

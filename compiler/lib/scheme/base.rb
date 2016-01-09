@@ -98,6 +98,23 @@ class Compiler
           end
         end
 
+        def base_list(args, options)
+          members = args.flat_map do |arg|
+            expr = compile_sexp(arg, options.merge(use: true))
+            if expr.first == 'splice'
+              expr.last
+            else
+              [expr]
+            end
+          end
+          [
+            members,
+            VM::PUSH_NUM, members.size,
+            VM::PUSH_LIST,
+            pop_maybe(options)
+          ]
+        end
+
         def base_list_to_string((list, *_rest), options)
           [
             compile_sexp(list, options.merge(use: true)),

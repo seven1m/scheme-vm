@@ -132,9 +132,9 @@ class Compiler
     if name =~ /unquote(\-splicing)?/ && options[:quasiquote]
       compile_quasiquoted_sexp(sexp, options)
     elsif sexp.size == 3 && sexp[1] == '.'
-      do_pair(sexp, options)
+      compile_pair(sexp, options)
     else
-      do_list(sexp, options)
+      base_list(sexp, options)
     end
   end
 
@@ -252,28 +252,11 @@ class Compiler
     ]
   end
 
-  def do_pair((car, _, cdr), options)
+  def compile_pair((car, _, cdr), options)
     [
       compile_sexp(car, options.merge(use: true)),
       compile_sexp(cdr, options.merge(use: true)),
       VM::PUSH_CONS,
-      pop_maybe(options)
-    ]
-  end
-
-  def do_list(args, options)
-    members = args.flat_map do |arg|
-      expr = compile_sexp(arg, options.merge(use: true))
-      if expr.first == 'splice'
-        expr.last
-      else
-        [expr]
-      end
-    end
-    [
-      members,
-      VM::PUSH_NUM, members.size,
-      VM::PUSH_LIST,
       pop_maybe(options)
     ]
   end
