@@ -232,51 +232,6 @@ class Compiler
     []
   end
 
-  def do_lambda((args, *body), options)
-    (locals, args) = compile_lambda_args(args)
-    body = compile_lambda_body(body, options[:locals].merge(locals), options)
-    [
-      VM::PUSH_FUNC,
-      args,
-      body,
-      VM::RETURN,
-      VM::ENDF,
-      pop_maybe(options)
-    ]
-  end
-
-  def compile_lambda_args(args)
-    if args.is_a?(Array)
-      compile_lambda_args_many(args)
-    else
-      compile_lambda_args_single(args)
-    end
-  end
-
-  def compile_lambda_args_many(args)
-    (named, _dot, rest) = args.slice_when { |i, j| [i, j].include?('.') }.to_a
-    locals = (Array(named) + Array(rest)).each_with_object({}) do |arg, hash|
-      hash[arg] = true
-    end
-    args = Array(named).map { |name| push_arg(name) }
-    args += push_all_args(rest.first) if rest
-    [locals, args]
-  end
-
-  def compile_lambda_args_single(arg)
-    [
-      { arg => true },
-      push_all_args(arg)
-    ]
-  end
-
-  def compile_lambda_body(body, locals, options)
-    body_opts = options.merge(use: true, locals: locals, syntax: {}, parent_options: options)
-    body.each_with_index.map do |sexp, index|
-      compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
-    end
-  end
-
   def call((lambda, *args), options)
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },

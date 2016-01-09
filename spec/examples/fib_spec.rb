@@ -11,13 +11,12 @@ describe 'Fib' do
     let(:code) do
       <<-END
         (import (only (scheme base) define write-string))
-        (define fib
-          (lambda (n)
-            (if (< n 2)
-                n
-                (+
-                  (fib (- n 1))
-                  (fib (- n 2))))))
+        (define (fib n)
+          (if (< n 2)
+              n
+              (+
+                (fib (- n 1))
+                (fib (- n 2)))))
         (write-string (fib 8))
       END
     end
@@ -32,14 +31,12 @@ describe 'Fib' do
     let(:code) do
       <<-END
         (import (only (scheme base) define write-string))
-        (define fib
-          (lambda (n)
-            (define f
-              (lambda (i c n)
-                (if (= i 0)
-                    c
-                    (f (- i 1) n (+ c n)))))
-            (f n 0 1)))
+        (define (fib n)
+          (define (f i c n)
+            (if (= i 0)
+                c
+                (f (- i 1) n (+ c n))))
+          (f n 0 1))
         (write-string (fib 8))
       END
     end

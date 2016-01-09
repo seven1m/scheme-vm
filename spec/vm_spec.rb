@@ -1118,12 +1118,11 @@ describe VM do
       c = Compiler.new(<<-END, filename: 'tce.scm')
         (import (only (scheme base) define))
         (import (only (scheme process-context) exit))
-        (define fn
-          (lambda (n)
-            (exit)
-            (if (< n 1)
-              n
-              (fn (- n 1)))))
+        (define (fn n)
+          (exit)
+          (if (< n 1)
+            n
+            (fn (- n 1))))
         (fn 2)
       END
       instr = c.compile(keep_last: true)

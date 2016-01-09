@@ -11,6 +11,7 @@
    define
    do
    empty?
+   lambda
    last
    length
    let
@@ -42,6 +43,7 @@
     (--define-native cdr base_cdr)
     (--define-native cons base_cons)
     (--define-native define base_define)
+    (--define-native lambda base_lambda)
     (--define-native list->string base_list_to_string)
     (--define-native null? base_null?)
     (--define-native pair? base_pair?)

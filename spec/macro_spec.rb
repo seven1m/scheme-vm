@@ -3,10 +3,6 @@ require_relative './spec_helper'
 describe Compiler do
   subject { described_class.new(filename: 'macro_spec.rb') }
 
-  def d(instructions)
-    subject.pretty_format(instructions)
-  end
-
   context 'define-syntax and syntax-rules' do
     context 'given a template with two arguments and a nested template' do
       before do
@@ -67,6 +63,7 @@ describe Compiler do
     context 'given multiple templates, recursive expansion' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) lambda))
           (define-syntax let
             (syntax-rules ()
               ((let ((name val) ...) body1 body2 ...)

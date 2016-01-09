@@ -3,15 +3,6 @@ require_relative './spec_helper'
 describe Compiler do
   subject { described_class.new(filename: __FILE__) }
 
-  def d(instructions, skip_libs: true)
-    pretty = subject.pretty_format(instructions)
-    if skip_libs
-      pretty.slice_after('VM::ENDL').to_a.last
-    else
-      pretty
-    end
-  end
-
   describe '#compile' do
     context 'number' do
       before do
@@ -298,7 +289,7 @@ describe Compiler do
     context 'variables' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define set!))
+          (import (only (scheme base) define lambda set!))
           (define x 8)
           ((lambda ()
             (define y 10)
@@ -335,6 +326,7 @@ describe Compiler do
       it 'fails to compile' do
         expect {
           subject.compile(<<-END)
+            (import (only (scheme base) lambda))
             (lambda ()
               n)
             (define n 10)
@@ -556,7 +548,7 @@ describe Compiler do
       context 'not storing in a variable or passing to a function' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (lambda ()
               (define x 1))
           END
@@ -578,7 +570,7 @@ describe Compiler do
       context 'storing in a variable' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define myfn
               (lambda ()
                 (define x 1)))
@@ -601,7 +593,7 @@ describe Compiler do
       context 'mixed variable storage' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define one
               (lambda ()
                 (lambda () 1)
@@ -639,6 +631,7 @@ describe Compiler do
       context 'with return value' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) lambda))
             (lambda ()
               1
               2)
@@ -664,7 +657,7 @@ describe Compiler do
       context 'without args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define x
               (lambda ()
                 1))
@@ -689,7 +682,7 @@ describe Compiler do
       context 'with args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define x
               (lambda (y z) ()))
             (x 2 4)
@@ -721,7 +714,7 @@ describe Compiler do
       context 'with variable args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define x
               (lambda args ()))
             (x 2 4)
@@ -751,7 +744,7 @@ describe Compiler do
       context 'with destructuring args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define x
               (lambda (first second . rest) ()))
             (x 2 3 4 5)
@@ -787,6 +780,7 @@ describe Compiler do
       context 'calling immediately' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) lambda))
             ((lambda (x) x) 1)
           END
         end
@@ -811,7 +805,7 @@ describe Compiler do
       context 'calling self' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define lambda))
             (define x
               (lambda ()
                 (x)))
@@ -985,6 +979,7 @@ describe Compiler do
       context 'inside a function body' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) lambda))
             (lambda ()
               (if #t 2 3))
           END
@@ -1049,6 +1044,7 @@ describe Compiler do
       context 'inside a lambda' do
         before do
           @result = subject.compile(<<-END)
+            (import (only (scheme base) lambda))
             (lambda ()
               (define-syntax and
                 (syntax-rules ()
@@ -1058,7 +1054,7 @@ describe Compiler do
         end
 
         it 'does not store the transformer in the top-level syntax accessor' do
-          expect(subject.syntax).to eq({})
+          expect(subject.syntax['and']).to be_nil
         end
 
         it 'compiles into vm instructions' do
