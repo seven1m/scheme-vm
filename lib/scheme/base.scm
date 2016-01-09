@@ -10,6 +10,7 @@
    cond
    cons
    define
+   define-syntax
    do
    empty?
    lambda
@@ -46,6 +47,7 @@
     (--define-native cdr base_cdr)
     (--define-native cons base_cons)
     (--define-native define base_define)
+    (--define-native define-syntax base_define_syntax)
     (--define-native lambda base_lambda)
     (--define-native list base_list)
     (--define-native list->string base_list_to_string)

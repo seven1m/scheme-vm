@@ -1,4 +1,4 @@
-(import (only (scheme base) define))
+(import (only (scheme base) define define-syntax))
 
 (define-library (fixtures library-test)
   (export foo macro)

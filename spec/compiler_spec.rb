@@ -1008,7 +1008,7 @@ describe Compiler do
       context 'at the top level' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
+            (import (only (scheme base) define define-syntax))
             (define local-foo 1)
             (define-syntax macro-foo (syntax-rules () ()))
 
@@ -1045,7 +1045,7 @@ describe Compiler do
       context 'inside a lambda' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) lambda))
+            (import (only (scheme base) define-syntax lambda))
             (lambda ()
               (define-syntax and
                 (syntax-rules ()
@@ -1133,7 +1133,7 @@ describe Compiler do
     context 'macro expansion' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list quote))
+          (import (only (scheme base) define-syntax list quote))
           (define-syntax foo
             (syntax-rules ()
               ((foo ((name1 val1) ...))

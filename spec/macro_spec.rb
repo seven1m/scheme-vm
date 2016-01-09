@@ -7,7 +7,7 @@ describe Compiler do
     context 'given a template with two arguments and a nested template' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list))
+          (import (only (scheme base) define-syntax list))
           (define-syntax listify
             (syntax-rules ()
               ((listify first second) (list (list first) (list second)))))
@@ -34,6 +34,7 @@ describe Compiler do
     context 'given multiple templates, recursive expansion' do
       before do
         @result = subject.compile(<<-END)
+          (import (only (scheme base) define-syntax))
           (define-syntax and
             (syntax-rules ()
               ((and) #t)
@@ -64,7 +65,7 @@ describe Compiler do
     context 'given multiple templates, recursive expansion' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) lambda list))
+          (import (only (scheme base) define-syntax lambda list))
           (define-syntax let
             (syntax-rules ()
               ((let ((name val) ...) body1 body2 ...)

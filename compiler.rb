@@ -250,14 +250,6 @@ class Compiler
     ]
   end
 
-  def do_define_syntax((name, transformer), options)
-    options[:syntax][name] = {
-      locals: options[:locals].keys + options[:syntax].keys + [name],
-      transformer: transformer
-    }
-    []
-  end
-
   def do_if((condition, true_body, false_body), options)
     true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
     false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
