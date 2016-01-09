@@ -298,7 +298,7 @@ describe Compiler do
     context 'variables' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define))
+          (import (only (scheme base) define set!))
           (define x 8)
           ((lambda ()
             (define y 10)

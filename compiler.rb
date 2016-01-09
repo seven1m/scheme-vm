@@ -232,14 +232,6 @@ class Compiler
     []
   end
 
-  def do_set!((name, val), options)
-    [
-      compile_sexp(val, options.merge(use: true)),
-      VM::SET_VAR,
-      name
-    ]
-  end
-
   def do_lambda((args, *body), options)
     (locals, args) = compile_lambda_args(args)
     body = compile_lambda_body(body, options[:locals].merge(locals), options)

@@ -26,6 +26,7 @@
    pair?
    quasiquote
    quote
+   set!
    set-car!
    set-cdr!
    string?
@@ -46,6 +47,7 @@
     (--define-native pair? base_pair?)
     (--define-native quasiquote base_quasiquote)
     (--define-native quote base_quote)
+    (--define-native set! base_set!)
     (--define-native set-car! base_set_car!)
     (--define-native set-cdr! base_set_cdr!)
     (--define-native string? base_string?)

@@ -93,6 +93,14 @@ class Compiler
           ]
         end
 
+        def base_set!((name, val), options)
+          [
+            compile_sexp(val, options.merge(use: true)),
+            VM::SET_VAR,
+            name
+          ]
+        end
+
         def base_set_cdr!((pair, new_cdr), options)
           [
             compile_sexp(pair, options.merge(use: true)),
