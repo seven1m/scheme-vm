@@ -4,6 +4,7 @@ require_relative 'compiler/optimizer'
 require_relative 'compiler/lib/scheme/base'
 require_relative 'compiler/lib/scheme/process_context'
 require 'pp'
+require 'pry'
 
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
@@ -220,6 +221,11 @@ class Compiler
 
   def do_debug(_args, _options)
     [VM::DEBUG]
+  end
+
+  def do_debug_compile(_args, options)
+    binding.pry # rubocop:disable Lint/Debugger
+    []
   end
 
   def do_define((name, *body), options)
