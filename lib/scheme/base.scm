@@ -19,11 +19,11 @@
    letrec*
    list?
    list->string
+   newline
    not
    null?
    or
    pair?
-   print
    quasiquote
    quote
    set-car!
@@ -32,7 +32,8 @@
    string-length
    string-ref
    string->list
-   string-append)
+   string-append
+   write-string)
 
   (begin
     (--define-native append base_append)
@@ -235,11 +236,16 @@
                         (apply s->l (cdr strings2))))))
         (list->string (apply s->l strings1))))
 
-    (define print
+    (--define-native write write) ; ensure this doesn't export
+
+    (define (newline)
+      (write #\newline))
+
+    (define write-string
       (lambda args
-        (if (= 0 (length args))
-            (write #\newline)
+        (if (not (empty? args))
             (begin
               (write (car args))
-              (apply print (cdr args))))))
+              (apply write-string (cdr args))))))
+
   ))

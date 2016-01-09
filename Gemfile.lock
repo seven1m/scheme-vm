@@ -31,6 +31,7 @@ GEM
       rspec-support (~> 3.3.0)
     rspec-support (3.3.0)
     slop (3.6.0)
+    stackprof (0.2.7)
 
 PLATFORMS
   ruby
@@ -40,6 +41,7 @@ DEPENDENCIES
   pry
   pry-stack_explorer
   rspec
+  stackprof
 
 BUNDLED WITH
    1.11.2

@@ -6,4 +6,5 @@
       (+
         (fib (- n 1))
         (fib (- n 2)))))
-(print (fib 8))
+(write-string (fib 8))
+(newline)

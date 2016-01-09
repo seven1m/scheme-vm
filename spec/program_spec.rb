@@ -68,7 +68,8 @@ describe Program do
     context do
       let(:code) do
         <<-END
-          (write 1)
+          (import (only (scheme base) write-string))
+          (write-string 1)
         END
       end
 

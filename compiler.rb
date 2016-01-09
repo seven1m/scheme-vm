@@ -3,6 +3,7 @@ require_relative 'compiler/macro'
 require_relative 'compiler/optimizer'
 require_relative 'compiler/lib/scheme/base'
 require_relative 'compiler/lib/scheme/process_context'
+require_relative 'compiler/lib/scheme/write'
 require 'pp'
 require 'pry'
 
@@ -12,6 +13,7 @@ class Compiler
 
   include Compiler::Lib::Scheme::Base
   include Compiler::Lib::Scheme::ProcessContext
+  include Compiler::Lib::Scheme::Write
 
   def initialize(code = nil, filename:, includes: [], arguments: {}, load_path: LOAD_PATH)
     @variables = {}
@@ -493,13 +495,6 @@ class Compiler
         hash[export] = export
       end
     end
-  end
-
-  def do_write(args, options)
-    [
-      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
-      VM::INT, VM::INT_WRITE
-    ]
   end
 
   def push_var(name, options)

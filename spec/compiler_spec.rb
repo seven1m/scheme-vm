@@ -552,22 +552,6 @@ describe Compiler do
       end
     end
 
-    context 'write' do
-      before do
-        @result = subject.compile(<<-END)
-          (write 1)
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '1',
-          'VM::INT', VM::INT_WRITE,
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'lambda' do
       context 'not storing in a variable or passing to a function' do
         before do
@@ -976,18 +960,23 @@ describe Compiler do
       context 'given value is used' do
         before do
           @result = subject.compile(<<-END)
-            (write (if #t 2 3))
+            (import (only (scheme base) write-string))
+            (write-string (if #t 2 3))
           END
         end
 
         it 'compiles into vm instructions' do
-          expect(d(@result)).to eq([
+          expect(d(@result)).to end_with([
+            'VM::IMPORT_LIB', 'scheme/base', 'write-string', 'write-string',
             'VM::PUSH_TRUE',
             'VM::JUMP_IF_FALSE', 5,
             'VM::PUSH_NUM', '2',
             'VM::JUMP', 3,
             'VM::PUSH_NUM', '3',
-            'VM::INT', VM::INT_WRITE,
+            'VM::PUSH_NUM', 1,
+            'VM::SET_ARGS',
+            'VM::PUSH_VAR', 'write-string',
+            'VM::CALL',
             'VM::HALT'
           ])
         end
@@ -1096,8 +1085,12 @@ describe Compiler do
 
         it 'includes the code' do
           expect(d(@result)).to eq([
+            'VM::IMPORT_LIB', 'scheme/base', 'write-string', 'write-string',
             'VM::PUSH_STR', 'hello from include-test',
-            'VM::INT', 1,
+            'VM::PUSH_NUM', 1,
+            'VM::SET_ARGS',
+            'VM::PUSH_VAR', 'write-string',
+            'VM::CALL',
             'VM::PUSH_STR', 'hello from main',
             'VM::HALT'
           ])

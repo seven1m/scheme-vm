@@ -10,7 +10,7 @@ describe 'Fib' do
   context 'recursive version' do
     let(:code) do
       <<-END
-        (import (only (scheme base) define))
+        (import (only (scheme base) define write-string))
         (define fib
           (lambda (n)
             (if (< n 2)
@@ -18,7 +18,7 @@ describe 'Fib' do
                 (+
                   (fib (- n 1))
                   (fib (- n 2))))))
-        (write (fib 8))
+        (write-string (fib 8))
       END
     end
 
@@ -31,7 +31,7 @@ describe 'Fib' do
   context 'recursive, tail-call version' do
     let(:code) do
       <<-END
-        (import (only (scheme base) define))
+        (import (only (scheme base) define write-string))
         (define fib
           (lambda (n)
             (define f
@@ -40,7 +40,7 @@ describe 'Fib' do
                     c
                     (f (- i 1) n (+ c n)))))
             (f n 0 1)))
-        (write (fib 8))
+        (write-string (fib 8))
       END
     end
 
