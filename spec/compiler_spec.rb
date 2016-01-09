@@ -829,7 +829,7 @@ describe Compiler do
     context 'apply' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define list))
+          (import (only (scheme base) apply define list))
           (define (foo))
           (apply foo (list 1 2))
         END

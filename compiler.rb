@@ -241,17 +241,6 @@ class Compiler
     ]
   end
 
-  def do_apply((lambda, *args), options)
-    fail 'apply expects at least 2 arguments' if args.empty?
-    [
-      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
-      VM::PUSH_NUM, args.size,
-      VM::SET_ARGS,
-      compile_sexp(lambda, options.merge(use: true)),
-      VM::APPLY
-    ]
-  end
-
   def compile_pair((car, _, cdr), options)
     [
       compile_sexp(car, options.merge(use: true)),

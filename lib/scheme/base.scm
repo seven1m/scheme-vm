@@ -2,6 +2,7 @@
   (export
    and
    append
+   apply
    begin
    boolean?
    car
@@ -40,6 +41,7 @@
 
   (begin
     (--define-native append base_append)
+    (--define-native apply base_apply)
     (--define-native car base_car)
     (--define-native cdr base_cdr)
     (--define-native cons base_cons)
