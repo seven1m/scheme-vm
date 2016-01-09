@@ -9,8 +9,7 @@ class Compiler
       @compiler = compiler
     end
 
-    # TODO: rename to #expand
-    def compile(sexp)
+    def expand(sexp)
       (@values, @template) = match_template(sexp)
       sexp = expand_template(@template)
       sexp = mangle_macro_bindings(sexp)

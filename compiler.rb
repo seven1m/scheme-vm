@@ -190,7 +190,7 @@ class Compiler
     if (method_name = macro[:native_transformer])
       send(method_name, sexp[1..-1], options)
     else
-      sexp = Macro.new(macro, self).compile(sexp)
+      sexp = Macro.new(macro, self).expand(sexp)
       compile_sexp(sexp, options)
     end
   end
