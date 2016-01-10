@@ -124,7 +124,7 @@ class Compiler
         end
 
         def compile_lambda_body(body, locals, options)
-          body_opts = options.merge(use: true, locals: locals, syntax: {}, parent_options: options)
+          body_opts = options.merge(use: true, locals: locals, syntax: options[:syntax].dup)
           body.each_with_index.map do |sexp, index|
             compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
           end

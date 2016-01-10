@@ -98,7 +98,7 @@ class Compiler
       do_import(args, name.filename, options)
     elsif (built_in_name = built_in_function_name(name))
       send(built_in_name, args, options)
-    elsif (macro = find_syntax(name, options))
+    elsif (macro = options[:syntax][name])
       compile_macro_sexp(sexp, macro, options)
     elsif options[:locals][name]
       call(sexp, options)
@@ -258,14 +258,5 @@ class Compiler
     code = File.read(path)
     @source[filename] = code
     Parser.new(code, filename: filename).parse
-  end
-
-  # walk up the chain of options looking for a syntax definition
-  def find_syntax(name, options)
-    loop do
-      return options[:syntax][name] if options[:syntax].key?(name)
-      break unless (options = options[:parent_options])
-    end
-    nil
   end
 end

@@ -1097,6 +1097,14 @@ describe Compiler do
           ])
         end
       end
+
+      context 'given a path to a library' do
+        it 'does not import macros into the current namespace' do
+          expect {
+            subject.compile('(include "./fixtures/library-test") (macro)')
+          }.to raise_error(VM::VariableUndefined)
+        end
+      end
     end
 
     context 'exit' do
@@ -1207,7 +1215,7 @@ describe Compiler do
 
       it 'records export names for the library' do
         expect(subject.libs['my-lib/1']).to include(
-          syntax: { 'define' => Hash },
+          syntax: Hash,
           bindings: {
             'foo' => 'foo',
             'bar' => 'foo'

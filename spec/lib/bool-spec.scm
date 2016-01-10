@@ -1,6 +1,5 @@
-(import (scheme base))
-
-(include "assert")
+(import (scheme base)
+        (assert))
 
 (assert (eq? #t (boolean? #t)))
 (assert (eq? #t (boolean? #f)))

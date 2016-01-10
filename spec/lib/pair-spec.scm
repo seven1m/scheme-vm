@@ -1,6 +1,5 @@
-(import (scheme base))
-
-(include "assert")
+(import (scheme base)
+        (assert))
 
 (assert (not (pair? 1)))
 (assert (not (pair? "string")))

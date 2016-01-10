@@ -1,6 +1,5 @@
-(import (scheme base))
-
-(include "assert")
+(import (scheme base)
+        (assert))
 
 (define i 0)
 

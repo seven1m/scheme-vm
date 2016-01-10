@@ -110,12 +110,13 @@ class Compiler
           begins += args
         end
       end
+      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: options[:syntax].dup)
       sexp = [
         VM::SET_LIB, name.join('/'),
-        begins.map { |s| compile_sexp(s, options) },
+        begins.map { |s| compile_sexp(s, lib_opts) },
         VM::ENDL
       ]
-      exports[:syntax] = options[:syntax]
+      exports[:syntax] = lib_opts[:syntax]
       sexp
     end
 
