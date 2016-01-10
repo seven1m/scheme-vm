@@ -17,6 +17,8 @@ class VM
       raw == other.raw
     end
 
+    alias_method :eq?, :==
+
     def to_s
       raw.map(&:chr).join
     end

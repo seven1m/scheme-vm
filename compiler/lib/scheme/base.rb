@@ -221,8 +221,10 @@ class Compiler
         end
 
         {
-          'pair?'   => VM::Pair,
-          'string?' => VM::ByteArray
+          'char?'    => VM::Char,
+          'integer?' => VM::Int,
+          'pair?'    => VM::Pair,
+          'string?'  => VM::ByteArray
         }.each do |name, type|
           define_method "base_#{name}" do |(arg, *_rest), options|
             [

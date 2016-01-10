@@ -14,6 +14,7 @@
    boolean?
    car
    cdr
+   char?
    cond
    cons
    define
@@ -21,8 +22,10 @@
    do
    empty?
    eq?
+   equal?
    eqv?
    if
+   integer?
    lambda
    last
    length
@@ -36,6 +39,7 @@
    newline
    not
    null?
+   number?
    or
    pair?
    quasiquote
@@ -62,12 +66,14 @@
     (--define-native apply base_apply)
     (--define-native car base_car)
     (--define-native cdr base_cdr)
+    (--define-native char? base_char?)
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native define-syntax base_define_syntax)
     (--define-native eq? base_eq?)
     (--define-native eqv? base_eqv?)
     (--define-native if base_if)
+    (--define-native integer? base_integer?)
     (--define-native lambda base_lambda)
     (--define-native list base_list)
     (--define-native list->string base_list_to_string)
@@ -245,6 +251,9 @@
       (lambda (b)
         (or (eq? b #t) (eq? b #f))))
 
+    (define (number? n)
+      (or (integer? n)))
+
     (define string->list
       (lambda (str)
         (define s->l
@@ -277,5 +286,22 @@
             (begin
               (write (car args))
               (apply write-string (cdr args))))))
+
+    (define equal? '()) ; temporary
+
+    (define (list-equal? a b)
+      (if (= (length a) (length b))
+          (if (= 0 (length a))
+              #t
+              (and (equal? (car a) (car b)) (list-equal? (cdr a) (cdr b))))
+          #f))
+
+    (define (equal? a b)
+      (cond
+       ((and (char? a) (char? b)) (eq? a b))
+       ((and (number? a) (number? b)) (eq? a b))
+       ((and (list? a) (list? b)) (list-equal? a b))
+       ((and (string? a) (string? b)) (eq? a b))
+       (else #f)))
 
   ))
