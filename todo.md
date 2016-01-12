@@ -17,16 +17,16 @@
 - [x] proper tail recursion (pp 11)
 - [x] `set!` (pp 14, 26)
 - [x] `include` takes multiple file paths (pp 14)
-- [ ] `include` allows relative and absolute paths (pp 14)
+- [x] `include` allows relative and absolute paths (pp 14)
 - [ ] `include-ci` (pp 14)
 - [x] `cond` (pp 14)
-- [ ] `case` (pp 14)
+- [x] `case` (pp 14)
 - [ ] `when` (pp 15)
 - [ ] `unless` (pp 15)
 - [ ] `cond-expand` (pp 15)
 - [x] `let*`, `letrec*` (pp 16)
 - [ ] `let-values`, `let*-values` (pp 16)
-- [ ] `do` (pp 18)
+- [x] `do` (pp 18)
 - [ ] `delay`, `delay-force`, `force` (pp 18)
 - [ ] `promise?`, `make-promise` (pp 19)
 - [ ] dynamic bindings, `make-parameter` (pp 19), `parameterize` (pp 20)
@@ -38,18 +38,27 @@
 - [x] literals in `syntax-rules` (pp 23)
 - [ ] underscore matches anything in `syntax-rules` and other matching semantics (pp 23)
 - [ ] syntax errors in macro expansion (pp 24)
-- [ ] `import` (pp 25)
+- [x] `import` (pp 25)
 - [x] `define` with body (pp 25)
-- [ ] internal definitions (pp 26)
+- [x] internal definitions (pp 26)
 - [ ] `define-values` (pp 26)
-- [ ] internal syntax definition, e.g. `define-syntax` is local to the scope (pp 26)
+- [x] internal syntax definition, e.g. `define-syntax` is local to the scope (pp 26)
 - [ ] `define-record-type` (pp 27)
 - [ ] `define-library` (pp 28)
+      - [x] `export`
+      - [x] `begin`
+      - [ ] `import`
+      - [ ] `include`
+      - [ ] `include-ci`
+      - [ ] `include-library-delcarations`
+      - [ ] `cond-expand`
 - [ ] repl (pp 29)
-- [ ] `eqv?` semantics (pp 30)
-- [ ] `equal?` semantics (pp 32)
-- [ ] complex, real, and rational numbers, and predicates:
-      `number?`, `complex?`, `real?`, `rational?`, and `integer?` (pp 32)
+- [x] `eqv?` semantics (pp 30)
+- [x] `equal?` semantics (pp 32)
+- [x] `number?` (pp 32)
+- [x] `integer?` (pp 32)
+- [ ] complex, real, and rational numbers, and other predicates:
+      `complex?`, `real?`, `rational?` (pp 32)
 - [ ] numerical constant syntax, `#b`, `#o`, `#d`, `#x` (pp 34)
 - [ ] exact and inexact prefixes, `#e` and `#i` (pp 34)
 - [ ] `exact?`, `exact-integer?`, `inexact?` (pp 35)
@@ -75,7 +84,7 @@
 - [x] `set-car!` (pp 41)
 - [x] `set-cdr!` (pp 42)
 - [ ] `caar`, `cadr`, `cdar`, `cddr`, `caaar`, `caadr` ... `cdddar`, `cddddr` (pp 42)
-- [ ] `list?` (pp 42)
+- [x] `list?` (pp 42)
 - [ ] `make-list` (pp 42)
 - [ ] `reverse` (pp 42)
 - [ ] `list-tail`, `list-ref` (pp 42)
