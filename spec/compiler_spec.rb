@@ -1,7 +1,13 @@
 require_relative './spec_helper'
 
 describe Compiler do
-  subject { described_class.new(filename: __FILE__) }
+  before(:all) do
+    base_compiler = described_class.new(filename: __FILE__)
+    base_compiler.compile('(import (scheme base))')
+    @compiler_cache = Marshal.dump(base_compiler)
+  end
+
+  subject { Marshal.load(@compiler_cache) }
 
   describe '#compile' do
     context 'number' do
@@ -76,7 +82,6 @@ describe Compiler do
     context 'a . pair' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) quote))
           (quote (1 . 2))
         END
       end
@@ -117,7 +122,6 @@ describe Compiler do
     context 'list->string' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list list->string))
           (list->string (list #\\a #\\b))
         END
       end
@@ -138,7 +142,6 @@ describe Compiler do
     context 'append' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) append list))
           (append (list 1 2) (list 3 4))
         END
       end
@@ -164,7 +167,6 @@ describe Compiler do
     context 'car' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) car list))
           (car (list 1 2 3))
         END
       end
@@ -186,7 +188,6 @@ describe Compiler do
     context 'cdr' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) cdr list))
           (cdr (list 1 2 3))
         END
       end
@@ -208,7 +209,6 @@ describe Compiler do
     context 'cons' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) cons list))
           (cons 1 (list 2 3))
         END
       end
@@ -230,7 +230,6 @@ describe Compiler do
     context 'set-car!' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) quote set-car!))
           (set-car! (quote (1 . 2)) 3)
         END
       end
@@ -250,7 +249,6 @@ describe Compiler do
     context 'set-cdr!' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) quote set-cdr!))
           (set-cdr! (quote (1 . 2)) 3)
         END
       end
@@ -270,7 +268,6 @@ describe Compiler do
     context 'null?' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list null?))
           (null? (list))
         END
       end
@@ -289,7 +286,6 @@ describe Compiler do
     context 'variables' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define lambda set!))
           (define x 8)
           ((lambda ()
             (define y 10)
@@ -326,7 +322,6 @@ describe Compiler do
       it 'fails to compile' do
         expect {
           subject.compile(<<-END)
-            (import (only (scheme base) lambda))
             (lambda ()
               n)
             (define n 10)
@@ -339,7 +334,6 @@ describe Compiler do
       context 'given a list' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) quote))
             (quote (foo 2 3 (write 4)))
           END
         end
@@ -364,7 +358,6 @@ describe Compiler do
       context 'given an atom' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) quote))
             (quote foo)
           END
         end
@@ -382,7 +375,6 @@ describe Compiler do
       context 'given a simple list' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) quasiquote))
             (quasiquote (foo 2 3 (write 4)))
           END
         end
@@ -407,7 +399,6 @@ describe Compiler do
       context 'given a list containing an unquote expression' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) + quasiquote))
             (quasiquote (list 1 (unquote (+ 2 3))))
           END
         end
@@ -430,7 +421,6 @@ describe Compiler do
       context 'given a list containing an unquote-splicing expression' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) list quasiquote))
             (quasiquote (list 1 (unquote-splicing (list 2 3))))
           END
         end
@@ -452,7 +442,6 @@ describe Compiler do
       context 'given a list containing an unquoted variable' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define quasiquote))
             (define foo 2)
             (quasiquote (list 1 (unquote foo)))
           END
@@ -478,7 +467,6 @@ describe Compiler do
       context '<variable> <expression>' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
             (define x 1)
           END
         end
@@ -495,7 +483,6 @@ describe Compiler do
       context '(<variable> <formals>) <body>' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define list))
             (define (fn x y)
               (list x y))
           END
@@ -523,7 +510,6 @@ describe Compiler do
       context '(<variable> . <formal>) <body>' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define))
             (define (fn . x)
               x)
           END
@@ -548,7 +534,6 @@ describe Compiler do
       context 'not storing in a variable or passing to a function' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (lambda ()
               (define x 1))
           END
@@ -570,7 +555,6 @@ describe Compiler do
       context 'storing in a variable' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define myfn
               (lambda ()
                 (define x 1)))
@@ -593,7 +577,6 @@ describe Compiler do
       context 'mixed variable storage' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define one
               (lambda ()
                 (lambda () 1)
@@ -631,7 +614,6 @@ describe Compiler do
       context 'with return value' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) lambda))
             (lambda ()
               1
               2)
@@ -657,7 +639,6 @@ describe Compiler do
       context 'without args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define x
               (lambda ()
                 1))
@@ -682,7 +663,6 @@ describe Compiler do
       context 'with args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define x
               (lambda (y z) ()))
             (x 2 4)
@@ -714,7 +694,6 @@ describe Compiler do
       context 'with variable args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define x
               (lambda args ()))
             (x 2 4)
@@ -744,7 +723,6 @@ describe Compiler do
       context 'with destructuring args' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define x
               (lambda (first second . rest) ()))
             (x 2 3 4 5)
@@ -780,7 +758,6 @@ describe Compiler do
       context 'calling immediately' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) lambda))
             ((lambda (x) x) 1)
           END
         end
@@ -805,7 +782,6 @@ describe Compiler do
       context 'calling self' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define lambda))
             (define x
               (lambda ()
                 (x)))
@@ -829,7 +805,6 @@ describe Compiler do
     context 'apply' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) apply define list))
           (define (foo))
           (apply foo (list 1 2))
         END
@@ -857,7 +832,6 @@ describe Compiler do
     context 'list' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) list))
           (list 1 2)
         END
       end
@@ -877,7 +851,6 @@ describe Compiler do
     context 'eq?' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) eq?))
           (eq? 1 1)
         END
       end
@@ -896,7 +869,6 @@ describe Compiler do
     context 'eqv?' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) eqv?))
           (eqv? 1 1)
         END
       end
@@ -915,7 +887,6 @@ describe Compiler do
     context '=' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) =))
           (= 1 1)
         END
       end
@@ -935,7 +906,6 @@ describe Compiler do
       context 'given value is not used' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) if))
             (if #t 2 3)
             0
           END
@@ -959,14 +929,12 @@ describe Compiler do
       context 'given value is used' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) if write-string))
             (write-string (if #t 2 3))
           END
         end
 
         it 'compiles into vm instructions' do
           expect(d(@result)).to end_with([
-            'VM::IMPORT_LIB', 'scheme/base', 'write-string', 'write-string',
             'VM::PUSH_TRUE',
             'VM::JUMP_IF_FALSE', 5,
             'VM::PUSH_NUM', '2',
@@ -984,7 +952,6 @@ describe Compiler do
       context 'inside a function body' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) if lambda))
             (lambda ()
               (if #t 2 3))
           END
@@ -1012,7 +979,6 @@ describe Compiler do
       context 'at the top level' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define define-syntax))
             (define local-foo 1)
             (define-syntax macro-foo (syntax-rules () ()))
 
@@ -1049,17 +1015,16 @@ describe Compiler do
       context 'inside a lambda' do
         before do
           @result = subject.compile(<<-END)
-            (import (only (scheme base) define-syntax lambda))
             (lambda ()
-              (define-syntax and
+              (define-syntax my-and
                 (syntax-rules ()
-                  ((and) #t)))
+                  ((my-and) #t)))
               (and))
           END
         end
 
         it 'does not store the transformer in the top-level syntax accessor' do
-          expect(subject.syntax['and']).to be_nil
+          expect(subject.syntax['my-and']).to be_nil
         end
 
         it 'compiles into vm instructions' do
@@ -1145,7 +1110,6 @@ describe Compiler do
     context 'macro expansion' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define-syntax list quote))
           (define-syntax foo
             (syntax-rules ()
               ((foo ((name1 val1) ...))

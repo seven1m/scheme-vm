@@ -17,33 +17,26 @@ class Compiler
   include Compiler::Lib::Scheme::ProcessContext
   include Compiler::Lib::Scheme::Write
 
-  def initialize(code = nil, filename:, includes: [], arguments: {}, load_path: LOAD_PATH)
+  def initialize(code = nil, filename:, arguments: {}, load_path: LOAD_PATH)
     @variables = {}
     @filename = filename
     @arguments = arguments
     @load_path = load_path
     @syntax = {}              # macro transformers
+    @locals = {}              # top-level locals (globals)
     @libs = {}                # loaded libraries
     @mangled_identifiers = {} # used for macro hygiene
     @source = {}              # store source code for each file compiled
     @source[filename] = code
     @sexps = []
-    include_code(includes)
     @sexps += Parser.new(code, filename: filename).parse if code
   end
 
   attr_reader :variables, :filename, :arguments, :syntax, :source, :libs
 
   def compile(code = nil, keep_last: false, halt: true)
-    @sexps += Parser.new(code, filename: filename).parse if code
-    compile_sexps(@sexps, options: { syntax: @syntax }, halt: halt, keep_last: keep_last)
-  end
-
-  def include_code(paths)
-    paths.map do |path|
-      filename = "#{path}.scm"
-      @sexps += parse_file(filename)
-    end
+    @sexps = Parser.new(code, filename: filename).parse if code
+    compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }, halt: halt, keep_last: keep_last)
   end
 
   def mangle_identifier(name)
@@ -63,8 +56,7 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps, options: {}, halt: false, keep_last: false)
-    options[:locals] ||= {}
+  def compile_sexps(sexps, options:, halt: false, keep_last: false)
     instructions = sexps
                    .each_with_index
                    .map { |s, i| compile_sexp(s, options.merge(use: i == sexps.size - 1 && keep_last)) }
