@@ -1,5 +1,3 @@
-; focus
-
 (import (scheme base)
         (assert))
 
