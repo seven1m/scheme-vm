@@ -12,7 +12,6 @@ require_relative 'vm/gc'
 require_relative 'vm/debug_output'
 require_relative 'vm/operations'
 require_relative 'parser'
-require_relative 'compiler'
 require 'pry'
 
 class VM
