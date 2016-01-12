@@ -56,6 +56,8 @@
    string->list
    string-append
    symbol?
+   unless
+   when
    write-string)
 
   (begin
@@ -357,5 +359,17 @@
        ((and (string? a) (string? b)) (eq? a b))
        ((and (symbol? a) (symbol? b)) (eq? a b))
        (else #f)))
+
+    (define-syntax when
+      (syntax-rules ()
+        ((when test result1 result2 ...)
+         (if test
+             (begin result1 result2 ...)))))
+
+    (define-syntax unless
+      (syntax-rules ()
+        ((unless test result1 result2 ...)
+         (if (not test)
+             (begin result1 result2 ...)))))
 
   ))
