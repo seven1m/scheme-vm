@@ -83,6 +83,7 @@ class VM
   INT_WRITE = 1
 
   TYPES = [
+    VM::Atom,
     VM::BoolTrue,
     VM::BoolFalse,
     VM::ByteArray,

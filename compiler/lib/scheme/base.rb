@@ -224,7 +224,8 @@ class Compiler
           'char?'    => VM::Char,
           'integer?' => VM::Int,
           'pair?'    => VM::Pair,
-          'string?'  => VM::ByteArray
+          'string?'  => VM::ByteArray,
+          'symbol?'  => VM::Atom
         }.each do |name, type|
           define_method "base_#{name}" do |(arg, *_rest), options|
             [

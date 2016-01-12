@@ -15,6 +15,8 @@ class VM
       self
     end
 
+    alias_method :eq?, :==
+
     def to_ruby
       to_s
     end

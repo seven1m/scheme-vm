@@ -13,6 +13,7 @@
    begin
    boolean?
    car
+   case
    cdr
    char?
    cond
@@ -36,6 +37,8 @@
    list
    list?
    list->string
+   memq
+   memv
    newline
    not
    null?
@@ -52,6 +55,7 @@
    string-ref
    string->list
    string-append
+   symbol?
    write-string)
 
   (begin
@@ -87,6 +91,7 @@
     (--define-native string? base_string?)
     (--define-native string-length base_string_length)
     (--define-native string-ref base_string_ref)
+    (--define-native symbol? base_symbol?)
 
     (define-syntax begin
       (syntax-rules ()
@@ -195,6 +200,57 @@
             #f
             #t)))
 
+    (define empty?
+      (lambda (l)
+        (null? l)))
+
+    (define (memq obj list)
+      (if (empty? list)
+          #f
+          (if (eq? obj (car list))
+              list
+              (memq obj (cdr list)))))
+
+    (define (memv obj list)
+      (if (empty? list)
+          #f
+          (if (eqv? obj (car list))
+              list
+              (memq obj (cdr list)))))
+
+    (define-syntax case
+      (syntax-rules (else =>)
+        ((case (key ...)
+           clauses ...)
+         (let ((atom-key (key ...)))
+           (case atom-key clauses ...)))
+        ((case key
+           (else => result))
+         (result key))
+        ((case key
+           (else result1 result2 ...))
+         (begin result1 result2 ...))
+        ((case key
+           ((atoms ...) result1 result2 ...))
+         (if (memv key '(atoms ...))
+             (begin result1 result2 ...)))
+        ((case key
+           ((atoms ...) => result))
+         (if (memv key '(atoms ...))
+             (result key)))
+        ((case key
+           ((atoms ...) => result)
+           clause clauses ...)
+         (if (memv key '(atoms ...))
+             (result key)
+             (case key clause clauses ...)))
+        ((case key
+           ((atoms ...) result1 result2 ...)
+           clause clauses ...)
+         (if (memv key '(atoms ...))
+             (begin result1 result2 ...)
+             (case key clause clauses ...)))))
+
     (define-syntax cond
       (syntax-rules (else =>)
         ((cond (else result1 result2 ...))
@@ -219,10 +275,6 @@
         (if test
             (begin result1 result2 ...)
             (cond clause1 clause2 ...)))))
-
-    (define empty?
-      (lambda (l)
-        (null? l)))
 
     (define list?
       (lambda (l)
@@ -298,10 +350,12 @@
 
     (define (equal? a b)
       (cond
+       ((and (boolean? a) (boolean? b)) (eq? a b))
        ((and (char? a) (char? b)) (eq? a b))
        ((and (number? a) (number? b)) (eq? a b))
        ((and (list? a) (list? b)) (list-equal? a b))
        ((and (string? a) (string? b)) (eq? a b))
+       ((and (symbol? a) (symbol? b)) (eq? a b))
        (else #f)))
 
   ))

@@ -79,7 +79,7 @@ describe VM do
 
     it 'pushes an int representing the type' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(5)
+        VM::Int.new(6)
       ])
     end
   end

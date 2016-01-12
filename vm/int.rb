@@ -20,6 +20,7 @@ class VM
     end
 
     alias_method :==, :eq?
+    alias_method :eqv?, :eq?
 
     def +(other)
       Int.new(raw + other.raw)
