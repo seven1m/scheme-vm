@@ -50,7 +50,7 @@
       - [ ] `import`
       - [ ] `include`
       - [ ] `include-ci`
-      - [ ] `include-library-delcarations`
+      - [ ] `include-library-declarations`
       - [ ] `cond-expand`
 - [ ] repl (pp 29)
 - [x] `eqv?` semantics (pp 30)
