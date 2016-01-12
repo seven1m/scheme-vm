@@ -35,7 +35,7 @@ class VM
     ['PUSH_CDR',      0],
     ['PUSH_CONS',     0],
     ['PUSH_LIST',     0],
-    ['PUSH_VAR',   1],
+    ['PUSH_VAR',      1],
     ['PUSH_ARG',      0],
     ['PUSH_ARGS',     0],
     ['PUSH_FUNC',     0],
@@ -80,7 +80,7 @@ class VM
     const_set(name.to_sym, index)
   end
 
-  INT_WRITE   = 1
+  INT_WRITE = 1
 
   TYPES = [
     VM::BoolTrue,

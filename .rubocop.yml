@@ -42,3 +42,6 @@ Style/WhileUntilModifier:
 
 Style/BlockDelimiters:
   Enabled: false
+
+Style/ExtraSpacing:
+  Enabled: false
