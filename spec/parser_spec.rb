@@ -9,7 +9,7 @@ describe Parser do
         '(1 2)
         '()
         ,foo
-        ,(foo bar)
+        ,(foo bar) #; (baz) #;6
         #| this is a
            multi-line comment |#
         (print |space in identifier|)
@@ -25,7 +25,7 @@ describe Parser do
         ['quote', ['1', '2']],
         ['list'],
         ['unquote', 'foo'],
-        ['unquote', ['foo', 'bar']],
+        ['unquote', ['foo', 'bar']], nil, nil,
         ['print', 'space in identifier'],
         ['if', ['<', '1', '2'], nil,
                'x',
