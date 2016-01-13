@@ -32,6 +32,8 @@
    length
    let
    let*
+   let-syntax
+   letrec-syntax
    letrec
    letrec*
    list
@@ -81,6 +83,8 @@
     (--define-native if base_if)
     (--define-native integer? base_integer?)
     (--define-native lambda base_lambda)
+    (--define-native let-syntax base_let_syntax)
+    (--define-native letrec-syntax base_letrec_syntax)
     (--define-native list base_list)
     (--define-native list->string base_list_to_string)
     (--define-native null? base_null?)

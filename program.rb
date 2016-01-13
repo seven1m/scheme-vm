@@ -24,6 +24,11 @@ class Program
     @compiler.filename = f
   end
 
+  def stdout=(io)
+    @stdout = io
+    @vm.stdout = io
+  end
+
   private
 
   def vm

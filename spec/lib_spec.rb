@@ -3,7 +3,6 @@ require_relative './support/dumpable_string_io'
 require 'stringio'
 
 out = DumpableStringIO.new
-
 program = Program.new('(import (scheme base) (assert))', stdout: out)
 program.run
 cached_program = Marshal.dump(program)
@@ -15,9 +14,10 @@ Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
     skip = !(code =~ /^; skip/).nil?
     it 'passes all tests', focus: focus, skip: skip do
       failed = false
-      out.rewind
+      out = DumpableStringIO.new
       program = Marshal.load(cached_program)
       program.filename = path
+      program.stdout = out
       program.run(code: code)
       out.rewind
       result = out.read

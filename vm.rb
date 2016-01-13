@@ -92,7 +92,8 @@ class VM
     VM::Pair
   ]
 
-  attr_reader :stack, :heap, :stdout, :ip, :call_stack, :closures, :call_args, :libs
+  attr_reader :stack, :heap, :ip, :call_stack, :closures, :call_args, :libs
+  attr_accessor :stdout
 
   def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0              # instruction pointer

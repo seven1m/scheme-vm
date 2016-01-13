@@ -130,6 +130,34 @@ class Compiler
           end
         end
 
+        def base_let_syntax((bindings, *body), options)
+          compile_let_syntax_body(bindings, body, {}, options)
+        end
+
+        def base_letrec_syntax((bindings, *body), options)
+          initial_bindings = bindings.each_with_object({}) do |(name), hash|
+            hash[name] = true
+          end
+          compile_let_syntax_body(bindings, body, initial_bindings, options)
+        end
+
+        def compile_let_syntax_body(bindings, body, initial_bindings, options)
+          body_opts = options.merge(
+            use: true,
+            locals: options[:locals].dup,
+            syntax: options[:syntax].merge(initial_bindings)
+          )
+          bindings.each do |name, transformer|
+            body_opts[:syntax][name] = {
+              locals: body_opts[:locals].keys + body_opts[:syntax].keys + [name],
+              transformer: transformer
+            }
+          end
+          body.each_with_index.map do |sexp, index|
+            compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
+          end
+        end
+
         def base_list(args, options)
           members = args.flat_map do |arg|
             expr = compile_sexp(arg, options.merge(use: true))

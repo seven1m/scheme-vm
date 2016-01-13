@@ -32,7 +32,7 @@
 - [ ] dynamic bindings, `make-parameter` (pp 19), `parameterize` (pp 20)
 - [ ] exception handling, `guard` (pp 20)
 - [ ] `case-lambda` (pp 21)
-- [ ] `let-syntax`, `letrec-syntax` (pp 22)
+- [x] `let-syntax`, `letrec-syntax` (pp 22)
 - [x] hygienic macro bindings (pp 22)
 - [ ] referentially transparent macro bindings (pp 22)
 - [x] literals in `syntax-rules` (pp 23)

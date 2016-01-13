@@ -36,7 +36,10 @@ class Compiler
   attr_accessor :filename
 
   def compile(code = nil, keep_last: false, halt: true)
-    @sexps = Parser.new(code, filename: filename).parse if code
+    if code
+      @source[@filename] = code
+      @sexps = Parser.new(code, filename: filename).parse
+    end
     compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }, halt: halt, keep_last: keep_last)
   end
 
