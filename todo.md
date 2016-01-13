@@ -64,7 +64,8 @@
 - [ ] `exact?`, `exact-integer?`, `inexact?` (pp 35)
 - [ ] `finite?`, `infinite?` (pp 35)
 - [ ] `nan?` (pp 36)
-- [ ] `zero?`, `positive?`, `negative?`, `odd?`, `even?` (pp 36)
+- [x] `positive?`, `negative?`, `zero?` (pp 36)
+- [ ] `odd?`, `even?` (pp 36)
 - [ ] `max`, `min` (pp 36)
 - [ ] `abs` (pp 36)
 - [ ] `floor/`, `floor-quotient`, `floor-remainder`,

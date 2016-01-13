@@ -41,12 +41,14 @@
    list->string
    memq
    memv
+   negative?
    newline
    not
    null?
    number?
    or
    pair?
+   positive?
    quasiquote
    quote
    set!
@@ -60,7 +62,8 @@
    symbol?
    unless
    when
-   write-string)
+   write-string
+   zero?)
 
   (begin
     (--define-native + base_+)
@@ -312,6 +315,12 @@
     (define (number? n)
       (or (integer? n)))
 
+    (define (negative? n)
+      (< n 0))
+
+    (define (positive? n)
+      (>= n 0))
+
     (define string->list
       (lambda (str)
         (define s->l
@@ -375,5 +384,8 @@
         ((unless test result1 result2 ...)
          (if (not test)
              (begin result1 result2 ...)))))
+
+    (define (zero? n)
+      (= n 0))
 
   ))

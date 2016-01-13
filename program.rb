@@ -26,7 +26,7 @@ class Program
 
   def stdout=(io)
     @stdout = io
-    @vm.stdout = io
+    vm.stdout = io
   end
 
   private
