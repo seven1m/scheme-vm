@@ -32,7 +32,8 @@ class Compiler
     @sexps += Parser.new(code, filename: filename).parse if code
   end
 
-  attr_reader :variables, :filename, :arguments, :syntax, :source, :libs
+  attr_reader :variables, :arguments, :syntax, :source, :libs
+  attr_accessor :filename
 
   def compile(code = nil, keep_last: false, halt: true)
     @sexps = Parser.new(code, filename: filename).parse if code

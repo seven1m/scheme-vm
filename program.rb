@@ -9,8 +9,8 @@ class Program
     @compiler = Compiler.new(code, filename: filename)
   end
 
-  def run(debug: 0)
-    @instr = @compiler.compile
+  def run(code: nil, debug: 0)
+    @instr = @compiler.compile(code)
     VM::PrettyPrinter.new(@instr).print if debug >= 1
     vm.execute(@instr, debug: debug)
     vm.return_value
@@ -18,6 +18,13 @@ class Program
     print_error_message(e)
     1
   end
+
+  def filename=(f)
+    @filename = f
+    @compiler.filename = f
+  end
+
+  private
 
   def vm
     @vm ||= VM.new(stdout: @stdout, args: @args)
