@@ -283,26 +283,6 @@ describe Compiler do
       end
     end
 
-    context 'undefined' do
-      before do
-        @result = subject.compile(<<-END)
-          (if #f #f)
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_FALSE',
-          'VM::JUMP_IF_FALSE', 4,
-          'VM::PUSH_FALSE',
-          'VM::JUMP', 2,
-          'VM::PUSH_UNDEF',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'variables' do
       before do
         @result = subject.compile(<<-END)
@@ -988,6 +968,26 @@ describe Compiler do
             'VM::PUSH_NUM', '3',
             'VM::RETURN',
             'VM::ENDF',
+            'VM::POP',
+            'VM::HALT'
+          ])
+        end
+      end
+
+      context 'without else' do
+        before do
+          @result = subject.compile(<<-END)
+            (if #f #f)
+          END
+        end
+
+        it 'compiles into vm instructions, adding PUSH_UNDEF for else' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_FALSE',
+            'VM::JUMP_IF_FALSE', 4,
+            'VM::PUSH_FALSE',
+            'VM::JUMP', 2,
+            'VM::PUSH_UNDEF',
             'VM::POP',
             'VM::HALT'
           ])
