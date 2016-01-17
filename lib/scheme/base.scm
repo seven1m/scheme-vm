@@ -51,6 +51,7 @@
    positive?
    quasiquote
    quote
+   reverse
    set!
    set-car!
    set-cdr!
@@ -384,6 +385,13 @@
         ((unless test result1 result2 ...)
          (if (not test)
              (begin result1 result2 ...)))))
+
+    (define (reverse l)
+      (letrec ((rv (lambda (l1 l2)
+                 (if (empty? l1)
+                     l2
+                     (rv (cdr l1) (cons (car l1) l2))))))
+        (rv l '())))
 
     (define (zero? n)
       (= n 0))

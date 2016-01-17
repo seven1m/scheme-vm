@@ -16,3 +16,5 @@
 
 (assert (eq? 1 (last (list 1))))
 (assert (eq? 3 (last (list 1 2 3))))
+
+(assert (equal? (list 3 2 1) (reverse '(1 2 3))))
