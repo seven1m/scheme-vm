@@ -27,6 +27,7 @@
    eq?
    equal?
    eqv?
+   even?
    if
    integer?
    lambda
@@ -49,6 +50,7 @@
    not
    null?
    number?
+   odd?
    or
    pair?
    positive?
@@ -401,5 +403,11 @@
 
     (define (zero? n)
       (= n 0))
+
+    (define (even? n)
+      (= 0 (modulo n 2)))
+
+    (define (odd? n)
+      (= 1 (modulo n 2)))
 
   ))
