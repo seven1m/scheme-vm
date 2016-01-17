@@ -84,6 +84,21 @@ describe VM do
     end
   end
 
+  describe 'PUSH_UNDEF' do
+    before do
+      subject.execute([
+        VM::PUSH_UNDEF,
+        VM::HALT
+      ])
+    end
+
+    it 'pushes undefined onto the stack' do
+      expect(subject.stack_values).to eq([
+        nil
+      ])
+    end
+  end
+
   describe 'STR_REF' do
     before do
       subject.execute([

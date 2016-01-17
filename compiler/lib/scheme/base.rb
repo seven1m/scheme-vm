@@ -75,6 +75,7 @@ class Compiler
         def base_if((condition, true_body, false_body), options)
           true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
           false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
+          false_instr = [VM::PUSH_UNDEF] if false_instr.empty?
           [
             compile_sexp(condition, options.merge(use: true)),
             VM::JUMP_IF_FALSE, true_instr.size + 3,

@@ -38,6 +38,7 @@ class VM
     ['PUSH_ARG',      0],
     ['PUSH_ARGS',     0],
     ['PUSH_FUNC',     0],
+    ['PUSH_UNDEF',    0],
     ['ENDF',          0],
     ['PUSH_LIB',      0],
     ['ENDL',          0],

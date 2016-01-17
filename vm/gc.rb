@@ -50,7 +50,7 @@ class VM
     def active_in_pair?(candidate, pair)
       return true if pair.address == candidate
       return true if pair.next_node == candidate
-      node = @vm.heap[pair.address]
+      node = pair.address && @vm.heap[pair.address]
       next_node = @vm.heap[pair.next_node]
       return true if node.is_a?(VM::Pair) && active_in_pair?(candidate, node)
       return true if next_node.is_a?(VM::Pair) && active_in_pair?(candidate, next_node)

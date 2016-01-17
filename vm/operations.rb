@@ -91,6 +91,10 @@ class VM
       fetch_until(ENDF) # discard
     end
 
+    def do_push_undef
+      push(nil)
+    end
+
     def do_set_lib
       name = fetch
       @closures[name] = { locals: {} }
@@ -295,7 +299,11 @@ class VM
 
     def do_set_args
       count = pop_raw
-      @call_args = (0...count).map { pop }.reverse
+      if @stack.size >= count
+        @call_args = (0...count).map { pop }.reverse
+      else
+        fail NoStackValue, "stack size is #{@stack.size}, but you tried to use #{count}"
+      end
     end
 
     def do_set_arg
