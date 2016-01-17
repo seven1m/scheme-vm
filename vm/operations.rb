@@ -64,6 +64,7 @@ class VM
 
     def do_push_var
       name = fetch
+      @last_atom = name if name.is_a?(Atom)
       if (frame = find_call_stack_frame_with_symbol(name))
         address = frame[:named_args][name]
         push(address)

@@ -22,5 +22,7 @@ class VM
     def to_s
       raw.map(&:chr).join
     end
+
+    alias_method :to_ruby, :to_s
   end
 end

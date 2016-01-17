@@ -7,7 +7,7 @@ require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
 require_relative 'vm/exceptions'
-require_relative 'vm/pretty_print'
+require_relative 'vm/pretty_printer'
 require_relative 'vm/gc'
 require_relative 'vm/debug_output'
 require_relative 'vm/operations'
@@ -93,7 +93,7 @@ class VM
     VM::Pair
   ]
 
-  attr_reader :stack, :heap, :ip, :call_stack, :closures, :call_args, :libs
+  attr_reader :stack, :heap, :ip, :call_stack, :closures, :call_args, :libs, :last_atom
   attr_accessor :stdout
 
   def initialize(instructions = [], args: [], stdout: $stdout)

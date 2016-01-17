@@ -61,7 +61,7 @@ class VM
     end
 
     def inspect
-      "#<VM::Pair size=#{size}, car=#{car.inspect}>"
+      "#<VM::Pair size=#{size}, car=#{car.inspect}, list=#{to_ruby.inspect}>"
     end
 
     alias_method :eq?, :==
