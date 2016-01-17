@@ -272,15 +272,18 @@ class Compiler
         end
 
         {
-          '+'    => VM::ADD,
-          '-'    => VM::SUB,
-          '>'    => VM::CMP_GT,
-          '>='   => VM::CMP_GTE,
-          '<'    => VM::CMP_LT,
-          '<='   => VM::CMP_LTE,
-          '='    => VM::CMP_EQ_NUM,
-          'eq?'  => VM::CMP_EQ,
-          'eqv?' => VM::CMP_EQV
+          '+'      => VM::ADD,
+          '-'      => VM::SUB,
+          '*'      => VM::MUL,
+          '/'      => VM::DIV,
+          'modulo' => VM::MOD,
+          '>'      => VM::CMP_GT,
+          '>='     => VM::CMP_GTE,
+          '<'      => VM::CMP_LT,
+          '<='     => VM::CMP_LTE,
+          '='      => VM::CMP_EQ_NUM,
+          'eq?'    => VM::CMP_EQ,
+          'eqv?'   => VM::CMP_EQV
         }.each do |name, instruction|
           define_method('base_' + name) do |args, options|
             compare(instruction, args, options)

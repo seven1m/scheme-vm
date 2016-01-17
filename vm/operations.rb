@@ -190,6 +190,24 @@ class VM
       push_val(num1 - num2)
     end
 
+    def do_mul
+      num2 = pop_val
+      num1 = pop_val
+      push_val(num1 * num2)
+    end
+
+    def do_div
+      num2 = pop_val
+      num1 = pop_val
+      push_val(num1 / num2)
+    end
+
+    def do_mod
+      num2 = pop_val
+      num1 = pop_val
+      push_val(num1 % num2)
+    end
+
     def do_cmp_gt
       num2 = pop_val
       num1 = pop_val

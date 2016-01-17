@@ -2,6 +2,8 @@
   (export
    +
    -
+   *
+   /
    >
    >=
    <
@@ -41,6 +43,7 @@
    list->string
    memq
    memv
+   modulo
    negative?
    newline
    not
@@ -69,6 +72,8 @@
   (begin
     (--define-native + base_+)
     (--define-native - base_-)
+    (--define-native * base_*)
+    (--define-native / base_/)
     (--define-native > base_>)
     (--define-native >= base_>=)
     (--define-native < base_<)
@@ -91,6 +96,7 @@
     (--define-native letrec-syntax base_letrec_syntax)
     (--define-native list base_list)
     (--define-native list->string base_list_to_string)
+    (--define-native modulo base_modulo)
     (--define-native null? base_null?)
     (--define-native pair? base_pair?)
     (--define-native quasiquote base_quasiquote)
