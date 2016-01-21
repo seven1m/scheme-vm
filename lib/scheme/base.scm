@@ -42,8 +42,10 @@
    list
    list?
    list->string
+   max
    memq
    memv
+   min
    modulo
    negative?
    newline
@@ -409,5 +411,23 @@
 
     (define (odd? n)
       (= 1 (modulo n 2)))
+
+    (define (max . nums)
+      (letrec ((get-max (lambda (nums biggest)
+                          (if (empty? nums)
+                              biggest
+                              (if (> (car nums) biggest)
+                                  (get-max (cdr nums) (car nums))
+                                  (get-max (cdr nums) biggest))))))
+        (get-max (cdr nums) (car nums))))
+
+    (define (min . nums)
+      (letrec ((get-min (lambda (nums smallest)
+                          (if (empty? nums)
+                              smallest
+                              (if (< (car nums) smallest)
+                                  (get-min (cdr nums) (car nums))
+                                  (get-min (cdr nums) smallest))))))
+        (get-min (cdr nums) (car nums))))
 
   ))
