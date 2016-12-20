@@ -249,6 +249,13 @@ class Compiler
           ]
         end
 
+        def base_char_to_integer((char), options)
+          [
+            compile_sexp(char, options.merge(use: true)),
+            VM::RAW
+          ]
+        end
+
         {
           'char?'    => VM::Char,
           'integer?' => VM::Int,

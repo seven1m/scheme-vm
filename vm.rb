@@ -46,6 +46,7 @@ class VM
     ['STR_LEN',       0],
     ['LIST_TO_STR',   0],
     ['APPEND',        0],
+    ['RAW',           0],
     ['POP',           0],
     ['ADD',           0],
     ['SUB',           0],

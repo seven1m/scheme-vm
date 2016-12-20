@@ -99,6 +99,22 @@ describe VM do
     end
   end
 
+  describe 'RAW' do
+    before do
+      subject.execute([
+        VM::PUSH_CHAR, 'a',
+        VM::RAW,
+        VM::HALT
+      ])
+    end
+
+    it 'pushes the raw value' do
+      expect(subject.stack_values).to eq([
+        VM::Int.new(97)
+      ])
+    end
+  end
+
   describe 'STR_REF' do
     before do
       subject.execute([

@@ -18,6 +18,7 @@
    case
    cdr
    char?
+   char->integer
    cond
    cons
    define
@@ -88,6 +89,7 @@
     (--define-native car base_car)
     (--define-native cdr base_cdr)
     (--define-native char? base_char?)
+    (--define-native char->integer base_char_to_integer)
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native define-syntax base_define_syntax)

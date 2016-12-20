@@ -300,6 +300,16 @@ class VM
       end
     end
 
+    def do_raw
+      raw = pop_raw
+      case raw
+      when Fixnum
+        push_val(VM::Int.new(raw))
+      else
+        fail "unknown raw value type #{raw.inspect}"
+      end
+    end
+
     def do_define_var
       name = fetch
       locals[name] = pop
