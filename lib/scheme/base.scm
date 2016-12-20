@@ -31,6 +31,7 @@
    even?
    if
    integer?
+   integer->char
    lambda
    last
    length
@@ -97,6 +98,7 @@
     (--define-native eqv? base_eqv?)
     (--define-native if base_if)
     (--define-native integer? base_integer?)
+    (--define-native integer->char base_integer_to_char)
     (--define-native lambda base_lambda)
     (--define-native let-syntax base_let_syntax)
     (--define-native letrec-syntax base_letrec_syntax)

@@ -256,6 +256,13 @@ class Compiler
           ]
         end
 
+        def base_integer_to_char((int), options)
+          [
+            compile_sexp(int, options.merge(use: true)),
+            VM::PUSH_CHAR
+          ]
+        end
+
         {
           'char?'    => VM::Char,
           'integer?' => VM::Int,
