@@ -44,6 +44,7 @@
    list
    list?
    list->string
+   map
    max
    memq
    memv
@@ -415,6 +416,11 @@
 
     (define (odd? n)
       (= 1 (modulo n 2)))
+
+    (define (map fn l)
+      (if (empty? l)
+        '()
+        (cons (fn (car l)) (map fn (cdr l)))))
 
     (define (max . nums)
       (letrec ((get-max (lambda (nums biggest)
