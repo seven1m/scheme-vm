@@ -67,9 +67,11 @@ class VM
       @last_atom = name if name.is_a?(Atom)
       if (frame = find_call_stack_frame_with_symbol(name))
         address = frame[:named_args][name]
+        fail VariableUndefined, name unless address
         push(address)
       elsif (c = find_closure_with_symbol(name))
         address = c[:locals][name]
+        fail VariableUndefined, name unless address
         push(address)
       else
         fail VariableUndefined, name
