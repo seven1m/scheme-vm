@@ -9,6 +9,7 @@
    <
    <=
    =
+   abs
    and
    append
    apply
@@ -203,6 +204,11 @@
         x)
         ((do "step" x y)
         y)))
+
+    (define (abs n)
+      (if (< n 0)
+        (* n -1)
+        n))
 
     (define-syntax and
       (syntax-rules ()

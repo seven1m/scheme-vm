@@ -12,3 +12,6 @@
 
 (assert (zero? 0))
 (assert (not (zero? 8)))
+
+(assert (= 3 (abs 3)))
+(assert (= 3 (abs -3)))
