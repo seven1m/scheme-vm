@@ -12,7 +12,8 @@ class Program
   def run(code: nil, debug: 0)
     @instr = @compiler.compile(code)
     VM::PrettyPrinter.new(@instr, grouped: true, ip: true).print if debug >= 1
-    vm.execute(@instr, debug: debug)
+    vm.debug = debug
+    vm.execute(@instr)
     vm.return_value
   rescue VM::VariableUndefined => e
     print_error_message(e)

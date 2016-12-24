@@ -98,7 +98,7 @@ class VM
   ]
 
   attr_reader :stack, :heap, :ip, :call_stack, :closures, :call_args, :libs, :last_atom
-  attr_accessor :stdout
+  attr_accessor :stdout, :debug
 
   def initialize(instructions = [], args: [], stdout: $stdout)
     @ip = 0              # instruction pointer
@@ -112,18 +112,19 @@ class VM
     @closures[:global] = { locals: {} } # global variables
     @stdout = stdout
     @executable = []     # ranges of executable heap (w^x)
+    @debug = 0
     load_code(instructions)
   end
 
-  def execute(instructions = nil, debug: 0)
+  def execute(instructions = nil)
     load_code(instructions) if instructions
     while (instruction = fetch)
       break if instruction == HALT
-      execute_instruction(instruction, debug: debug)
+      execute_instruction(instruction)
     end
   end
 
-  def execute_instruction(instruction, debug: 0)
+  def execute_instruction(instruction)
     debug_output = DebugOutput.new(self, instruction, debug) if debug >= 2
     debug_output.print_ip if debug >= 2
     case instruction
