@@ -6,6 +6,7 @@ require_relative 'vm/pair'
 require_relative 'vm/empty_list'
 require_relative 'vm/bool_true'
 require_relative 'vm/bool_false'
+require_relative 'vm/unspecified'
 require_relative 'vm/exceptions'
 require_relative 'vm/pretty_printer'
 require_relative 'vm/gc'
@@ -220,7 +221,7 @@ class VM
 
   def pop_val
     address = pop
-    fail NoStackValue, 'no value on stack' unless address
+    return Unspecified.instance unless address
     resolve(address)
   end
 
