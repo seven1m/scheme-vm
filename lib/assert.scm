@@ -5,6 +5,8 @@
   (begin
     (define-syntax assert
       (syntax-rules (eq? eqv? equal?)
+        ((assert (= expected actual))
+         (assert (= expected actual) expected actual))
         ((assert (eq? expected actual))
          (assert (eq? expected actual) expected actual))
         ((assert (eqv? expected actual))
