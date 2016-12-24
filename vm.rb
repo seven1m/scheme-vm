@@ -164,7 +164,7 @@ class VM
   end
 
   def resolve(address)
-    fail 'cannot lookup nil' if address.nil?
+    return Unspecified.instance if address.nil?
     @heap[address] || fail("invalid address #{address}")
   end
 
@@ -221,7 +221,6 @@ class VM
 
   def pop_val
     address = pop
-    return Unspecified.instance unless address
     resolve(address)
   end
 

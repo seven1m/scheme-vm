@@ -67,11 +67,9 @@ class VM
       @last_atom = name if name.is_a?(Atom)
       if (frame = find_call_stack_frame_with_symbol(name))
         address = frame[:named_args][name]
-        fail VariableUndefined, name unless address
         push(address)
       elsif (c = find_closure_with_symbol(name))
         address = c[:locals][name]
-        fail VariableUndefined, name unless address
         push(address)
       else
         fail VariableUndefined, name
@@ -266,12 +264,8 @@ class VM
       func = fetch
       case func
       when INT_WRITE
-        if (address = pop)
-          val = resolve(address)
-          stdout_print(val)
-        else
-          stdout_print(nil)
-        end
+        val = pop_val
+        stdout_print(val)
       end
     end
 
