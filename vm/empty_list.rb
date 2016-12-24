@@ -16,6 +16,10 @@ class VM
       []
     end
 
+    def to_ruby
+      []
+    end
+
     alias_method :eq?, :==
   end
 end
