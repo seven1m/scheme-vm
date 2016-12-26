@@ -237,7 +237,6 @@ class VM
 
   def peek_val
     address = @stack.last
-    fail 'no value on stack' unless address
     resolve(address)
   end
 
