@@ -9,4 +9,4 @@
     ((= i 5) i)
   (set! result (cons i result)))
 
-(assert (eqv? result '(4 3 2 1 0)))
+(assert (equal? result '(4 3 2 1 0)))

@@ -67,8 +67,7 @@ class VM
     alias_method :eq?, :==
 
     def eqv?(other)
-      return false unless other.is_a?(Pair)
-      to_ruby == other.to_ruby
+      self == other
     end
   end
 end
