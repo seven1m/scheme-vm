@@ -78,7 +78,8 @@ class VM
 
     def do_push_args
       last = empty_list
-      while (arg = args.pop)
+      while args.size > 0
+        arg = args.pop
         address = alloc
         @heap[address] = build_pair(arg, last)
         last = address
