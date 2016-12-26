@@ -7,7 +7,7 @@ class VM
     end
 
     def eq?(other)
-      other == Unspecified.instance
+      self == other
     end
   end
 end
