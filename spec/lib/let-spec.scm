@@ -20,6 +20,16 @@
 
 (assert (eq? "old-foo" (foo)))
 
+(let ((a 1)
+      (b 2))
+  (assert (= 1 a))
+  (assert (= 2 b)))
+
+(let* ((a '(1 2 3))
+       (b a))
+  (assert (equal? '(1 2 3) a))
+  (assert (eqv? a b)))
+
 (letrec ((even?
           (lambda (n)
             (if (= n 0)

@@ -15,7 +15,8 @@ describe Compiler::Pattern do
     end
 
     it 'does not error if pattern contains a sexp but expression does not' do
-      expect(described_class.new(['assert', ['expected', 'eq?', 'actual']]).match(['assert', 'foo'])).to be_nil
+      pattern = described_class.new(['assert', ['x', 'y', 'z']])
+      expect(pattern.match(['assert', 'foo'])).to be_nil
     end
 
     it 'matches if length is different but pattern allows for variability' do
@@ -34,6 +35,17 @@ describe Compiler::Pattern do
         'name...' => ['baz'],
         'val...'  => ['quz']
       )
+      pattern = described_class.new(['let', [['name1', 'val1'], ['name2', 'val2'], '...']])
+      expect(pattern.match(['let', [['foo', 'bar']]])).to eq(
+        'name1'    => 'foo',
+        'val1'     => 'bar',
+        'name2'    => nil,
+        'val2'     => nil,
+        'name2...' => [],
+        'val2...'  => []
+      )
+      pattern = described_class.new(['let', []])
+      expect(pattern.match(['let', [[]]])).to eq({})
     end
 
     it 'matches literals literally' do
