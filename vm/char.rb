@@ -13,15 +13,8 @@ class VM
       raw == other.raw
     end
 
-    def eq?(other)
-      return false unless other.is_a?(Char)
-      raw == other.raw
-    end
-
-    def eqv?(other)
-      return false unless other.is_a?(Char)
-      raw == other.raw
-    end
+    alias eq? ==
+    alias eqv? ==
 
     def to_s
       @byte.chr

@@ -2,23 +2,23 @@
         (assert))
 
 (define (foo)
-  "old-foo")
+  "old")
 
 (let-syntax
     ((foo (syntax-rules ()
             ((foo) "foo")))
      (bar (syntax-rules ()
             ((bar) "bar"))))
-  (assert (eq? "foobar" (string-append (foo) (bar)))))
+  (assert (equal? "foobar" (string-append (foo) (bar)))))
 
 (letrec-syntax
     ((foo (syntax-rules ()
             ((foo) (bar))))
      (bar (syntax-rules ()
             ((bar) "bar"))))
-  (assert (eq? "barbar" (string-append (foo) (bar)))))
+  (assert (equal? "barbar" (string-append (foo) (bar)))))
 
-(assert (eq? "old-foo" (foo)))
+(assert (equal? "old" (foo)))
 
 (let ((a 1)
       (b 2))

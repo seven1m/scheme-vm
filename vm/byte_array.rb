@@ -12,17 +12,17 @@ class VM
       @bytes
     end
 
-    def ==(other)
-      return false unless other.is_a?(ByteArray)
-      raw == other.raw
-    end
-
-    alias_method :eq?, :==
-
     def to_s
       raw.map(&:chr).join
     end
 
-    alias_method :to_ruby, :to_s
+    alias to_ruby to_s
+
+    alias eq? equal?
+    alias eqv? equal?
+
+    def ==(other)
+      other.is_a?(ByteArray) && raw == other.raw
+    end
   end
 end

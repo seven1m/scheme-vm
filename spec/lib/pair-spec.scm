@@ -19,11 +19,3 @@
 (assert (equal?   '(3 4) (cadr nested-list)))
 (assert (equal?     '(2) (cdar nested-list)))
 (assert (equal? '((5 6)) (cddr nested-list)))
-
-(define p1 '(1))
-(define p2 p1)
-(define p3 '(1))
-
-(assert (eqv? p1 p2))
-(assert (not (eqv? p1 p3)))
-(assert (not (eqv? p2 p3)))

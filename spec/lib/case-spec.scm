@@ -7,6 +7,6 @@
     ((2) "two")
     (else "other")))
 
-(assert (eq? "one" (compare 1)))
-(assert (eq? "two" (compare 2)))
-(assert (eq? "other" (compare 3)))
+(assert (equal? "one" (compare 1)))
+(assert (equal? "two" (compare 2)))
+(assert (equal? "other" (compare 3)))

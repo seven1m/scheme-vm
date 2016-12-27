@@ -69,6 +69,7 @@
    set!
    set-car!
    set-cdr!
+   string=?
    string?
    string-length
    string-ref
@@ -416,17 +417,22 @@
       (if (= (length a) (length b))
           (if (= 0 (length a))
               #t
-              (and (equal? (car a) (car b)) (list-equal? (cdr a) (cdr b))))
+              (if (equal? (car a) (car b))
+                (list-equal? (cdr a) (cdr b))
+                #f))
           #f))
+
+    (define (string=? a b)
+      (list-equal? (string->list a) (string->list b)))
 
     (define (equal? a b)
       (cond
        ((and (boolean? a) (boolean? b)) (eq? a b))
-       ((and (char? a) (char? b)) (eq? a b))
-       ((and (number? a) (number? b)) (eq? a b))
-       ((and (list? a) (list? b)) (list-equal? a b))
-       ((and (string? a) (string? b)) (eq? a b))
-       ((and (symbol? a) (symbol? b)) (eq? a b))
+       ((and (char? a)    (char? b))    (eq? a b))
+       ((and (number? a)  (number? b))  (eq? a b))
+       ((and (list? a)    (list? b))    (list-equal? a b))
+       ((and (string? a)  (string? b))  (string=? a b))
+       ((and (symbol? a)  (symbol? b))  (eq? a b))
        (else #f)))
 
     (define-syntax when

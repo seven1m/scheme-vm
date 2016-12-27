@@ -64,10 +64,11 @@ class VM
       "#<VM::Pair size=#{size}, car=#{car.inspect}, list=#{to_ruby.inspect}>"
     end
 
-    alias_method :eq?, :==
+    alias eq? equal?
+    alias eqv? equal?
 
-    def eqv?(other)
-      self == other
+    def ==(other)
+      other.is_a?(Pair) && raw == other.raw
     end
   end
 end
