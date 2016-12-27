@@ -45,3 +45,6 @@ Style/BlockDelimiters:
 
 Style/ExtraSpacing:
   Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
