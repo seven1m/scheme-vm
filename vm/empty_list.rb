@@ -20,6 +20,7 @@ class VM
       []
     end
 
-    alias_method :eq?, :==
+    alias eq? ==
+    alias eqv? ==
   end
 end

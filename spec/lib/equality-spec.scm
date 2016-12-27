@@ -33,10 +33,21 @@
 (assert (not (eq? #\a #\b)))
 (assert (not (eq? #\a "a")))
 
+;; pairs
+(assert (equal? '(1 . 2) '(1 . 2)))
+(assert (not (equal? '(1 . 2) '(3 . 4))))
+(assert (not (eqv? '(1 . 2) '(1 . 2))))
+(assert (not (eq? '(1 . 2) '(1 . 2))))
+(let* ((x '(1 . 2)) (y x))
+  (assert (eq? x y))
+  (assert (eqv? x y)))
+
 ;; lists
 (assert (equal? (list 1 2) '(1 2)))
 (assert (equal? (list "foo" "bar") '("foo" "bar")))
 (assert (equal? (list) '()))
+(assert (eqv? (list) '()))
+(assert (eq? (list) '()))
 (assert (not (equal? (list "foo" "bar") '("foo" "baz"))))
 (assert (not (equal? (list 1 2) '(1 2 3))))
 (assert (not (equal? (list 1 2 3) '(1 2))))
@@ -68,20 +79,3 @@
 (let* ((x "foo") (y x))
   (assert (eq? x y))
   (assert (eqv? x y)))
-
-;;
-(define l1 '(1 2 3))
-(define l2 l1)
-(define l3 '(1 2 3))
-
-(assert (eqv? l1 l2))
-(assert (not (eqv? l1 l3)))
-(assert (not (eqv? l2 l3)))
-
-(define p1 '(1))
-(define p2 p1)
-(define p3 '(1))
-
-(assert (eqv? p1 p2))
-(assert (not (eqv? p1 p3)))
-(assert (not (eqv? p2 p3)))

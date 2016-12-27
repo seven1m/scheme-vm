@@ -399,7 +399,7 @@
                         (apply s->l (cdr strings2))))))
         (list->string (apply s->l strings1))))
 
-    (--define-native write write) ; ensure this doesn't export
+    (--define-native write write) ; don't export this
 
     (define (newline)
       (write #\newline))
@@ -425,11 +425,17 @@
     (define (string=? a b)
       (list-equal? (string->list a) (string->list b)))
 
+    (define (pair=? a b) ; don't export this
+      (and
+        (equal? (car a) (car b))
+        (equal? (cdr a) (cdr b))))
+
     (define (equal? a b)
       (cond
        ((and (boolean? a) (boolean? b)) (eq? a b))
        ((and (char? a)    (char? b))    (eq? a b))
        ((and (number? a)  (number? b))  (eq? a b))
+       ((and (pair? a)    (pair? b))    (pair=? a b))
        ((and (list? a)    (list? b))    (list-equal? a b))
        ((and (string? a)  (string? b))  (string=? a b))
        ((and (symbol? a)  (symbol? b))  (eq? a b))
