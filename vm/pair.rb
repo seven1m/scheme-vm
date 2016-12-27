@@ -17,7 +17,7 @@ class VM
 
     def to_s
       items = to_a.flat_map do |item|
-        if item.is_a?(Fixnum) # address
+        if item.is_a?(Integer) # address
           @heap[item].to_s
         else
           ['.', item.to_s]

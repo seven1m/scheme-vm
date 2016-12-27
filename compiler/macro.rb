@@ -23,7 +23,7 @@ class Compiler
         values = Pattern.new(pattern, literals: @literals).match(sexp)
         return [values, template] if values
       end
-      fail "Could not match any template for #{sexp.inspect}"
+      raise "Could not match any template for #{sexp.inspect}"
     end
 
     def expand_template(template)

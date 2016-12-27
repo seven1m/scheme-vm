@@ -4,7 +4,7 @@ gem 'parslet'
 gem 'pry'
 
 group :development do
-  gem 'rspec'
   gem 'pry-stack_explorer'
+  gem 'rspec'
   gem 'stackprof'
 end

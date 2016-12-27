@@ -4,6 +4,5 @@ class DumpableStringIO < StringIO
     []
   end
 
-  def marshal_load(_data)
-  end
+  def marshal_load(_data); end
 end

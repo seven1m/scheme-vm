@@ -79,7 +79,7 @@ class VM
     ['IMPORT_LIB',    3],
     ['HALT',          0],
     ['DEBUG',         0]
-  ]
+  ].freeze
 
   INSTRUCTIONS.each_with_index do |(name, _arity), index|
     const_set(name.to_sym, index)
@@ -96,7 +96,7 @@ class VM
     VM::EmptyList,
     VM::Int,
     VM::Pair
-  ]
+  ].freeze
 
   attr_reader :stack, :heap, :ip, :call_stack, :closures, :call_args, :libs, :last_atom
   attr_accessor :stdout, :debug
@@ -130,7 +130,7 @@ class VM
     debug_output.print_ip if debug >= 2
     case instruction
     when NOOP
-      # nothing
+      :noop
     when RETURN
       do_return(debug)
     when DEBUG
@@ -143,7 +143,7 @@ class VM
   end
 
   def fetch
-    fail "heap[#{@ip}] is not executable" unless executable?(@ip)
+    raise "heap[#{@ip}] is not executable" unless executable?(@ip)
     instruction = @heap[@ip]
     @ip += 1
     instruction
@@ -165,7 +165,7 @@ class VM
 
   def resolve(address)
     return Unspecified.instance if address.nil?
-    @heap[address] || fail("invalid address #{address}")
+    @heap[address] || raise("invalid address #{address}")
   end
 
   def push(address)
@@ -316,7 +316,7 @@ class VM
   def return_value
     if peek
       val = pop_raw
-      return val if val.is_a?(Fixnum)
+      return val if val.is_a?(Integer)
       return 1 if val == false
     end
     0

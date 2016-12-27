@@ -7,7 +7,7 @@ class VM
 
     def initialize(num)
       @num = num.to_i
-      fail 'integer out of range' if @num < MIN || @num > MAX
+      raise 'integer out of range' if @num < MIN || @num > MAX
     end
 
     def raw
@@ -19,8 +19,8 @@ class VM
       raw == other.raw
     end
 
-    alias_method :==, :eq?
-    alias_method :eqv?, :eq?
+    alias == eq?
+    alias eqv? eq?
 
     def +(other)
       Int.new(raw + other.raw)

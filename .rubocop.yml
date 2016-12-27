@@ -7,6 +7,9 @@ Style/WordArray:
 Style/PerlBackrefs:
   Enabled: false
 
+Style/IndentArray:
+  Enabled: false
+
 Metrics/LineLength:
   Max: 120
 

@@ -10,7 +10,7 @@ require 'pry'
 
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
-  LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')]
+  LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')].freeze
 
   include Compiler::Libraries
   include Compiler::Lib::Scheme::Base
@@ -99,7 +99,7 @@ class Compiler
     elsif options[:locals][name]
       call(sexp, options)
     else
-      fail VM::VariableUndefined, name
+      raise VM::VariableUndefined, name
     end
   end
 
@@ -118,7 +118,7 @@ class Compiler
     (name, *args) = sexp
     expr = compile_sexp(args.first, options.merge(quasiquote: false))
     if name == 'unquote-splicing'
-      fail 'can only use unquote-splicing with a list' if expr.compact.last != VM::PUSH_LIST
+      raise 'can only use unquote-splicing with a list' if expr.compact.last != VM::PUSH_LIST
       ['splice', expr.first]
     else
       expr
@@ -219,7 +219,7 @@ class Compiler
   end
 
   def push_var(name, options)
-    fail VM::VariableUndefined, name unless options[:locals][name]
+    raise VM::VariableUndefined, name unless options[:locals][name]
     [
       VM::PUSH_VAR,
       name
@@ -245,12 +245,12 @@ class Compiler
   end
 
   def parse_file(filename, relative_to: nil)
-    if filename =~ /\A\./ && relative_to
-      path = File.join(File.dirname(relative_to), filename)
-    else
-      path = @load_path.map { |p| File.join(p, filename) }.detect { |p| File.exist?(p) }
-    end
-    fail "File #{filename} not found in load path #{@load_path.join(';')}" unless path
+    path = if filename.start_with?('.') && relative_to
+             File.join(File.dirname(relative_to), filename)
+           else
+             @load_path.map { |p| File.join(p, filename) }.detect { |p| File.exist?(p) }
+           end
+    raise "File #{filename} not found in load path #{@load_path.join(';')}" unless path
     code = File.read(path)
     @source[filename] = code
     Parser.new(code, filename: filename).parse

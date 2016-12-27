@@ -58,7 +58,7 @@ class VM
     def do_push_local
       name = fetch
       address = named_args[name] || locals[name]
-      fail VariableUndefined, name unless address
+      raise VariableUndefined, name unless address
       push(address)
     end
 
@@ -72,13 +72,13 @@ class VM
         address = c[:locals][name]
         push(address)
       else
-        fail VariableUndefined, name
+        raise VariableUndefined, name
       end
     end
 
     def do_push_args
       last = empty_list
-      while args.size > 0
+      until args.empty?
         arg = args.pop
         address = alloc
         @heap[address] = build_pair(arg, last)
@@ -141,7 +141,7 @@ class VM
         @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
       end
       pp @call_stack if @call_stack.size > MAX_CALL_DEPTH
-      fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
+      raise CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
     end
 
@@ -153,7 +153,7 @@ class VM
       end
       new_ip = pop
       @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
-      fail CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
+      raise CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
     end
 
@@ -283,7 +283,7 @@ class VM
 
     def do_append
       count = pop_raw
-      if count == 0
+      if count.zero?
         push(empty_list)
       else
         raw = (0...count).map { pop_val }.reverse.map(&:to_a).inject(&:+)
@@ -300,10 +300,10 @@ class VM
     def do_raw
       raw = pop_raw
       case raw
-      when Fixnum
+      when Integer
         push_val(VM::Int.new(raw))
       else
-        fail "unknown raw value type #{raw.inspect}"
+        raise "unknown raw value type #{raw.inspect}"
       end
     end
 
@@ -319,17 +319,14 @@ class VM
       elsif (c = find_closure_with_symbol(name))
         c[:locals][name] = pop
       else
-        fail VariableUndefined, name
+        raise VariableUndefined, name
       end
     end
 
     def do_set_args
       count = pop_raw
-      if @stack.size >= count
-        @call_args = (0...count).map { pop }.reverse
-      else
-        fail NoStackValue, "stack size is #{@stack.size}, but you tried to use #{count}"
-      end
+      raise NoStackValue, "stack size is #{@stack.size}, but you tried to use #{count}" if @stack.size < count
+      @call_args = (0...count).map { pop }.reverse
     end
 
     def do_set_arg

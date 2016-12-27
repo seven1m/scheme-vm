@@ -9,7 +9,7 @@ class VM
         next if value.nil?
         next if active?(location)
         puts "garbage collecting #{value.inspect} at #{location}" if debug >= 3
-        fail "heap[#{@ip}] is not writable" unless @vm.writable?(location)
+        raise "heap[#{@ip}] is not writable" unless @vm.writable?(location)
         @vm.heap[location] = nil
       end
     end

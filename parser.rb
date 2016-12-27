@@ -71,7 +71,7 @@ module LISP
       ',@' => 'unquote-splicing',
       ','  => 'unquote',
       '`'  => 'quasiquote'
-    }
+    }.freeze
 
     rule(comment: subtree(:comment))
 

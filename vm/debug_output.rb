@@ -60,10 +60,9 @@ class VM
     def print_stack
       print 'stack:  '
       puts @vm.stack.map { |a| a ? @vm.heap[a].inspect : a.inspect }.join("\n" + (' ' * 28))
-      if (atom = @vm.last_atom)
-        print 'code:  '.rjust(28)
-        puts "#{atom.filename}##{atom.line}:#{atom.column}"
-      end
+      return unless (atom = @vm.last_atom)
+      print 'code:  '.rjust(28)
+      puts "#{atom.filename}##{atom.line}:#{atom.column}"
     end
   end
 end

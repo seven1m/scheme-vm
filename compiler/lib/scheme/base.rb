@@ -12,7 +12,7 @@ class Compiler
         end
 
         def base_apply((lambda, *args), options)
-          fail 'apply expects at least 2 arguments' if args.empty?
+          raise 'apply expects at least 2 arguments' if args.empty?
           [
             args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
             VM::PUSH_NUM, args.size,
@@ -56,7 +56,7 @@ class Compiler
         end
 
         def base_cons(args, options)
-          fail 'cons expects exactly 2 arguments' if args.size != 2
+          raise 'cons expects exactly 2 arguments' if args.size != 2
           [
             args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
             VM::PUSH_CONS,

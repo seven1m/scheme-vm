@@ -12,7 +12,7 @@ class Compiler
 
     def do_include(paths, relative_to, options)
       paths.map do |path|
-        fail "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
+        raise "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
         filename = "#{$1}.scm"
         sexps = parse_file(filename, relative_to: relative_to)
         compile_sexps(sexps, options: options)
@@ -69,7 +69,7 @@ class Compiler
           [name, internal_name, renamed[external_name] || external_name, syntax]
         end
       else
-        fail "unknown import directive #{directive}"
+        raise "unknown import directive #{directive}"
       end
       [include, bindings]
     end

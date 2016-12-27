@@ -27,7 +27,7 @@ Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
         puts result
         failed = true
       end
-      fail 'spec failed' if failed
+      raise 'spec failed' if failed
     end
   end
 end
