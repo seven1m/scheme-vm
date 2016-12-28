@@ -268,6 +268,16 @@ class VM
     end
   end
 
+  def find_address_for_name(name, raise_if_not_found: false)
+    if (frame = find_call_stack_frame_with_symbol(name))
+      frame[:named_args][name]
+    elsif (c = find_closure_with_symbol(name))
+      c[:locals][name]
+    elsif raise_if_not_found
+      raise VariableUndefined, name
+    end
+  end
+
   def args
     @call_stack.last[:args]
   end

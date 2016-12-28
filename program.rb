@@ -16,8 +16,11 @@ class Program
     vm.execute(@instr)
     vm.return_value
   rescue VM::VariableUndefined => e
-    print_error_message(e)
+    print_variable_undefined_error(e)
     1
+  rescue VM::CallStackTooDeep => e
+    print_call_stack_too_deep_error(e)
+    2
   end
 
   def filename=(f)
@@ -36,7 +39,7 @@ class Program
     @vm ||= VM.new(stdout: @stdout, args: @args)
   end
 
-  def print_error_message(e)
+  def print_variable_undefined_error(e)
     message = "Error: #{e.message}"
     message += error_details_to_s(e)
     @stdout.puts(message)
@@ -49,5 +52,17 @@ class Program
     line = "#{e.filename}##{e.line}"
     pointer = " #{' ' * e.column}^ #{e.message}"
     "\n\n#{line}\n\n#{code}\n#{pointer}"
+  end
+
+  def print_call_stack_too_deep_error(e)
+    message = "Error: #{e.message}"
+    @stdout.puts(message)
+    e.call_stack.reverse.each do |frame|
+      next unless (name = frame[:name])
+      @stdout.puts "#{name.filename}##{name.line}"
+      code = @compiler.source[name.filename].split("\n")[name.line - 1]
+      @stdout.puts "  #{code}"
+      @stdout.puts " #{' ' * name.column}^"
+    end
   end
 end

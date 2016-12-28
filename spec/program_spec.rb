@@ -80,6 +80,29 @@ describe Program do
       end
     end
 
+    context 'when the stack overflows' do
+      let(:code) do
+        <<-END
+          (import (only (scheme base) define if < + -))
+          (define (fib n)
+            (if (< n 2)
+                n
+                (+
+                  (fib (- n 1))
+                  (fib (- n 2)))))
+          (fib 1000)
+        END
+      end
+
+      it 'returns 2 and prints the stack' do
+        result = subject.run
+        expect(result).to eq(2)
+        stdout.rewind
+        out = stdout.read
+        expect(out).to match(/\AError: call stack too deep\n.+program_spec\.rb#\d+\n\s+\(fib \(- n 1\)\)\n\s+\^/)
+      end
+    end
+
     context 'exception in program code' do
       let(:code) do
         "; undefined variable\n" \

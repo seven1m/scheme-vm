@@ -65,15 +65,7 @@ class VM
     def do_push_var
       name = fetch
       @last_atom = name if name.is_a?(Atom)
-      if (frame = find_call_stack_frame_with_symbol(name))
-        address = frame[:named_args][name]
-        push(address)
-      elsif (c = find_closure_with_symbol(name))
-        address = c[:locals][name]
-        push(address)
-      else
-        raise VariableUndefined, name
-      end
+      push(find_address_for_name(name, raise_if_not_found: true))
     end
 
     def do_push_args
@@ -134,14 +126,15 @@ class VM
 
     def do_call
       new_ip = pop
+      name = @last_atom if find_address_for_name(@last_atom) == new_ip
       if @heap[@ip] == RETURN
         @call_stack.last[:func] = new_ip
         @call_stack.last[:args] = @call_args
+        @call_stack.last[:name] = name
       else
-        @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
+        @call_stack << { name: name, func: new_ip, return: @ip, args: @call_args, named_args: {} }
       end
-      pp @call_stack if @call_stack.size > MAX_CALL_DEPTH
-      raise CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
+      raise CallStackTooDeep, @call_stack if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
     end
 

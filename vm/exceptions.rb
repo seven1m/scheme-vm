@@ -1,7 +1,6 @@
 require_relative 'atom'
 
 class VM
-  class CallStackTooDeep < StandardError; end
   class NoStackValue < StandardError; end
 
   class VariableUndefined < StandardError
@@ -26,6 +25,18 @@ class VM
     def unmangled_name
       return @name unless mangled?
       @name.match(/\A#(.+)\.v\d+\z/)[1]
+    end
+  end
+
+  class CallStackTooDeep < StandardError
+    attr_reader :call_stack
+
+    def initialize(call_stack)
+      @call_stack = call_stack
+    end
+
+    def message
+      'call stack too deep'
     end
   end
 end
