@@ -379,16 +379,12 @@
     (define (positive? n)
       (>= n 0))
 
-    (define string->list
-      (lambda (str)
-        (define s->l
-          (lambda (s i)
-            (if (>= i (string-length s))
-                (list)
-                (cons
-                  (string-ref str i)
-                  (s->l s (+ i 1))))))
-        (s->l str 0)))
+    (define (string->list str)
+      (letrec ((s->l (lambda (l i)
+                       (if (< i 0)
+                         l
+                         (s->l (cons (string-ref str i) l) (- i 1))))))
+        (s->l '() (- (string-length str) 1))))
 
     (define string-append
       (lambda strings1

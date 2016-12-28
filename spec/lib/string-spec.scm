@@ -10,4 +10,4 @@
 
 (assert (eqv? #\y (string-ref "xyz" 1)))
 
-(assert (equal? "foo" (list->string (list #\f #\o #\o))))
+(assert (equal? '(#\f #\o #\o #\b #\a #\r #\b #\a #\z) (string->list "foobarbaz")))
