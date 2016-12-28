@@ -1142,6 +1142,34 @@ describe VM do
   end
 
   describe 'tail call elimination' do
+    context 'when the return is in the true position of an if' do
+      before do
+        c = Compiler.new(<<-END, filename: 'tce.scm')
+          (import (only (scheme base) >= - define if))
+          (import (only (scheme process-context) exit))
+          (define (fn n)
+            (exit)
+            (if (>= n 1)
+              (fn (- n 1))
+              n))
+          (fn 2)
+        END
+        instr = c.compile(keep_last: true)
+        subject.execute(instr)
+      end
+
+      it 'reuses the same stack frame' do
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(1)
+        expect(subject.pop_val).to eq(VM::Int.new(0))
+      end
+    end
+
     context 'when the return is in the false position of an if' do
       before do
         c = Compiler.new(<<-END, filename: 'tce.scm')
@@ -1182,6 +1210,34 @@ describe VM do
                 (fn (- n 1))
                 n)
               #f))
+          (fn 2)
+        END
+        instr = c.compile(keep_last: true)
+        subject.execute(instr)
+      end
+
+      it 'reuses the same stack frame' do
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(2)
+        subject.execute
+        expect(subject.call_stack.size).to eq(1)
+        expect(subject.pop_val).to eq(VM::Int.new(0))
+      end
+    end
+
+    context 'when the call uses apply' do
+      before do
+        c = Compiler.new(<<-END, filename: 'tce.scm')
+          (import (only (scheme base) >= - define if apply list))
+          (import (only (scheme process-context) exit))
+          (define (fn n)
+            (exit)
+            (if (>= n 1)
+              (apply fn (list (- n 1)))
+              n))
           (fn 2)
         END
         instr = c.compile(keep_last: true)

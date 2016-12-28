@@ -151,10 +151,7 @@ class VM
         @call_args.push(pair.address)
         pair = @heap[pair.next_node]
       end
-      new_ip = pop
-      @call_stack << { func: new_ip, return: @ip, args: @call_args, named_args: {} }
-      raise CallStackTooDeep, 'call stack too deep' if @call_stack.size > MAX_CALL_DEPTH
-      @ip = new_ip
+      do_call
     end
 
     def do_return(debug)
