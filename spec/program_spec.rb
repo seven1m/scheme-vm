@@ -82,24 +82,36 @@ describe Program do
 
     context 'when the stack overflows' do
       let(:code) do
-        <<-END
-          (import (only (scheme base) define if < + -))
-          (define (fib n)
-            (if (< n 2)
-                n
-                (+
-                  (fib (- n 1))
-                  (fib (- n 2)))))
-          (fib 1000)
-        END
+        "(import (only (scheme base) define if < + -))\n" \
+        "(define (fib n)\n" \
+        "  (if (< n 2)\n" \
+        "      n\n" \
+        "      (+\n" \
+        "        (fib (- n 1))\n" \
+        "        (fib (- n 2)))))\n" \
+        '(fib 3)'
+      end
+
+      it 'sets the exit code to 2' do
+        expect(subject.run).to eq(2)
       end
 
       it 'returns 2 and prints the stack' do
-        result = subject.run
-        expect(result).to eq(2)
+        stub_const('VM::MAX_CALL_DEPTH', 3)
+        subject.run
         stdout.rewind
-        out = stdout.read
-        expect(out).to match(/\AError: call stack too deep\n.+program_spec\.rb#\d+\n\s+\(fib \(- n 1\)\)\n\s+\^/)
+        expect(stdout.read).to eq(
+          "Error: call stack too deep\n" \
+          "#{__FILE__}#6\n" \
+          "          (fib (- n 1))\n" \
+          "           ^\n" \
+          "#{__FILE__}#6\n" \
+          "          (fib (- n 1))\n" \
+          "           ^\n" \
+          "#{__FILE__}#8\n" \
+          "  (fib 3)\n" \
+          "   ^\n"
+        )
       end
     end
 
@@ -107,6 +119,10 @@ describe Program do
       let(:code) do
         "; undefined variable\n" \
         '(foo)'
+      end
+
+      it 'sets the exit code to 1' do
+        expect(subject.run).to eq(1)
       end
 
       it 'shows the filename, line and column number' do
