@@ -170,8 +170,12 @@ class Compiler
     [VM::PUSH_CHAR, char, pop_maybe(options)]
   end
 
-  def compile_string(string, _options)
-    [VM::PUSH_STR, string]
+  def compile_string(string, options)
+    [
+      VM::PUSH_STR,
+      string,
+      pop_maybe(options)
+    ]
   end
 
   def compile_number(number, options)

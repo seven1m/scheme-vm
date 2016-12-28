@@ -73,7 +73,9 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_STR', 'a string',
+          'VM::PUSH_STR',
+          'a string',
+          'VM::POP',
           'VM::HALT'
         ])
       end
@@ -1078,6 +1080,7 @@ describe Compiler do
             'VM::PUSH_VAR', 'write-string',
             'VM::CALL',
             'VM::PUSH_STR', 'hello from main',
+            'VM::POP',
             'VM::HALT'
           ])
         end
