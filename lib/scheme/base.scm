@@ -351,11 +351,12 @@
                   (or (empty? next) (list? next)))
                 #f))))
 
-    (define length
-      (lambda (l)
-        (if (empty? l)
-            0
-            (+ 1 (length (cdr l))))))
+    (define (length l)
+      (letrec ((f (lambda (ll count)
+                    (if (empty? ll)
+                      count
+                      (f (cdr ll) (+ 1 count))))))
+        (f l 0)))
 
     (define last
       (lambda (l)
@@ -413,22 +414,22 @@
 
     (define equal? '()) ; temporary
 
-    (define (list-equal? a b)
+    (define (list=? a b) ; don't export this
       (if (= (length a) (length b))
-          (if (= 0 (length a))
+          (if (empty? a)
               #t
               (if (equal? (car a) (car b))
-                (list-equal? (cdr a) (cdr b))
+                (list=? (cdr a) (cdr b))
                 #f))
           #f))
 
     (define (string=? a b)
-      (list-equal? (string->list a) (string->list b)))
+      (list=? (string->list a) (string->list b)))
 
     (define (pair=? a b) ; don't export this
-      (and
-        (equal? (car a) (car b))
-        (equal? (cdr a) (cdr b))))
+      (if (equal? (car a) (car b))
+        (equal? (cdr a) (cdr b))
+        #f))
 
     (define (equal? a b)
       (cond
@@ -436,7 +437,7 @@
        ((and (char? a)    (char? b))    (eq? a b))
        ((and (number? a)  (number? b))  (eq? a b))
        ((and (pair? a)    (pair? b))    (pair=? a b))
-       ((and (list? a)    (list? b))    (list-equal? a b))
+       ((and (list? a)    (list? b))    (list=? a b))
        ((and (string? a)  (string? b))  (string=? a b))
        ((and (symbol? a)  (symbol? b))  (eq? a b))
        (else #f)))

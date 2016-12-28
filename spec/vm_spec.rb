@@ -1170,7 +1170,7 @@ describe VM do
       end
     end
 
-    xcontext 'inside nested ifs' do
+    context 'inside nested ifs' do
       before do
         c = Compiler.new(<<-END, filename: 'tce.scm')
           (import (only (scheme base) >= - define if))

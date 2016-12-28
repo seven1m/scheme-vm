@@ -2,7 +2,7 @@
         (assert))
 
 (define (foo)
-  "old")
+  "old-foo")
 
 (let-syntax
     ((foo (syntax-rules ()
@@ -18,7 +18,7 @@
             ((bar) "bar"))))
   (assert (equal? "barbar" (string-append (foo) (bar)))))
 
-(assert (equal? "old" (foo)))
+(assert (equal? "old-foo" (foo)))
 
 (let ((a 1)
       (b 2))
