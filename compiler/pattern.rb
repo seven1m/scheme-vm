@@ -23,16 +23,7 @@ class Compiler
         elsif identifier == '...'
           match_dotted_sub(identifier, expr, previous, hash)
         elsif identifier.is_a?(Array)
-          sub_expr = expr.shift
-          if sub_expr.nil?
-            sub_match = Hash[identifier.zip(Array.new(identifier.size))]
-          elsif sub_expr.is_a?(Array)
-            sub_match = match_sub(sub_expr.dup, identifier.dup)
-            return unless sub_match
-          else
-            return
-          end
-          hash.merge!(sub_match)
+          return unless match_sub_array(identifier, expr, hash)
         else
           value = expr.shift
           return if value.nil? && pattern.first != '...'
@@ -42,6 +33,16 @@ class Compiler
       end
       return if expr.any?
       hash
+    end
+
+    def match_sub_array(identifier, expr, hash)
+      sub_expr = expr.shift
+      if sub_expr.nil?
+        match = Hash[identifier.zip(Array.new(identifier.size))]
+      elsif sub_expr.is_a?(Array)
+        match = match_sub(sub_expr.dup, identifier.dup)
+      end
+      match && hash.merge!(match)
     end
 
     def match_dotted_sub(identifier, expr, previous, hash)
