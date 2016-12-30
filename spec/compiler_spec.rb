@@ -886,24 +886,6 @@ describe Compiler do
       end
     end
 
-    context '=' do
-      before do
-        @result = subject.compile(<<-END)
-          (= 1 1)
-        END
-      end
-
-      it 'compiles into vm instructions' do
-        expect(d(@result)).to eq([
-          'VM::PUSH_NUM', '1',
-          'VM::PUSH_NUM', '1',
-          'VM::CMP_EQ_NUM',
-          'VM::POP',
-          'VM::HALT'
-        ])
-      end
-    end
-
     context 'if' do
       context 'given value is not used' do
         before do

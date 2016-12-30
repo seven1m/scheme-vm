@@ -275,7 +275,7 @@ class Compiler
               compile_sexp(arg, options.merge(use: true)),
               VM::PUSH_TYPE,
               VM::PUSH_NUM, VM::TYPES.index(type),
-              VM::CMP_EQ_NUM,
+              VM::CMP_EQ,
               VM::JUMP_IF_FALSE, 4,
               VM::PUSH_TRUE,
               VM::JUMP, 2,
@@ -295,7 +295,6 @@ class Compiler
           '>='     => VM::CMP_GTE,
           '<'      => VM::CMP_LT,
           '<='     => VM::CMP_LTE,
-          '='      => VM::CMP_EQ_NUM,
           'eq?'    => VM::CMP_EQ,
           'eqv?'   => VM::CMP_EQV
         }.each do |name, instruction|

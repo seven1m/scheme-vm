@@ -90,7 +90,6 @@
     (--define-native >= base_>=)
     (--define-native < base_<)
     (--define-native <= base_<=)
-    (--define-native = base_=)
     (--define-native append base_append)
     (--define-native apply base_apply)
     (--define-native car base_car)
@@ -208,6 +207,9 @@
         x)
         ((do "step" x y)
         y)))
+
+    (define (= a b)
+      (eq? a b))
 
     (define (abs n)
       (if (< n 0)

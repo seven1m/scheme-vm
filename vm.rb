@@ -60,7 +60,6 @@ class VM
     ['CMP_LTE',       0],
     ['CMP_EQ',        0],
     ['CMP_EQV',       0],
-    ['CMP_EQ_NUM',    0],
     ['CMP_NULL',      0],
     ['DUP',           0],
     ['INT',           1],
