@@ -127,8 +127,8 @@ class Compiler
 
   def compile_literal(literal, options = { use: false, locals: {} })
     case literal.to_s.strip
-    when /\A[a-z]|\A#[a-z].*\.v\d+$/
-      compile_atom(literal, options)
+    when /\A-?[0-9]+\z/
+      compile_number(literal, options)
     when '#t', '#true', '#f', '#false'
       compile_boolean(literal, options)
     when /\A#\\(.+)\z/
@@ -138,7 +138,7 @@ class Compiler
     when ''
       []
     else
-      compile_number(literal, options)
+      compile_atom(literal, options)
     end
   end
 
