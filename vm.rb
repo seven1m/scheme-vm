@@ -143,7 +143,7 @@ class VM
   end
 
   def fetch
-    raise "heap[#{@ip}] is not executable" unless executable?(@ip)
+    raise "heap[#{@ip}] (#{resolve(@ip)}) is not executable" unless executable?(@ip)
     instruction = @heap[@ip]
     @ip += 1
     instruction
