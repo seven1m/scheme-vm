@@ -25,6 +25,7 @@
    char?
    char->integer
    char-downcase
+   char-upcase
    cond
    cons
    define
@@ -251,6 +252,13 @@
         (let ((i (char->integer c)))
           (if (and (>= i 65) (<= i 90))
             (integer->char (+ i 32))
+            c))))
+
+    (define (char-upcase c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (if (and (>= i 97) (<= i 122))
+            (integer->char (- i 32))
             c))))
 
     (define (memq obj list)

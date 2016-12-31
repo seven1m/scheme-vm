@@ -8,3 +8,6 @@
 
 (assert (eq? #\a (char-downcase #\A)))
 (assert (eq? #\a (char-downcase #\a)))
+
+(assert (eq? #\A (char-upcase #\a)))
+(assert (eq? #\A (char-upcase #\A)))
