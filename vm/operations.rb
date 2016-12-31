@@ -154,7 +154,7 @@ class VM
     end
 
     def do_push_list
-      count = pop_raw
+      count = pop_raw_and_delete
       address = last = empty_list
       count.times do
         arg = pop
@@ -248,7 +248,7 @@ class VM
     end
 
     def do_append
-      count = pop_raw
+      count = pop_raw_and_delete
       if count.zero?
         push(empty_list)
       else
@@ -290,7 +290,7 @@ class VM
     end
 
     def do_set_args
-      count = pop_raw
+      count = pop_raw_and_delete
       raise NoStackValue, "stack size is #{@stack.size}, but you tried to use #{count}" if @stack.size < count
       @call_args = (0...count).map { pop }.reverse
     end

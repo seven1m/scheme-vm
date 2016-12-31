@@ -223,6 +223,12 @@ class VM
   def pop_raw
     address = pop
     val = resolve(address)
+    val.raw
+  end
+
+  def pop_raw_and_delete
+    address = pop
+    val = resolve(address)
     @heap[address] = nil
     val.raw
   end

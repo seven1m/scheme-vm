@@ -102,15 +102,20 @@ describe VM do
   describe 'RAW' do
     before do
       subject.execute([
-        VM::PUSH_CHAR, 'a',
+        VM::PUSH_NUM, 97,
+        VM::PUSH_CHAR,
+        VM::DEFINE_VAR, 'a',
+        VM::PUSH_VAR, 'a',
         VM::RAW,
+        VM::PUSH_VAR, 'a',
         VM::HALT
       ])
     end
 
     it 'pushes the raw value' do
       expect(subject.stack_values).to eq([
-        VM::Int.new(97)
+        VM::Int.new(97),
+        VM::Char.new(97)
       ])
     end
   end
