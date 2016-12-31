@@ -97,6 +97,7 @@
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native define-syntax base_define_syntax)
+    (--define-native empty? base_null?)
     (--define-native eq? base_eq?)
     (--define-native eqv? base_eqv?)
     (--define-native if base_if)
@@ -344,14 +345,13 @@
             (begin result1 result2 ...)
             (cond clause1 clause2 ...)))))
 
-    (define list?
-      (lambda (l)
-        (if (empty? l)
-            #t
-            (if (pair? l)
-                (let ((next (cdr l)))
-                  (or (empty? next) (list? next)))
-                #f))))
+    (define (list? l)
+      (if (empty? l)
+        #t
+        (if (pair? l)
+          (let ((next (cdr l)))
+            (or (empty? next) (list? next)))
+          #f)))
 
     (define (length l)
       (letrec ((f (lambda (ll count)
@@ -360,17 +360,15 @@
                       (f (cdr ll) (+ 1 count))))))
         (f l 0)))
 
-    (define last
-      (lambda (l)
-        (if (empty? l)
-            (list)
-            (if (= 1 (length l))
-                (car l)
-                (last (cdr l))))))
+    (define (last l)
+      (if (empty? l)
+          (list)
+          (if (= 1 (length l))
+              (car l)
+              (last (cdr l)))))
 
-    (define boolean?
-      (lambda (b)
-        (or (eq? b #t) (eq? b #f))))
+    (define (boolean? b)
+      (or (eq? b #t) (eq? b #f)))
 
     (define (number? n)
       (or (integer? n)))
@@ -388,14 +386,12 @@
                          (s->l (cons (string-ref str i) l) (- i 1))))))
         (s->l '() (- (string-length str) 1))))
 
-    (define string-append
-      (lambda strings1
-        (define s->l
-          (lambda strings2
-            (if (= 0 (length strings2))
-                (list)
-                (append (string->list (car strings2))
-                        (apply s->l (cdr strings2))))))
+    (define (string-append . strings1)
+      (letrec ((s->l (lambda strings2
+                       (if (= 0 (length strings2))
+                         (list)
+                         (append (string->list (car strings2))
+                                 (apply s->l (cdr strings2)))))))
         (list->string (apply s->l strings1))))
 
     (--define-native write write) ; don't export this
@@ -403,12 +399,11 @@
     (define (newline)
       (write #\newline))
 
-    (define write-string
-      (lambda args
-        (if (not (empty? args))
-            (begin
-              (write (car args))
-              (apply write-string (cdr args))))))
+    (define (write-string . args)
+      (if (not (empty? args))
+          (begin
+            (write (car args))
+            (apply write-string (cdr args)))))
 
     (define equal? '()) ; temporary
 
