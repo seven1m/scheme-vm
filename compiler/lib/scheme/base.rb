@@ -300,7 +300,8 @@ class Compiler
           end
         end
 
-        def compare(instruction, (arg1, arg2), options)
+        def compare(instruction, (arg1, arg2, *rest), options)
+          raise "too many arguments (expected 2, got #{2 + rest.size})" if rest.any?
           [
             compile_sexp(arg1, options.merge(use: true)),
             compile_sexp(arg2, options.merge(use: true)),
