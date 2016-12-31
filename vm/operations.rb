@@ -16,8 +16,8 @@ class VM
     end
 
     def do_push_char
-      char = fetch
-      push_val(Char.new(char))
+      code = pop_raw
+      push_val(Char.new(code))
     end
 
     def do_push_true

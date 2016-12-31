@@ -132,7 +132,7 @@ describe VM do
 
     it 'allocates memory, stores the character, and pushes address onto the stack' do
       expect(subject.stack_values).to eq([
-        VM::Char.new('o')
+        VM::Char.from_string('o')
       ])
     end
   end
@@ -156,8 +156,10 @@ describe VM do
   describe 'LIST_TO_STR' do
     before do
       subject.execute([
-        VM::PUSH_CHAR, 'a',
-        VM::PUSH_CHAR, 'b',
+        VM::PUSH_NUM, 97,
+        VM::PUSH_CHAR,
+        VM::PUSH_NUM, 98,
+        VM::PUSH_CHAR,
         VM::PUSH_NUM, 2,
         VM::PUSH_LIST,
         VM::LIST_TO_STR,
@@ -197,14 +199,15 @@ describe VM do
   describe 'PUSH_CHAR' do
     before do
       subject.execute([
-        VM::PUSH_CHAR, 'c',
+        VM::PUSH_NUM, 99,
+        VM::PUSH_CHAR,
         VM::HALT
       ])
     end
 
     it 'allocates memory, stores the character, and pushes address onto the stack' do
       expect(subject.stack_values).to eq([
-        VM::Char.new('c')
+        VM::Char.from_string('c')
       ])
     end
   end

@@ -163,11 +163,15 @@ class Compiler
   end
 
   def compile_character(name, options)
-    char = {
+    code = {
       'space'   => ' ',
       'newline' => "\n"
-    }.fetch(name, name[0])
-    [VM::PUSH_CHAR, char, pop_maybe(options)]
+    }.fetch(name, name[0]).ord
+    [
+      VM::PUSH_NUM, code,
+      VM::PUSH_CHAR,
+      pop_maybe(options)
+    ]
   end
 
   def compile_string(string, options)

@@ -1,11 +1,15 @@
 class VM
   class Char
-    def initialize(char)
-      @byte = char.ord
+    def initialize(code)
+      @code = code
+    end
+
+    def self.from_string(str)
+      new(str.ord)
     end
 
     def raw
-      @byte
+      @code
     end
 
     def ==(other)
@@ -16,11 +20,11 @@ class VM
     alias eq? ==
 
     def to_s
-      @byte.chr
+      @code.chr
     end
 
     def to_ruby
-      @byte.chr
+      @code.chr
     end
   end
 end

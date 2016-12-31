@@ -27,7 +27,7 @@ class VM
     ['PUSH_ATOM',     1],
     ['PUSH_NUM',      1],
     ['PUSH_STR',      1],
-    ['PUSH_CHAR',     1],
+    ['PUSH_CHAR',     0],
     ['PUSH_TRUE',     0],
     ['PUSH_FALSE',    0],
     ['PUSH_TYPE',     0],

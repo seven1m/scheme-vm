@@ -110,11 +110,14 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_CHAR', 'c',
+          'VM::PUSH_NUM', 99,
+          'VM::PUSH_CHAR',
           'VM::POP',
-          'VM::PUSH_CHAR', ' ',
+          'VM::PUSH_NUM', 32,
+          'VM::PUSH_CHAR',
           'VM::POP',
-          'VM::PUSH_CHAR', "\n",
+          'VM::PUSH_NUM', 10,
+          'VM::PUSH_CHAR',
           'VM::POP',
           'VM::HALT'
         ])
@@ -130,8 +133,10 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_CHAR', 'a',
-          'VM::PUSH_CHAR', 'b',
+          'VM::PUSH_NUM', 97,
+          'VM::PUSH_CHAR',
+          'VM::PUSH_NUM', 98,
+          'VM::PUSH_CHAR',
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
           'VM::LIST_TO_STR',
