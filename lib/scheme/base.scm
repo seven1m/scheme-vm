@@ -24,6 +24,7 @@
    cdr
    char?
    char->integer
+   char-downcase
    cond
    cons
    define
@@ -244,6 +245,13 @@
 
     (define (eqv? a b)
       (eq? a b))
+
+    (define (char-downcase c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (if (and (>= i 65) (<= i 90))
+            (integer->char (+ i 32))
+            c))))
 
     (define (memq obj list)
       (if (empty? list)
