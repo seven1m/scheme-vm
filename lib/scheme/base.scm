@@ -87,9 +87,7 @@
     (--define-native * base_*)
     (--define-native / base_/)
     (--define-native > base_>)
-    (--define-native >= base_>=)
     (--define-native < base_<)
-    (--define-native <= base_<=)
     (--define-native append base_append)
     (--define-native apply base_apply)
     (--define-native car base_car)
@@ -208,14 +206,6 @@
         ((do "step" x y)
         y)))
 
-    (define (= a b)
-      (eq? a b))
-
-    (define (abs n)
-      (if (< n 0)
-        (* n -1)
-        n))
-
     (define-syntax and
       (syntax-rules ()
         ((and) #t)
@@ -237,9 +227,19 @@
             #f
             #t)))
 
-    (define empty?
-      (lambda (l)
-        (null? l)))
+    (define (= a b)
+      (eq? a b))
+
+    (define (>= a b)
+      (or (= a b) (> a b)))
+
+    (define (<= a b)
+      (or (= a b) (< a b)))
+
+    (define (abs n)
+      (if (< n 0)
+        (* n -1)
+        n))
 
     (define (memq obj list)
       (if (empty? list)

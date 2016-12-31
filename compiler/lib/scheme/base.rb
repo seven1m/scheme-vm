@@ -292,9 +292,7 @@ class Compiler
           '/'      => VM::DIV,
           'modulo' => VM::MOD,
           '>'      => VM::CMP_GT,
-          '>='     => VM::CMP_GTE,
           '<'      => VM::CMP_LT,
-          '<='     => VM::CMP_LTE,
           'eq?'    => VM::CMP_EQ,
           'eqv?'   => VM::CMP_EQV
         }.each do |name, instruction|

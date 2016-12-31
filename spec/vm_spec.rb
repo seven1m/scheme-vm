@@ -853,31 +853,6 @@ describe VM do
     end
   end
 
-  describe 'CMP_GTE' do
-    before do
-      subject.execute([
-        VM::PUSH_NUM, '1',
-        VM::PUSH_NUM, '2',
-        VM::CMP_GTE,
-        VM::PUSH_NUM, '2',
-        VM::PUSH_NUM, '2',
-        VM::CMP_GTE,
-        VM::PUSH_NUM, '3',
-        VM::PUSH_NUM, '2',
-        VM::CMP_GTE,
-        VM::HALT
-      ])
-    end
-
-    it 'removes both values and puts a #t or #f on the stack' do
-      expect(subject.stack_values).to eq([
-        VM::BoolFalse.instance,
-        VM::BoolTrue.instance,
-        VM::BoolTrue.instance
-      ])
-    end
-  end
-
   describe 'CMP_LT' do
     before do
       subject.execute([
@@ -898,31 +873,6 @@ describe VM do
       expect(subject.stack_values).to eq([
         VM::BoolTrue.instance,
         VM::BoolFalse.instance,
-        VM::BoolFalse.instance
-      ])
-    end
-  end
-
-  describe 'CMP_LTE' do
-    before do
-      subject.execute([
-        VM::PUSH_NUM, '1',
-        VM::PUSH_NUM, '2',
-        VM::CMP_LTE,
-        VM::PUSH_NUM, '2',
-        VM::PUSH_NUM, '2',
-        VM::CMP_LTE,
-        VM::PUSH_NUM, '3',
-        VM::PUSH_NUM, '2',
-        VM::CMP_LTE,
-        VM::HALT
-      ])
-    end
-
-    it 'removes both values and puts a #t or #f on the stack' do
-      expect(subject.stack_values).to eq([
-        VM::BoolTrue.instance,
-        VM::BoolTrue.instance,
         VM::BoolFalse.instance
       ])
     end

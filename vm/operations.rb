@@ -205,22 +205,10 @@ class VM
       num1 > num2 ? push_true : push_false
     end
 
-    def do_cmp_gte
-      num2 = pop_val
-      num1 = pop_val
-      num1 >= num2 ? push_true : push_false
-    end
-
     def do_cmp_lt
       num2 = pop_val
       num1 = pop_val
       num1 < num2 ? push_true : push_false
-    end
-
-    def do_cmp_lte
-      num2 = pop_val
-      num1 = pop_val
-      num1 <= num2 ? push_true : push_false
     end
 
     def do_cmp_eq
