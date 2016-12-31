@@ -425,7 +425,10 @@
           #f))
 
     (define (string=? a b)
-      (list=? (string->list a) (string->list b)))
+      (and
+        (string? a)
+        (string? b)
+        (list=? (string->list a) (string->list b))))
 
     (define (pair=? a b) ; don't export this
       (if (equal? (car a) (car b))

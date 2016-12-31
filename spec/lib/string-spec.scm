@@ -11,3 +11,7 @@
 (assert (eqv? #\y (string-ref "xyz" 1)))
 
 (assert (equal? '(#\f #\o #\o #\b #\a #\r #\b #\a #\z) (string->list "foobarbaz")))
+
+(assert (string=? "foo" "foo"))
+(assert (not (string=? "foo" "bar")))
+(assert (not (string=? "foo" 1)))
