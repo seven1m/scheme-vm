@@ -15,6 +15,7 @@
    apply
    begin
    boolean?
+   boolean=?
    car
    caar cadr cdar cddr
    caaar caadr cadar caddr cdaar cdadr cddar cdddr
@@ -371,6 +372,11 @@
 
     (define (boolean? b)
       (or (eq? b #t) (eq? b #f)))
+
+    (define (boolean=? a b)
+      (or
+        (and (eq? a #t) (eq? b #t))
+        (and (eq? a #f) (eq? b #f))))
 
     (define (number? n)
       (or (integer? n)))
