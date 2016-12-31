@@ -169,7 +169,7 @@ class Compiler
     }.fetch(name, name[0]).ord
     [
       VM::PUSH_NUM, code,
-      VM::PUSH_CHAR,
+      VM::TO_CHAR,
       pop_maybe(options)
     ]
   end
@@ -221,7 +221,7 @@ class Compiler
     [
       compile_sexp(car, options.merge(use: true)),
       compile_sexp(cdr, options.merge(use: true)),
-      VM::PUSH_CONS,
+      VM::CONS,
       pop_maybe(options)
     ]
   end
@@ -237,14 +237,14 @@ class Compiler
   def push_arg(name, _options = {})
     [
       VM::PUSH_ARG,
-      VM::SET_ARG, name
+      VM::NAME_ARG, name
     ]
   end
 
   def push_all_args(name, _options = {})
     [
       VM::PUSH_ARGS,
-      VM::SET_ARG, name
+      VM::NAME_ARG, name
     ]
   end
 

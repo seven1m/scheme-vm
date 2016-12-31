@@ -8,10 +8,10 @@ describe GC do
       VM::PUSH_FUNC,
 
       VM::PUSH_ARG,
-      VM::SET_ARG, 'my-2',
+      VM::NAME_ARG, 'my-2',
 
       VM::PUSH_ARG,
-      VM::SET_ARG, 'my-3',
+      VM::NAME_ARG, 'my-3',
 
       VM::PUSH_VAR, 'y',
       VM::DEFINE_VAR, 'my-y',

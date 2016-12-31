@@ -16,8 +16,8 @@ class VM
       case name
       when 'SET_ARGS'
         print_set_args
-      when 'SET_ARG'
-        print_set_arg
+      when 'NAME_ARG'
+        print_name_arg
       when 'DEFINE_VAR'
         print_define_var
       when 'SET_VAR'
@@ -37,7 +37,7 @@ class VM
       p @vm.call_args.each_with_object({}) { |a, h| h[a] = a && @vm.heap[a] }
     end
 
-    def print_set_arg
+    def print_name_arg
       print 'nargs:  '
       p @vm.named_args.each_with_object({}) { |(n, a), h| h[n] = a && @vm.heap[a] }
     end

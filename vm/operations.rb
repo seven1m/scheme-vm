@@ -15,7 +15,7 @@ class VM
       push_val(ByteArray.new(str))
     end
 
-    def do_push_char
+    def do_to_char
       code = pop_raw
       push_val(Char.new(code))
     end
@@ -28,17 +28,22 @@ class VM
       push_false
     end
 
-    def do_push_type
+    def do_type
       val = pop_val
       push_type(val)
     end
 
-    def do_push_car
+    def do_car
       pair = pop_val
       push(pair.address)
     end
 
-    def do_push_cons
+    def do_cdr
+      pair = pop_val
+      push(pair.next_node)
+    end
+
+    def do_cons
       cdr = pop
       car = pop
       pair = build_pair(car, cdr)
@@ -48,11 +53,6 @@ class VM
     def do_push_arg
       address = args.shift
       push(address)
-    end
-
-    def do_push_cdr
-      pair = pop_val
-      push(pair.next_node)
     end
 
     def do_push_local
@@ -118,7 +118,7 @@ class VM
       push_val(Int.new(str.size))
     end
 
-    def do_list_to_str
+    def do_to_str
       list = pop_val
       chars = list.to_ruby.map(&:to_s)
       push_val(ByteArray.new(chars.join))
@@ -295,7 +295,7 @@ class VM
       @call_args = (0...count).map { pop }.reverse
     end
 
-    def do_set_arg
+    def do_name_arg
       address = pop
       name = fetch
       named_args[name] = address

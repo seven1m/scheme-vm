@@ -68,11 +68,11 @@ describe VM do
     end
   end
 
-  describe 'PUSH_TYPE' do
+  describe 'TYPE' do
     before do
       subject.execute([
         VM::PUSH_NUM, 1,
-        VM::PUSH_TYPE,
+        VM::TYPE,
         VM::HALT
       ])
     end
@@ -103,7 +103,7 @@ describe VM do
     before do
       subject.execute([
         VM::PUSH_NUM, 97,
-        VM::PUSH_CHAR,
+        VM::TO_CHAR,
         VM::DEFINE_VAR, 'a',
         VM::PUSH_VAR, 'a',
         VM::RAW,
@@ -153,16 +153,16 @@ describe VM do
     end
   end
 
-  describe 'LIST_TO_STR' do
+  describe 'TO_STR' do
     before do
       subject.execute([
         VM::PUSH_NUM, 97,
-        VM::PUSH_CHAR,
+        VM::TO_CHAR,
         VM::PUSH_NUM, 98,
-        VM::PUSH_CHAR,
+        VM::TO_CHAR,
         VM::PUSH_NUM, 2,
         VM::PUSH_LIST,
-        VM::LIST_TO_STR,
+        VM::TO_STR,
         VM::HALT
       ])
     end
@@ -196,11 +196,11 @@ describe VM do
     end
   end
 
-  describe 'PUSH_CHAR' do
+  describe 'TO_CHAR' do
     before do
       subject.execute([
         VM::PUSH_NUM, 99,
-        VM::PUSH_CHAR,
+        VM::TO_CHAR,
         VM::HALT
       ])
     end
@@ -242,7 +242,7 @@ describe VM do
     end
   end
 
-  describe 'PUSH_CAR' do
+  describe 'CAR' do
     before do
       subject.execute([
         VM::PUSH_NUM, '1',
@@ -250,7 +250,7 @@ describe VM do
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, 3,
         VM::PUSH_LIST,
-        VM::PUSH_CAR,
+        VM::CAR,
         VM::HALT
       ])
     end
@@ -262,7 +262,7 @@ describe VM do
     end
   end
 
-  describe 'PUSH_CDR' do
+  describe 'CDR' do
     before do
       subject.execute([
         VM::PUSH_NUM, '1',
@@ -270,7 +270,7 @@ describe VM do
         VM::PUSH_NUM, '3',
         VM::PUSH_NUM, 3,
         VM::PUSH_LIST,
-        VM::PUSH_CDR,
+        VM::CDR,
         VM::HALT
       ])
     end
@@ -280,7 +280,7 @@ describe VM do
     end
   end
 
-  describe 'PUSH_CONS' do
+  describe 'CONS' do
     context 'given the first element is an int' do
       before do
         subject.execute([
@@ -289,7 +289,7 @@ describe VM do
           VM::PUSH_NUM, '3',
           VM::PUSH_NUM, 2,
           VM::PUSH_LIST,
-          VM::PUSH_CONS,
+          VM::CONS,
           VM::HALT
         ])
       end
@@ -310,7 +310,7 @@ describe VM do
           VM::PUSH_NUM, '4',
           VM::PUSH_NUM, 2,
           VM::PUSH_LIST,
-          VM::PUSH_CONS,
+          VM::CONS,
           VM::HALT
         ])
       end
@@ -325,7 +325,7 @@ describe VM do
         subject.execute([
           VM::PUSH_NUM, '1',
           VM::PUSH_NUM, '2',
-          VM::PUSH_CONS,
+          VM::CONS,
           VM::HALT
         ])
       end
@@ -521,7 +521,7 @@ describe VM do
       subject.execute([
         VM::PUSH_NUM, '1',
         VM::PUSH_NUM, '2',
-        VM::PUSH_CONS,
+        VM::CONS,
         VM::DUP,
         VM::PUSH_NUM, '3',
         VM::SET_CAR,
@@ -542,7 +542,7 @@ describe VM do
       subject.execute([
         VM::PUSH_NUM, '1',
         VM::PUSH_NUM, '2',
-        VM::PUSH_CONS,
+        VM::CONS,
         VM::DUP,
         VM::PUSH_NUM, '3',
         VM::SET_CDR,

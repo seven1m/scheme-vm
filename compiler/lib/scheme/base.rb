@@ -50,7 +50,7 @@ class Compiler
         def base_car((arg, *_rest), options)
           [
             compile_sexp(arg, options.merge(use: true)),
-            VM::PUSH_CAR,
+            VM::CAR,
             pop_maybe(options)
           ]
         end
@@ -59,7 +59,7 @@ class Compiler
           raise 'cons expects exactly 2 arguments' if args.size != 2
           [
             args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
-            VM::PUSH_CONS,
+            VM::CONS,
             pop_maybe(options)
           ]
         end
@@ -67,7 +67,7 @@ class Compiler
         def base_cdr((arg, *_rest), options)
           [
             compile_sexp(arg, options.merge(use: true)),
-            VM::PUSH_CDR,
+            VM::CDR,
             pop_maybe(options)
           ]
         end
@@ -179,7 +179,7 @@ class Compiler
         def base_list_to_string((list, *_rest), options)
           [
             compile_sexp(list, options.merge(use: true)),
-            VM::LIST_TO_STR,
+            VM::TO_STR,
             pop_maybe(options)
           ]
         end
@@ -259,7 +259,7 @@ class Compiler
         def base_integer_to_char((int), options)
           [
             compile_sexp(int, options.merge(use: true)),
-            VM::PUSH_CHAR
+            VM::TO_CHAR
           ]
         end
 
@@ -273,7 +273,7 @@ class Compiler
           define_method "base_#{name}" do |(arg, *_rest), options|
             [
               compile_sexp(arg, options.merge(use: true)),
-              VM::PUSH_TYPE,
+              VM::TYPE,
               VM::PUSH_NUM, VM::TYPES.index(type),
               VM::CMP_EQ,
               VM::JUMP_IF_FALSE, 4,

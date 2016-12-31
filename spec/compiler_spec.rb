@@ -92,7 +92,7 @@ describe Compiler do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
-          'VM::PUSH_CONS',
+          'VM::CONS',
           'VM::POP',
           'VM::HALT'
         ])
@@ -111,13 +111,13 @@ describe Compiler do
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', 99,
-          'VM::PUSH_CHAR',
+          'VM::TO_CHAR',
           'VM::POP',
           'VM::PUSH_NUM', 32,
-          'VM::PUSH_CHAR',
+          'VM::TO_CHAR',
           'VM::POP',
           'VM::PUSH_NUM', 10,
-          'VM::PUSH_CHAR',
+          'VM::TO_CHAR',
           'VM::POP',
           'VM::HALT'
         ])
@@ -134,12 +134,12 @@ describe Compiler do
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', 97,
-          'VM::PUSH_CHAR',
+          'VM::TO_CHAR',
           'VM::PUSH_NUM', 98,
-          'VM::PUSH_CHAR',
+          'VM::TO_CHAR',
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
-          'VM::LIST_TO_STR',
+          'VM::TO_STR',
           'VM::POP',
           'VM::HALT'
         ])
@@ -185,7 +185,7 @@ describe Compiler do
           'VM::PUSH_NUM', '3',
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
-          'VM::PUSH_CAR',
+          'VM::CAR',
           'VM::POP',
           'VM::HALT'
         ])
@@ -206,7 +206,7 @@ describe Compiler do
           'VM::PUSH_NUM', '3',
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
-          'VM::PUSH_CDR',
+          'VM::CDR',
           'VM::POP',
           'VM::HALT'
         ])
@@ -227,7 +227,7 @@ describe Compiler do
           'VM::PUSH_NUM', '3',
           'VM::PUSH_NUM', 2,
           'VM::PUSH_LIST',
-          'VM::PUSH_CONS',
+          'VM::CONS',
           'VM::POP',
           'VM::HALT'
         ])
@@ -245,7 +245,7 @@ describe Compiler do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
-          'VM::PUSH_CONS',
+          'VM::CONS',
           'VM::PUSH_NUM', '3',
           'VM::SET_CAR',
           'VM::HALT'
@@ -264,7 +264,7 @@ describe Compiler do
         expect(d(@result)).to eq([
           'VM::PUSH_NUM', '1',
           'VM::PUSH_NUM', '2',
-          'VM::PUSH_CONS',
+          'VM::CONS',
           'VM::PUSH_NUM', '3',
           'VM::SET_CDR',
           'VM::HALT'
@@ -499,9 +499,9 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'x',
+            'VM::NAME_ARG', 'x',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'y',
+            'VM::NAME_ARG', 'y',
             'VM::PUSH_VAR', 'x',
             'VM::PUSH_VAR', 'y',
             'VM::PUSH_NUM', 2,
@@ -526,7 +526,7 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_ARGS',
-            'VM::SET_ARG', 'x',
+            'VM::NAME_ARG', 'x',
             'VM::PUSH_VAR', 'x',
             'VM::RETURN',
             'VM::ENDF',
@@ -680,9 +680,9 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'y',
+            'VM::NAME_ARG', 'y',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'z',
+            'VM::NAME_ARG', 'z',
             'VM::RETURN',
             'VM::ENDF',
             'VM::DEFINE_VAR', 'x',
@@ -711,7 +711,7 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_ARGS',
-            'VM::SET_ARG', 'args',
+            'VM::NAME_ARG', 'args',
             'VM::RETURN',
             'VM::ENDF',
             'VM::DEFINE_VAR', 'x',
@@ -740,11 +740,11 @@ describe Compiler do
           expect(d(@result)).to eq([
             'VM::PUSH_FUNC',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'first',
+            'VM::NAME_ARG', 'first',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'second',
+            'VM::NAME_ARG', 'second',
             'VM::PUSH_ARGS',
-            'VM::SET_ARG', 'rest',
+            'VM::NAME_ARG', 'rest',
             'VM::RETURN',
             'VM::ENDF',
             'VM::DEFINE_VAR', 'x',
@@ -776,7 +776,7 @@ describe Compiler do
             'VM::SET_ARGS',
             'VM::PUSH_FUNC',
             'VM::PUSH_ARG',
-            'VM::SET_ARG', 'x',
+            'VM::NAME_ARG', 'x',
             'VM::PUSH_VAR', 'x',
             'VM::RETURN',
             'VM::ENDF',
@@ -1278,11 +1278,11 @@ describe Compiler do
           'VM::SET_ARGS',
           'VM::PUSH_FUNC',
           'VM::PUSH_ARG',
-          'VM::SET_ARG', 'x',
+          'VM::NAME_ARG', 'x',
           'VM::PUSH_ARG',
-          'VM::SET_ARG', 'y',
+          'VM::NAME_ARG', 'y',
           'VM::PUSH_ARG',
-          'VM::SET_ARG', 'z',
+          'VM::NAME_ARG', 'z',
           'VM::PUSH_VAR', 'x',
           'VM::PUSH_VAR', 'y',
           'VM::PUSH_VAR', 'z',
