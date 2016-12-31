@@ -19,7 +19,6 @@ class VM
     alias to_ruby to_s
 
     alias eq? equal?
-    alias eqv? equal?
 
     def ==(other)
       other.is_a?(ByteArray) && raw == other.raw

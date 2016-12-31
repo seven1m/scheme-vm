@@ -65,7 +65,6 @@ class VM
     end
 
     alias eq? equal?
-    alias eqv? equal?
 
     def ==(other)
       other.is_a?(Pair) && raw == other.raw

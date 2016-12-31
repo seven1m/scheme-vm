@@ -20,7 +20,6 @@ class VM
     end
 
     alias == eq?
-    alias eqv? eq?
 
     def +(other)
       Int.new(raw + other.raw)

@@ -57,7 +57,6 @@ class VM
     ['CMP_GT',        0],
     ['CMP_LT',        0],
     ['CMP_EQ',        0],
-    ['CMP_EQV',       0],
     ['CMP_NULL',      0],
     ['DUP',           0],
     ['INT',           1],

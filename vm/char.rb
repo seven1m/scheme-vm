@@ -14,7 +14,6 @@ class VM
     end
 
     alias eq? ==
-    alias eqv? ==
 
     def to_s
       @byte.chr

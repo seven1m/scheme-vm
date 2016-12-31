@@ -21,6 +21,5 @@ class VM
     end
 
     alias eq? ==
-    alias eqv? ==
   end
 end

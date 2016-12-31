@@ -16,7 +16,6 @@ class VM
     end
 
     alias eq? ==
-    alias eqv? ==
 
     def to_ruby
       to_s

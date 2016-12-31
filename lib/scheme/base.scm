@@ -99,7 +99,6 @@
     (--define-native define-syntax base_define_syntax)
     (--define-native empty? base_null?)
     (--define-native eq? base_eq?)
-    (--define-native eqv? base_eqv?)
     (--define-native if base_if)
     (--define-native integer? base_integer?)
     (--define-native integer->char base_integer_to_char)
@@ -241,6 +240,9 @@
       (if (< n 0)
         (* n -1)
         n))
+
+    (define (eqv? a b)
+      (eq? a b))
 
     (define (memq obj list)
       (if (empty? list)

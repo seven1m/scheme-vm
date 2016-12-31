@@ -293,8 +293,7 @@ class Compiler
           'modulo' => VM::MOD,
           '>'      => VM::CMP_GT,
           '<'      => VM::CMP_LT,
-          'eq?'    => VM::CMP_EQ,
-          'eqv?'   => VM::CMP_EQV
+          'eq?'    => VM::CMP_EQ
         }.each do |name, instruction|
           define_method('base_' + name) do |args, options|
             compare(instruction, args, options)

@@ -217,12 +217,6 @@ class VM
       obj1.eq?(obj2) ? push_true : push_false
     end
 
-    def do_cmp_eqv
-      obj2 = pop_val
-      obj1 = pop_val
-      obj1.eqv?(obj2) ? push_true : push_false
-    end
-
     def do_cmp_null
       val = pop_val
       val == EmptyList.instance ? push_true : push_false
