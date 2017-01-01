@@ -232,6 +232,16 @@ class Compiler
           ]
         end
 
+        def base_string(chars, options)
+          [
+            chars.map { |char| compile_sexp(char, options.merge(use: true)) },
+            VM::PUSH_NUM, chars.size,
+            VM::PUSH_LIST,
+            VM::TO_STR,
+            pop_maybe(options)
+          ]
+        end
+
         def base_string_length((string, *_rest), options)
           [
             compile_sexp(string, options.merge(use: true)),

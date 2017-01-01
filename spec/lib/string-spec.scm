@@ -15,3 +15,7 @@
 (assert (string=? "foo" "foo"))
 (assert (not (string=? "foo" "bar")))
 (assert (not (string=? "foo" 1)))
+
+(assert (equal? "" (string)))
+(assert (equal? "a" (string #\a)))
+(assert (equal? "foo" (string #\f #\o #\o)))

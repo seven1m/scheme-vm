@@ -72,6 +72,7 @@
    set!
    set-car!
    set-cdr!
+   string
    string=?
    string?
    string-length
@@ -118,6 +119,7 @@
     (--define-native set! base_set!)
     (--define-native set-car! base_set_car!)
     (--define-native set-cdr! base_set_cdr!)
+    (--define-native string base_string)
     (--define-native string? base_string?)
     (--define-native string-length base_string_length)
     (--define-native string-ref base_string_ref)
