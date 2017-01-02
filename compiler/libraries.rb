@@ -102,15 +102,17 @@ class Compiler
         bindings: {}
       }
       begins = []
+      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: options[:syntax].dup)
       declarations.each do |(type, *args)|
         case type
         when 'export'
           exports[:bindings].merge!(library_exports_as_hash(args))
+        when 'import'
+          do_import(args, name.first.filename, lib_opts)
         when 'begin'
           begins += args
         end
       end
-      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: options[:syntax].dup)
       sexp = [
         VM::SET_LIB, name.join('/'),
         begins.map { |s| compile_sexp(s, lib_opts) },
