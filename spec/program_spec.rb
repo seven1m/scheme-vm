@@ -23,6 +23,52 @@ describe Program do
       end
     end
 
+    context 'when the program writes a string' do
+      let(:code) do
+        <<-END
+          (import (only (scheme base) write-string))
+          (write-string 1)
+        END
+      end
+
+      it 'writes to stdout' do
+        subject.run
+        stdout.rewind
+        expect(stdout.read).to eq('1')
+      end
+    end
+
+    xcontext 'when the program imports other libraries' do
+      let(:code) do
+        <<-END
+          (import (only (scheme base) define define-syntax write-string)) ; TODO this shouldn't work
+          (define-library (my-lib 1)
+            (begin
+              (define foo "foo")
+              (define-syntax macro1
+                (syntax-rules ()
+                  ((macro1) (write-string "from my-lib 1")))))
+            (export foo macro1))
+          (define-library (my-lib 2)
+            (import (my-lib 1))
+            (begin
+              (define baz "baz")
+              (define-syntax macro2
+                (syntax-rules ()
+                  ((macro2) (macro1)))))
+            (export foo baz macro2 (rename foo bar)))
+          (import (my-lib 2))
+          (macro2)
+        END
+      end
+
+      it 'allows one library to reference another one' do
+        subject.run
+        stdout.rewind
+        expect(stdout.read).to eq('from my-lib 1')
+      end
+    end
+
     context 'when the program fails' do
       let(:code) { 'foo' }
 
@@ -62,21 +108,6 @@ describe Program do
         it 'returns 1' do
           expect(subject.run).to eq(1)
         end
-      end
-    end
-
-    context do
-      let(:code) do
-        <<-END
-          (import (only (scheme base) write-string))
-          (write-string 1)
-        END
-      end
-
-      it 'runs the program' do
-        subject.run
-        stdout.rewind
-        expect(stdout.read).to eq('1')
       end
     end
 
