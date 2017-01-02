@@ -126,6 +126,7 @@ class VM
 
     def do_call
       new_ip = pop
+      raise "ip #{new_ip.inspect} is invalid" unless new_ip.is_a?(Integer)
       name = @last_atom if find_address_for_name(@last_atom) == new_ip
       if @heap[@ip] == RETURN
         @call_stack.last[:func] = new_ip
