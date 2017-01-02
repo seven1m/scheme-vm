@@ -1158,42 +1158,88 @@ describe Compiler do
           (import (only (scheme base) define))
           (define-library (my-lib 1)
             (begin
-              (define foo "foo"))
-            (export foo (rename foo bar)))
-          (import (my-lib 1))
-          (import (only (my-lib 1) bar))
-          (import (except (my-lib 1) bar))
+              (define foo "foo")
+              (define-syntax macro1
+                (syntax-rules ()
+                  ((macro1) 1))))
+            (export foo macro1))
+          (define-library (my-lib 2)
+            (import (my-lib 1))
+            (begin
+              (define baz "baz")
+              (define-syntax macro2
+                (syntax-rules ()
+                  ((macro2) macro1))))
+            (export foo baz macro2 (rename foo bar)))
+          (import (my-lib 1) (my-lib 2))
+          (import (only (my-lib 1) foo))
+          (import (only (my-lib 1) bar)) ; wrong name
           (import (prefix (my-lib 1) my-))
           (import (rename (my-lib 1) (foo baz)))
-          (import (rename (prefix (except (my-lib 1) bar) my-) (my-foo my-baz)))
+          (import (except (my-lib 2) bar))
+          (import (rename (prefix (except (my-lib 2) bar) my-) (my-foo my-baz)))
         END
       end
 
-      it 'records export names for the library' do
+      it 'records export names for the libraries' do
         expect(subject.libs['my-lib/1']).to include(
-          syntax: Hash,
+          syntax: include(
+            'macro1' => {
+              locals: Array,
+              transformer: [
+                'syntax-rules', [],
+                [['macro1'], '1']
+              ]
+            }
+          ),
           bindings: {
-            'foo' => 'foo',
-            'bar' => 'foo'
+            'foo'    => 'foo',
+            'macro1' => 'macro1'
+          }
+        )
+        expect(subject.libs['my-lib/2']).to include(
+          syntax: include(
+            'macro2' => {
+              locals: Array,
+              transformer: [
+                'syntax-rules', [],
+                [['macro2'], 'macro1']
+              ]
+            }
+          ),
+          bindings: {
+            'foo'    => 'foo',
+            'baz'    => 'baz',
+            'bar'    => 'foo',
+            'macro2' => 'macro2'
           }
         )
       end
 
       it 'compiles into vm instructions' do
-        expect(d(@result, skip_libs: false)).to end_with([
+        expect(d(@result, skip_libs: false)).to eq([
           'VM::SET_LIB', 'my-lib/1',
           'VM::PUSH_STR', 'foo',
           'VM::DEFINE_VAR', 'foo',
           'VM::ENDL',
+
+          'VM::SET_LIB', 'my-lib/2',
+          'VM::PUSH_STR', 'baz',
+          'VM::DEFINE_VAR', 'baz',
+          'VM::ENDL',
+
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
+          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'baz',
+          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'bar',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-foo',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-bar',
           'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'baz',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'bar',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-baz',
+          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'baz',
+          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'my-baz',
+          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'my-baz',
+
           'VM::HALT'
         ])
       end

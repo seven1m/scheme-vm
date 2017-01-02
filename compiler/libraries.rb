@@ -57,9 +57,9 @@ class Compiler
       available = bindings.each_with_object({}) { |(n, i, e, s), h| h[e] = [n, i, e, s] }
       case directive
       when 'only'
-        bindings = available.values_at(*identifiers)
+        bindings = available.values_at(*identifiers).compact
       when 'except'
-        bindings = available.values_at(*(available.keys - identifiers))
+        bindings = available.values_at(*(available.keys - identifiers)).compact
       when 'prefix'
         prefix = identifiers.first
         bindings = bindings.map { |(n, i, e, s)| [n, i, prefix + e, s] }
