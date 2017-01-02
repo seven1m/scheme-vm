@@ -146,7 +146,7 @@ describe Program do
       end
     end
 
-    context 'exception in program code' do
+    context 'when an undefined variable is referenced' do
       let(:code) do
         "; undefined variable\n" \
         '(foo)'
@@ -156,7 +156,7 @@ describe Program do
         expect(subject.run).to eq(1)
       end
 
-      it 'shows the filename, line and column number' do
+      it 'shows the filename, line and column of the error' do
         subject.run
         stdout.rewind
         expect(stdout.read).to eq(
