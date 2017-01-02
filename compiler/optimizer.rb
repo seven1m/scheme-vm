@@ -31,11 +31,19 @@ class Compiler
       jumps = []
       while ip < @instructions.size
         instruction = @instructions[ip]
+        raise_invalid_instruction_error(ip) unless instruction.is_a?(Integer)
         (_name, arity) = VM::INSTRUCTIONS.fetch(instruction)
         jumps << ip if instruction == VM::JUMP
         ip += arity + 1
       end
       jumps
+    end
+
+    def raise_invalid_instruction_error(ip)
+      puts 'Full compiled code:'
+      p @instructions
+      puts "Something is wrong starting at index #{ip}: #{@instructions[ip..(ip + 2)].inspect}"
+      raise 'Invalid compiled code.'
     end
   end
 end
