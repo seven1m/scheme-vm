@@ -41,15 +41,57 @@ describe Program do
     xcontext 'when the program imports other libraries' do
       let(:code) do
         <<-END
-          (import (only (scheme base) define define-syntax write-string)) ; TODO this shouldn't work
+          (define-library (base)
+            (export
+             define
+             define-syntax
+             if
+             write-string)
+
+            (begin
+              (--define-native apply base_apply)
+              (--define-native car base_car)
+              (--define-native cdr base_cdr)
+              (--define-native define base_define)
+              (--define-native define-syntax base_define_syntax)
+              (--define-native empty? base_null?)
+              (--define-native if base_if)
+              (--define-native lambda base_lambda)
+
+              (define-syntax begin
+                (syntax-rules ()
+                  ((begin exp ...)
+                  ((lambda () exp ...)))))
+
+              (define not
+                (lambda (condition)
+                  (if condition
+                      #f
+                      #t)))
+
+              (--define-native write write) ; don't export this
+
+              (define (newline)
+                (write #\\newline))
+
+              (define (write-string . args)
+                (if (not (empty? args))
+                    (begin
+                      (write (car args))
+                      (apply write-string (cdr args)))))
+            ))
+
           (define-library (my-lib 1)
+            (import (base))
             (begin
               (define foo "foo")
               (define-syntax macro1
                 (syntax-rules ()
                   ((macro1) (write-string "from my-lib 1")))))
             (export foo macro1))
+
           (define-library (my-lib 2)
+            (import (base))
             (import (my-lib 1))
             (begin
               (define baz "baz")
@@ -57,7 +99,9 @@ describe Program do
                 (syntax-rules ()
                   ((macro2) (macro1)))))
             (export foo baz macro2 (rename foo bar)))
+
           (import (my-lib 2))
+
           (macro2)
         END
       end
