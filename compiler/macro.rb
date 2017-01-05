@@ -79,10 +79,20 @@ class Compiler
         # FIXME: won't work with some identifiers and literal elipsis
         identifiers = @template.flatten.select { |name| name =~ /\A[a-z]/ }.uniq
         identifiers.each_with_object({}) do |identifier, hash|
-          next if known_identifier?(identifier)
-          hash[identifier] = @compiler.mangle_identifier(identifier)
+          hash[identifier] = if macro?(identifier)
+                               identifier
+                             elsif known_identifier?(identifier)
+                               @macro[:lib] ? "##{@macro[:lib]}:#{identifier}" : identifier
+                             else
+                               @compiler.mangle_identifier(identifier)
+                             end
         end
       end
+    end
+
+    def macro?(name)
+      return false if @macro[:syntax].nil?
+      @macro[:syntax][name] # TODO: maybe built_in_function should be here -- not sure!
     end
 
     def known_identifier?(name)

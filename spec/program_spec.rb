@@ -38,7 +38,7 @@ describe Program do
       end
     end
 
-    xcontext 'when the program imports other libraries' do
+    context 'when the program imports other libraries' do
       let(:code) do
         <<-END
           (define-library (base)

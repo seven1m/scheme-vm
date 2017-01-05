@@ -42,7 +42,9 @@ class Compiler
         def base_define_syntax((name, transformer), options)
           options[:syntax][name] = {
             locals: options[:locals].keys + options[:syntax].keys + [name],
-            transformer: transformer
+            transformer: transformer,
+            syntax: options[:syntax],
+            lib: options[:lib]
           }
           []
         end

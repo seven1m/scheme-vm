@@ -96,10 +96,8 @@ class Compiler
       send(built_in_name, args, options)
     elsif (macro = options[:syntax][name])
       compile_macro_sexp(sexp, macro, options)
-    elsif options[:locals][name]
-      call(sexp, options)
     else
-      raise VM::VariableUndefined, name
+      call(sexp, options)
     end
   end
 
@@ -144,7 +142,11 @@ class Compiler
 
   def compile_atom(name, options)
     if options[:quote] || options[:quasiquote]
-      [VM::PUSH_ATOM, name]
+      [
+        VM::PUSH_ATOM,
+        name,
+        pop_maybe(options)
+      ]
     else
       [
         push_var(name, options),
@@ -195,8 +197,20 @@ class Compiler
       send(method_name, sexp[1..-1], options)
     else
       sexp = Macro.new(macro, self).expand(sexp)
-      compile_sexp(sexp, options)
+      locals = Hash[macro[:locals].zip([true] * macro[:locals].size)]
+      compile_sexp(
+        sexp,
+        options.merge(
+          syntax: options[:syntax].merge(macro[:syntax] || {}),
+          locals: options[:locals].merge(locals)
+        )
+      )
     end
+  end
+
+  def unmangled_name(name)
+    return name unless (match = name.match(/\A#([^:]+):(.+)\z/))
+    match[2]
   end
 
   def do_debug(_args, _options)
@@ -209,10 +223,11 @@ class Compiler
   end
 
   def call((lambda, *args), options)
+    function = compile_sexp(lambda, options.merge(use: true))
     [
       args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
       args.any? ? [VM::PUSH_NUM, args.size, VM::SET_ARGS] : nil,
-      compile_sexp(lambda, options.merge(use: true)),
+      function,
       VM::CALL
     ]
   end
@@ -227,7 +242,7 @@ class Compiler
   end
 
   def push_var(name, options)
-    raise VM::VariableUndefined, name unless options[:locals][name]
+    raise VM::VariableUndefined, name unless options[:locals][unmangled_name(name)]
     [
       VM::PUSH_VAR,
       name

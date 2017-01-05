@@ -1,6 +1,5 @@
-(import (only (scheme base) begin define-syntax = eq? eqv? equal? if newline not quote write-string))
-
 (define-library (assert)
+  (import (only (scheme base) begin define-syntax = eq? eqv? equal? if newline not quote write-string))
   (export assert)
   (begin
     (define-syntax assert

@@ -5,7 +5,9 @@ class Compiler
     def do_define_native((name, method_name), options)
       options[:syntax][name] = {
         locals: options[:locals].keys + options[:syntax].keys + [name],
-        native_transformer: method_name
+        native_transformer: method_name,
+        syntax: options[:syntax],
+        lib: options[:lib]
       }
       []
     end
@@ -97,29 +99,31 @@ class Compiler
     end
 
     def do_define_library((name, *declarations), options)
-      exports = @libs[name.join('/')] = {
+      name_as_string = name.join('/')
+      exports = @libs[name_as_string] = {
         syntax: {},
         bindings: {}
       }
+      imports = []
       begins = []
-      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: options[:syntax].dup)
+      # TODO: probably shouldn't dup locals either
+      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: exports[:syntax], lib: name_as_string)
       declarations.each do |(type, *args)|
         case type
         when 'export'
           exports[:bindings].merge!(library_exports_as_hash(args))
         when 'import'
-          do_import(args, name.first.filename, lib_opts)
+          imports = do_import(args, name.first.filename, lib_opts)
         when 'begin'
           begins += args
         end
       end
-      sexp = [
-        VM::SET_LIB, name.join('/'),
+      [
+        VM::SET_LIB, name_as_string,
+        imports,
         begins.map { |s| compile_sexp(s, lib_opts) },
         VM::ENDL
       ]
-      exports[:syntax] = lib_opts[:syntax]
-      sexp
     end
 
     def library_exports_as_hash(exports)

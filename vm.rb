@@ -275,9 +275,17 @@ class VM
       frame[:named_args][name]
     elsif (c = find_closure_with_symbol(name))
       c[:locals][name]
+    elsif (m = mangled_local(name))
+      (lib, name) = m
+      @libs[lib][:locals][name]
     elsif raise_if_not_found
       raise VariableUndefined, name
     end
+  end
+
+  def mangled_local(name)
+    return unless name && (match = name.match(/\A#([^:]+):(.+)\z/))
+    match[1..2]
   end
 
   def args

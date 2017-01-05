@@ -372,6 +372,7 @@ describe Compiler do
         it 'compiles into vm instructions' do
           expect(d(@result)).to eq([
             'VM::PUSH_ATOM', 'foo',
+            'VM::POP',
             'VM::HALT'
           ])
         end
@@ -1155,8 +1156,8 @@ describe Compiler do
     context 'define-library and import' do
       before do
         @result = subject.compile(<<-END)
-          (import (only (scheme base) define))
           (define-library (my-lib 1)
+            (import (only (scheme base) define define-syntax))
             (begin
               (define foo "foo")
               (define-syntax macro1
@@ -1164,6 +1165,7 @@ describe Compiler do
                   ((macro1) 1))))
             (export foo macro1))
           (define-library (my-lib 2)
+            (import (only (scheme base) define define-syntax))
             (import (my-lib 1))
             (begin
               (define baz "baz")
@@ -1171,6 +1173,7 @@ describe Compiler do
                 (syntax-rules ()
                   ((macro2) macro1))))
             (export foo baz macro2 (rename foo bar)))
+          (import (only (scheme base) define))
           (import (my-lib 1) (my-lib 2))
           (import (only (my-lib 1) foo))
           (import (only (my-lib 1) bar)) ; wrong name
@@ -1182,37 +1185,29 @@ describe Compiler do
       end
 
       it 'records export names for the libraries' do
-        expect(subject.libs['my-lib/1']).to include(
-          syntax: include(
-            'macro1' => {
-              locals: Array,
-              transformer: [
-                'syntax-rules', [],
-                [['macro1'], '1']
-              ]
-            }
-          ),
-          bindings: {
-            'foo'    => 'foo',
-            'macro1' => 'macro1'
-          }
+        expect(subject.libs['my-lib/1'][:syntax]['macro1']).to include(
+          locals: Array,
+          transformer: [
+            'syntax-rules', [],
+            [['macro1'], '1']
+          ]
         )
-        expect(subject.libs['my-lib/2']).to include(
-          syntax: include(
-            'macro2' => {
-              locals: Array,
-              transformer: [
-                'syntax-rules', [],
-                [['macro2'], 'macro1']
-              ]
-            }
-          ),
-          bindings: {
-            'foo'    => 'foo',
-            'baz'    => 'baz',
-            'bar'    => 'foo',
-            'macro2' => 'macro2'
-          }
+        expect(subject.libs['my-lib/1'][:bindings]).to eq(
+          'foo'    => 'foo',
+          'macro1' => 'macro1'
+        )
+        expect(subject.libs['my-lib/2'][:syntax]['macro2']).to include(
+          locals: Array,
+          transformer: [
+            'syntax-rules', [],
+            [['macro2'], 'macro1']
+          ]
+        )
+        expect(subject.libs['my-lib/2'][:bindings]).to eq(
+          'foo'    => 'foo',
+          'baz'    => 'baz',
+          'bar'    => 'foo',
+          'macro2' => 'macro2'
         )
       end
 
@@ -1224,6 +1219,7 @@ describe Compiler do
           'VM::ENDL',
 
           'VM::SET_LIB', 'my-lib/2',
+          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
           'VM::PUSH_STR', 'baz',
           'VM::DEFINE_VAR', 'baz',
           'VM::ENDL',
