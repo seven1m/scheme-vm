@@ -23,6 +23,11 @@
    case
    cdr
    char?
+   char=?
+   char<?
+   char<=?
+   char>?
+   char>=?
    char->integer
    char-downcase
    char-upcase
@@ -452,6 +457,27 @@
       (if (equal? (car a) (car b))
         (equal? (cdr a) (cdr b))
         #f))
+
+    (define (char=? a b)
+      (if (and (char? a) (char? b))
+        (eq? a b)
+        #f))
+
+    (define (char<? a b)
+      (if (and (char? a) (char? b))
+        (< (char->integer a) (char->integer b))
+        #f))
+
+    (define (char<=? a b)
+      (or (char<? a b) (char=? a b)))
+
+    (define (char>? a b)
+      (if (and (char? a) (char? b))
+        (> (char->integer a) (char->integer b))
+        #f))
+
+    (define (char>=? a b)
+      (or (char>? a b) (char=? a b)))
 
     (define (equal? a b)
       (cond
