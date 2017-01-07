@@ -405,20 +405,23 @@
     (define (number? n)
       (or (integer? n)))
 
-    (define (number->string num)
-      (letrec ((i->c (lambda (i)
-                       (integer->char (+ i 48))))
-               (n->s (lambda (n l)
-                       (if (< n 10)
-                         (cons (i->c n) l)
-                         (n->s (/ n 10) (cons (i->c (modulo n 10)) l))))))
-        (list->string (n->s num '()))))
-
     (define (negative? n)
       (< n 0))
 
     (define (positive? n)
       (>= n 0))
+
+    (define (number->string num)
+      (letrec* ((i->c (lambda (i)
+                       (integer->char (+ i 48))))
+                (n->s (lambda (n l)
+                        (if (< n 10)
+                          (cons (i->c n) l)
+                          (n->s (/ n 10) (cons (i->c (modulo n 10)) l)))))
+                (digits (n->s (abs num) '())))
+        (if (negative? num)
+          (list->string (cons #\- digits))
+          (list->string digits))))
 
     (define (string->list str)
       (letrec ((s->l (lambda (l i)

@@ -26,3 +26,4 @@
 
 (assert (equal? "123" (number->string 123)))
 (assert (equal? "0" (number->string 0)))
+(assert (equal? "-123" (number->string -123)))
