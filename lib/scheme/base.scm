@@ -67,6 +67,7 @@
    not
    null?
    number?
+   number->string
    odd?
    or
    pair?
@@ -403,6 +404,15 @@
 
     (define (number? n)
       (or (integer? n)))
+
+    (define (number->string num)
+      (letrec ((i->c (lambda (i)
+                       (integer->char (+ i 48))))
+               (n->s (lambda (n l)
+                       (if (< n 10)
+                         (cons (i->c n) l)
+                         (n->s (/ n 10) (cons (i->c (modulo n 10)) l))))))
+        (list->string (n->s num '()))))
 
     (define (negative? n)
       (< n 0))

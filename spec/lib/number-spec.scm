@@ -23,3 +23,6 @@
 (assert (<= 2 2))
 (assert (> 2 1))
 (assert (>= 2 2))
+
+(assert (equal? "123" (number->string 123)))
+(assert (equal? "0" (number->string 0)))
