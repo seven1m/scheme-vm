@@ -1,13 +1,28 @@
 (import (scheme base)
         (assert))
 
-(assert (equal? 7 (+ 4 3)))
-(assert (equal? 1 (- 4 3)))
-(assert (equal? 12 (* 4 3)))
-(assert (equal? 2 (/ 4 2)))
-(assert (equal? 2 (/ 5 2))) ; no support for inexact numbers
+(assert (= 0 (+)))
+(assert (= 4 (+ 4)))
+(assert (= 7 (+ 4 3)))
+(assert (= 10 (+ 4 3 2 1)))
 
-(assert (equal? 2 (modulo 8 3)))
+; (-) is an error
+(assert (= -4 (- 4)))
+(assert (= 1 (- 4 3)))
+(assert (= -2 (- 4 3 2 1)))
+
+(assert (= 1 (*)))
+(assert (= 4 (* 4)))
+(assert (= 12 (* 4 3)))
+(assert (= 24 (* 4 3 2 1)))
+
+; (/) is an error
+(assert (= 1 (/ 1)))
+(assert (= 2 (/ 4 2)))
+(assert (= 2 (/ 4 2 1)))
+(assert (= 2 (/ 5 2))) ; no support for inexact numbers
+
+(assert (= 2 (modulo 8 3)))
 
 (assert (equal? #t (even? 2)))
 (assert (equal? #f (even? 3)))

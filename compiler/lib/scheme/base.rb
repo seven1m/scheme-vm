@@ -304,11 +304,32 @@ class Compiler
           end
         end
 
+        [
+          ['+', VM::ADD, 0],
+          ['-', VM::SUB, 0],
+          ['*', VM::MUL, 1],
+          ['/', VM::DIV, 1]
+        ].each do |name, instruction, default_arg_value|
+          define_method('base_' + name) do |args, options|
+            default_arg_count = [(2 - args.size), 0].max
+            args = ([default_arg_value.to_s] * default_arg_count) + args
+            arith(instruction, args, options)
+          end
+        end
+
+        def arith(instruction, args, options)
+          args = args.map { |arg| compile_sexp(arg, options.merge(use: true)) }
+          first_two = args.shift(2)
+          rest = args.zip([instruction] * args.size)
+          [
+            first_two,
+            instruction,
+            rest,
+            pop_maybe(options)
+          ]
+        end
+
         {
-          '+'      => VM::ADD,
-          '-'      => VM::SUB,
-          '*'      => VM::MUL,
-          '/'      => VM::DIV,
           'modulo' => VM::MOD,
           '>'      => VM::CMP_GT,
           '<'      => VM::CMP_LT,
@@ -319,11 +340,10 @@ class Compiler
           end
         end
 
-        def compare(instruction, (arg1, arg2, *rest), options)
-          raise "too many arguments (expected 2, got #{2 + rest.size})" if rest.any?
+        def compare(instruction, args, options)
+          raise "wrong number of arguments (expected 2, got #{args.size})" if args.size != 2
           [
-            compile_sexp(arg1, options.merge(use: true)),
-            compile_sexp(arg2, options.merge(use: true)),
+            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
             instruction,
             pop_maybe(options)
           ]
