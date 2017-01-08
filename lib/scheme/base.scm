@@ -242,8 +242,15 @@
             #f
             #t)))
 
-    (define (= a b)
-      (eq? a b))
+    (define-syntax =
+      (syntax-rules ()
+        ((=) #t)
+        ((= n) #t)
+        ((= n1 n2) (eq? n1 n2))
+        ((= n1 n2 n3 ...)
+         (and (eq? n1 n2)
+              (= n2 n3 ...)))))
+
 
     (define (>= a b)
       (or (= a b) (> a b)))
