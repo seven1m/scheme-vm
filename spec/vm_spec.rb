@@ -68,6 +68,63 @@ describe VM do
     end
   end
 
+  describe 'CALL_WITH_CC' do
+    context 'at the top level' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::HALT,
+          VM::RETURN,
+          VM::ENDF,
+          VM::CALL_WITH_CC,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function with a continuation' do
+        expect(subject.call_args.size).to eq(1)
+        address = subject.call_args.first
+        continuation = subject.heap[address]
+        expect(continuation).to be_a(VM::Continuation)
+        expect(continuation.ip).to eq(5)
+        expect(continuation.call_stack).to eq([
+          { args: [], named_args: {} }
+        ])
+      end
+    end
+
+    context 'inside a function call' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::HALT,
+          VM::RETURN,
+          VM::ENDF,
+          VM::DEFINE_VAR, 'fn',
+          VM::PUSH_FUNC,
+          VM::PUSH_VAR, 'fn',
+          VM::CALL_WITH_CC,
+          VM::RETURN,
+          VM::ENDF,
+          VM::CALL,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function with a continuation' do
+        expect(subject.call_args.size).to eq(1)
+        address = subject.call_args.first
+        continuation = subject.heap[address]
+        expect(continuation).to be_a(VM::Continuation)
+        expect(continuation.ip).to eq(10)
+        expect(continuation.call_stack).to eq([
+          { args: [], named_args: {} },
+          { name: nil, func: 7, return: 13, args: [], named_args: {} }
+        ])
+      end
+    end
+  end
+
   describe 'TYPE' do
     before do
       subject.execute([
@@ -713,23 +770,90 @@ describe VM do
   end
 
   describe 'CALL' do
-    before do
-      subject.execute([
-        VM::PUSH_FUNC,
-        VM::PUSH_STR, 'yo',
-        VM::INT, VM::INT_WRITE,
-        VM::RETURN,
-        VM::ENDF,
-        VM::DUP,
-        VM::CALL,
-        VM::CALL,
-        VM::HALT
-      ])
+    context 'given a function' do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_STR, 'yo',
+          VM::INT, VM::INT_WRITE,
+          VM::RETURN,
+          VM::ENDF,
+          VM::DUP,
+          VM::CALL,
+          VM::CALL,
+          VM::HALT
+        ])
+      end
+
+      it 'calls the function' do
+        subject.stdout.rewind
+        expect(subject.stdout.read).to eq('yoyo')
+      end
     end
 
-    it 'calls the function' do
-      subject.stdout.rewind
-      expect(subject.stdout.read).to eq('yoyo')
+    context 'given a continuation' do
+      before do
+        subject.heap[0] = VM::Continuation.new(5, [{ args: [], named_args: {} }])
+        subject.locals['k'] = 0
+        subject.execute([
+          VM::PUSH_NUM, '0',
+          VM::DEFINE_VAR, 'n',
+
+          VM::PUSH_VAR, 'n', # continuation (k) starts here
+          VM::PUSH_NUM, '1',
+          VM::ADD,
+          VM::SET_VAR, 'n',
+          VM::HALT,          # pause here and verify n
+          VM::PUSH_VAR, 'n',
+          VM::PUSH_NUM, '2',
+          VM::CMP_GT,
+          VM::JUMP_IF_FALSE, 3,
+          VM::JUMP, 4,
+
+          VM::PUSH_VAR, 'k',
+          VM::CALL,
+
+          VM::HALT
+        ])
+      end
+
+      it 'jumps back to the point of the continuation' do
+        expect(subject.heap[subject.locals['n']]).to eq(VM::Int.new(1))
+        subject.execute
+        expect(subject.heap[subject.locals['n']]).to eq(VM::Int.new(2))
+        subject.execute
+        expect(subject.heap[subject.locals['n']]).to eq(VM::Int.new(3))
+        subject.execute
+        expect(subject.heap[subject.locals['n']]).to eq(VM::Int.new(3))
+      end
+    end
+
+    context 'given a continuation with an arg' do
+      before do
+        subject.heap[0] = VM::Continuation.new(5, [{ args: [], named_args: {} }])
+        subject.locals['k'] = 0
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_ARG,
+          VM::DEFINE_VAR, 'k',
+          VM::PUSH_NUM, '100',
+          VM::PUSH_NUM, 1,
+          VM::SET_ARGS,
+          VM::PUSH_VAR, 'k',
+          VM::CALL,
+          VM::RETURN,
+          VM::ENDF,
+
+          VM::CALL_WITH_CC,
+          VM::HALT
+        ])
+      end
+
+      it 'pushes the argument passed to the continuation onto the stack' do
+        expect(subject.stack_values).to eq([
+          VM::Int.new(100)
+        ])
+      end
     end
   end
 

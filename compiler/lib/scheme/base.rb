@@ -49,6 +49,13 @@ class Compiler
           []
         end
 
+        def base_call_cc((fn), options)
+          [
+            compile_sexp(fn, options.merge(use: true)),
+            VM::CALL_WITH_CC
+          ]
+        end
+
         def base_car((arg, *_rest), options)
           [
             compile_sexp(arg, options.merge(use: true)),

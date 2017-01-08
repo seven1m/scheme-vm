@@ -810,6 +810,27 @@ describe Compiler do
       end
     end
 
+    context 'call/cc' do
+      before do
+        @result = subject.compile(<<-END)
+          (call/cc (lambda (k) 1))
+        END
+      end
+
+      it 'compiles into vm instructions' do
+        expect(d(@result)).to eq([
+          'VM::PUSH_FUNC',
+          'VM::PUSH_ARG',
+          'VM::NAME_ARG', 'k',
+          'VM::PUSH_NUM', '1',
+          'VM::RETURN',
+          'VM::ENDF',
+          'VM::CALL_WITH_CC',
+          'VM::HALT'
+        ])
+      end
+    end
+
     context 'apply' do
       before do
         @result = subject.compile(<<-END)

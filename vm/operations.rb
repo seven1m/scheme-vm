@@ -15,6 +15,15 @@ class VM
       push_val(ByteArray.new(str))
     end
 
+    def do_call_with_cc
+      new_ip = pop
+      continuation = Continuation.new(@ip, @call_stack)
+      address = alloc
+      @heap[address] = continuation
+      @call_args = [address]
+      do_call(new_ip)
+    end
+
     def do_to_char
       code = pop_raw
       push_val(Char.new(code))
@@ -124,8 +133,8 @@ class VM
       push_val(ByteArray.new(chars.join))
     end
 
-    def do_call
-      new_ip = pop
+    def do_call(new_ip = pop)
+      return do_call_continuation(new_ip) if heap[new_ip].is_a?(Continuation)
       raise "ip #{new_ip.inspect} is invalid" unless new_ip.is_a?(Integer)
       name = @last_atom if find_address_for_name(@last_atom) == new_ip
       if @heap[@ip] == RETURN
@@ -137,6 +146,14 @@ class VM
       end
       raise CallStackTooDeep, @call_stack if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip
+    end
+
+    def do_call_continuation(address)
+      continuation = heap[address]
+      @ip = continuation.ip
+      @call_stack = continuation.call_stack
+      push(@call_args.first)
+      @call_args = []
     end
 
     def do_apply

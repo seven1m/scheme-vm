@@ -1,18 +1,19 @@
+require_relative 'parser'
 require_relative 'vm/atom'
-require_relative 'vm/int'
+require_relative 'vm/bool_false'
+require_relative 'vm/bool_true'
 require_relative 'vm/byte_array'
 require_relative 'vm/char'
-require_relative 'vm/pair'
-require_relative 'vm/empty_list'
-require_relative 'vm/bool_true'
-require_relative 'vm/bool_false'
-require_relative 'vm/unspecified'
-require_relative 'vm/exceptions'
-require_relative 'vm/pretty_printer'
-require_relative 'vm/gc'
+require_relative 'vm/continuation'
 require_relative 'vm/debug_output'
+require_relative 'vm/empty_list'
+require_relative 'vm/exceptions'
+require_relative 'vm/gc'
+require_relative 'vm/int'
 require_relative 'vm/operations'
-require_relative 'parser'
+require_relative 'vm/pair'
+require_relative 'vm/pretty_printer'
+require_relative 'vm/unspecified'
 require 'pry'
 
 class VM
@@ -27,6 +28,7 @@ class VM
     ['APPEND',        0],
     ['APPLY',         0],
     ['CALL',          0],
+    ['CALL_WITH_CC',  0],
     ['CAR',           0],
     ['CDR',           0],
     ['CMP_EQ',        0],

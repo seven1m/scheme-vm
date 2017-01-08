@@ -16,6 +16,8 @@
    begin
    boolean?
    boolean=?
+   call-with-current-continuation
+   call/cc
    car
    caar cadr cdar cddr
    caaar caadr cadar caddr cdaar cdadr cddar cdddr
@@ -100,6 +102,8 @@
     (--define-native < base_<)
     (--define-native append base_append)
     (--define-native apply base_apply)
+    (--define-native call-with-current-continuation base_call_cc)
+    (--define-native call/cc base_call_cc)
     (--define-native car base_car)
     (--define-native cdr base_cdr)
     (--define-native char? base_char?)
