@@ -292,7 +292,7 @@
           #f
           (if (eqv? obj (car list))
               list
-              (memq obj (cdr list)))))
+              (memv obj (cdr list)))))
 
     (define (caar l) (car (car l)))
     (define (cadr l) (car (cdr l)))
