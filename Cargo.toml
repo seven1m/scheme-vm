@@ -1,0 +1,10 @@
+[package]
+name = "scheme-vm"
+version = "0.1.0"
+authors = ["Tim Morgan <tim@timmorgan.org>"]
+
+[dependencies]
+ruru = "0.9.0"
+
+[lib]
+crate-type = ["dylib"]
