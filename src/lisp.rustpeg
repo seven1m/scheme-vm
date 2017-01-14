@@ -1,0 +1,2 @@
+pub consonants
+	= ([a-z]![aeiou])+
