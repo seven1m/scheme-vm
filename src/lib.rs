@@ -4,7 +4,7 @@ extern crate ruru;
 use ruru::{Boolean, Class, Object, RString};
 
 mod lisp {
-    include!("lisp.rs");
+    include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
 
 use self::lisp::*;
