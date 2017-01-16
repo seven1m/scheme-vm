@@ -4,4 +4,5 @@ library = Fiddle::dlopen('target/release/libscheme_vm.dylib')
 
 Fiddle::Function.new(library['initialize_string'], [], Fiddle::TYPE_VOIDP).call
 
-p ''.weird?
+p "\n\t ".whitespace? # => true
+p "x".whitespace?     # => false

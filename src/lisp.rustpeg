@@ -1,2 +1,2 @@
-pub consonants
-	= ([a-z]![aeiou])+
+pub whitespace
+	= [ \t\n]+

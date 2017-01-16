@@ -13,15 +13,14 @@ methods!(
    RString,
    itself,
 
-   fn string_is_weird() -> Boolean {
-       Boolean::new(false)
+   fn string_is_whitespace() -> Boolean {
+       Boolean::new(whitespace(&itself.to_string()).is_ok())
    }
 );
 
 #[no_mangle]
 pub extern fn initialize_string() {
-    println!("{}", consonants("qwrty").is_ok());
     Class::from_existing("String").define(|itself| {
-        itself.def("weird?", string_is_weird);
+        itself.def("whitespace?", string_is_whitespace);
     });
 }
