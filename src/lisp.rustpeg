@@ -1,2 +1,14 @@
 pub whitespace
 	= [ \t\n]+
+
+pub escape
+	= "\\" .
+
+pub string -> String
+	= n:$("\"" ([^"] / escape)* "\"") { n.to_string() }
+
+pub atom -> &'input str
+	= $([^\(\) \t\n\[\]\{\}]+)
+
+pub sexp -> Vec<&'input str>
+	= "(" whitespace* n:(atom ** whitespace) whitespace* ")" {n}
