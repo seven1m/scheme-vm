@@ -5,7 +5,7 @@ pub escape
 	= "\\" .
 
 pub string -> String
-	= n:$("\"" ([^"] / escape)* "\"") { n.to_string() }
+	= n:$("\"" (escape / [^"])* "\"") { n.to_string() }
 
 pub atom -> &'input str
 	= $([^\(\) \t\n\[\]\{\}]+)

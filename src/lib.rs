@@ -27,7 +27,7 @@ mod tests {
     fn string() {
         assert!(lisp::string("\"foo\"").is_ok());
         assert!(lisp::string("\"\"").is_ok());
-        //assert!(lisp::string("\"quote\\\"in the middle\"").is_ok());
+        assert!(lisp::string("\"quote\\\"in\\.the middle\"").is_ok());
         assert!(lisp::string("\"").is_err());
         assert!(lisp::string("").is_err());
     }
