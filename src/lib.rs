@@ -56,6 +56,16 @@ mod tests {
         assert!(lisp::sexp("(").is_err());
         assert!(lisp::sexp("").is_err());
     }
+
+    #[test]
+    fn quote() {
+        assert!(lisp::quote("'").is_ok());
+        assert!(lisp::quote(",@").is_ok());
+        assert!(lisp::quote(",").is_ok());
+        assert!(lisp::quote("`").is_ok());
+        assert!(lisp::quote("").is_err());
+        assert!(lisp::quote("/").is_err());
+    }
 }
 
 #[no_mangle]
