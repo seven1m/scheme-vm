@@ -4,8 +4,8 @@ pub whitespace
 pub escape
 	= "\\" .
 
-pub string -> String
-	= n:$("\"" (escape / [^"])* "\"") { n.to_string() }
+pub string -> &'input str
+	= $("\"" (escape / [^"])* "\"")
 
 pub atom -> &'input str
 	= $([^\(\) \t\n\[\]\{\}]+)
@@ -15,3 +15,12 @@ pub sexp -> Vec<&'input str>
 
 pub quote -> &'input str
 	= $("'" / ",@" / "," / "`")
+
+//pub quoted_sexp -> Vec<&'input str>
+	//= q:quote simple_sexp
+
+//pub simple_sexp -> Vec<&'input str>
+	//= "(" expression* ")"
+
+pub expression -> &'input str
+	= e:(string / atom) whitespace {e}

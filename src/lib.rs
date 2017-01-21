@@ -66,6 +66,15 @@ mod tests {
         assert!(lisp::quote("").is_err());
         assert!(lisp::quote("/").is_err());
     }
+
+    #[test]
+    fn expression() {
+        assert!(lisp::expression("\"string\" ").is_ok());
+        assert!(lisp::expression("identifier ").is_ok());
+        assert!(lisp::expression("1 ").is_ok());
+        assert!(lisp::expression(" ").is_err());
+        assert!(lisp::expression("[ ").is_err());
+    }
 }
 
 #[no_mangle]
