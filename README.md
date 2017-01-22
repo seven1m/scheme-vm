@@ -2,7 +2,7 @@
 
 [![Circle CI](https://circleci.com/gh/seven1m/scheme-vm.svg?style=svg)](https://circleci.com/gh/seven1m/scheme-vm)
 
-a R7RS scheme implementation in Ruby for my own amusement
+a R7RS scheme implementation in Ruby (and now some Rust!) for my own amusement
 
 [the todo list](https://github.com/seven1m/scheme-vm/issues/12)
 
