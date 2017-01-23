@@ -11,16 +11,17 @@ pub atom -> &'input str
 	= $([^\(\) \t\n\[\]\{\}]+)
 
 pub sexp -> Vec<&'input str>
-	= "(" whitespace* n:(atom ** whitespace) whitespace* ")" {n}
+	= quoted_sexp / simple_sexp
+
+pub simple_sexp -> Vec<&'input str>
+	= "(" whitespace* n:(expression ** whitespace) whitespace* ")" {n}
 
 pub quote -> &'input str
 	= $("'" / ",@" / "," / "`")
 
-//pub quoted_sexp -> Vec<&'input str>
-	//= q:quote simple_sexp
-
-//pub simple_sexp -> Vec<&'input str>
-	//= "(" expression* ")"
+// FIXME: return quote
+pub quoted_sexp -> Vec<&'input str>
+	= quote n:simple_sexp {n}
 
 pub expression -> &'input str
-	= e:(string / atom) whitespace {e}
+	= string / atom
