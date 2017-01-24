@@ -1,27 +1,28 @@
+use values::*;
+
 pub whitespace
 	= [ \t\n]+
 
 pub escape
 	= "\\" .
 
-pub string -> &'input str
-	= $("\"" (escape / [^"])* "\"")
+pub string -> Box<Val>
+	= "\"" s:$(escape / [^"])* "\"" { Box::new(Str { value: s.to_string() }) }
 
-pub atom -> &'input str
-	= $([^\(\) \t\n\[\]\{\}]+)
+pub atom -> Box<Val>
+	= n:$([^\(\) \t\n\[\]\{\}]+) { Box::new(Atom { name: n.to_string() }) }
 
-pub sexp -> Vec<&'input str>
+pub sexp -> Vec<Box<Val>>
 	= quoted_sexp / simple_sexp
 
-pub simple_sexp -> Vec<&'input str>
+pub simple_sexp -> Vec<Box<Val>>
 	= "(" whitespace* n:(expression ** whitespace) whitespace* ")" {n}
 
-pub quote -> &'input str
-	= $("'" / ",@" / "," / "`")
+pub quote -> Box<Val>
+	= n:$("'" / ",@" / "," / "`") { Box::new(Atom { name: n.to_string() }) }
 
-// FIXME: return quote
-pub quoted_sexp -> Vec<&'input str>
-	= quote n:simple_sexp {n}
+pub quoted_sexp -> Vec<Box<Val>>
+	= q:quote s:simple_sexp { vec![q, Box::new(Arr { values: s })] }
 
-pub expression -> &'input str
+pub expression -> Box<Val>
 	= string / atom

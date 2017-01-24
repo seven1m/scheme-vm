@@ -3,11 +3,12 @@ extern crate ruru;
 
 use ruru::{Boolean, Class, Object, RString};
 
+mod values;
+use values::*;
+
 mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
-
-//use self::lisp::*;
 
 methods!(
    RString,
@@ -22,6 +23,7 @@ methods!(
 #[cfg(test)]
 mod tests {
     use lisp;
+    use values::*;
 
     #[test]
     fn string() {
@@ -30,6 +32,8 @@ mod tests {
         assert!(lisp::string("\"quote\\\"in\\.the middle\"").is_ok());
         assert!(lisp::string("\"").is_err());
         assert!(lisp::string("").is_err());
+        let str = lisp::string("\"foo\"").unwrap();
+        //assert_eq!((str as Box<Str>).value, "foo");
     }
 
     #[test]
@@ -46,15 +50,17 @@ mod tests {
         assert!(lisp::atom("*").is_ok());
         assert!(lisp::atom("[").is_err());
         assert!(lisp::atom("").is_err());
+        //assert_eq!(lisp::atom("foo"), Ok("foo"));
     }
 
     #[test]
     fn sexp() {
-        assert!(lisp::sexp("(foo bar)").is_ok());
+        assert!(lisp::sexp("(foo \"bar\")").is_ok());
         assert!(lisp::sexp("(foo)").is_ok());
         assert!(lisp::sexp("()").is_ok());
         assert!(lisp::sexp("(").is_err());
         assert!(lisp::sexp("").is_err());
+        //assert_eq!(lisp::sexp("(foo \"bar\")"), Ok(vec!["foo", "\"bar\""]));
     }
 
     #[test]
@@ -65,6 +71,13 @@ mod tests {
         assert!(lisp::quote("`").is_ok());
         assert!(lisp::quote("").is_err());
         assert!(lisp::quote("/").is_err());
+        //assert_eq!(lisp::sexp("(foo \"bar\")"), Ok(vec!["foo", "\"bar\""]));
+    }
+
+    #[test]
+    fn quoted_sexp() {
+        assert!(lisp::quoted_sexp("'(foo)").is_ok());
+        //assert_eq!(lisp::quoted_sexp(",@(foo)"), Ok(vec![",@", vec!["foo"]]));
     }
 
     #[test]
