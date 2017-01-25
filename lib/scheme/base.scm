@@ -86,6 +86,7 @@
    string-length
    string-ref
    string->list
+   string->number
    string-append
    symbol?
    unless
@@ -546,6 +547,16 @@
       (if (empty? l)
         '()
         (cons (fn (car l)) (map fn (cdr l)))))
+
+    (define (string->number str)
+      (letrec* ((digits (map (lambda (c)
+                              (- (char->integer c) 48))
+                            (string->list str)))
+                (d->n (lambda (d n)
+                        (if (empty? d)
+                          n
+                          (d->n (cdr d) (+ (* n 10) (car d)))))))
+               (d->n digits 0)))
 
     (define (max . nums)
       (letrec ((get-max (lambda (nums biggest)

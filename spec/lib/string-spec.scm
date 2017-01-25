@@ -19,3 +19,7 @@
 (assert (equal? "" (string)))
 (assert (equal? "a" (string #\a)))
 (assert (equal? "foo" (string #\f #\o #\o)))
+
+(assert (equal? 123 (string->number "123")))
+(assert (equal? 0 (string->number "0")))
+;(assert (equal? -123 (string->number "-123")))
