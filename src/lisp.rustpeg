@@ -7,22 +7,22 @@ pub escape
 	= "\\" .
 
 pub string -> Box<Val>
-	= "\"" s:$(escape / [^"])* "\"" { Box::new(Str { value: s.to_string() }) }
+	= "\"" s:$(escape / [^"])* "\"" { Box::new(Val::Str { val: s.to_string() }) }
 
 pub atom -> Box<Val>
-	= n:$([^\(\) \t\n\[\]\{\}]+) { Box::new(Atom { name: n.to_string() }) }
+	= n:$([^\(\) \t\n\[\]\{\}]+) { Box::new(Val::Atom { name: n.to_string() }) }
 
-pub sexp -> Vec<Box<Val>>
+pub sexp -> Box<Val>
 	= quoted_sexp / simple_sexp
 
-pub simple_sexp -> Vec<Box<Val>>
-	= "(" whitespace* n:(expression ** whitespace) whitespace* ")" {n}
+pub simple_sexp -> Box<Val>
+	= "(" whitespace* s:(expression ** whitespace) whitespace* ")" { Box::new(Val::Arr { vals: s }) }
 
 pub quote -> Box<Val>
-	= n:$("'" / ",@" / "," / "`") { Box::new(Atom { name: n.to_string() }) }
+	= n:$("'" / ",@" / "," / "`") { Box::new(Val::Atom { name: n.to_string() }) }
 
-pub quoted_sexp -> Vec<Box<Val>>
-	= q:quote s:simple_sexp { vec![q, Box::new(Arr { values: s })] }
+pub quoted_sexp -> Box<Val>
+	= q:quote s:simple_sexp { Box::new(Val::Arr { vals: vec![q, s] }) }
 
 pub expression -> Box<Val>
 	= string / atom

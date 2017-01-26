@@ -4,7 +4,6 @@ extern crate ruru;
 use ruru::{Boolean, Class, Object, RString};
 
 mod values;
-use values::*;
 
 mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
@@ -33,7 +32,10 @@ mod tests {
         assert!(lisp::string("\"").is_err());
         assert!(lisp::string("").is_err());
         let str = lisp::string("\"foo\"").unwrap();
-        //assert_eq!((str as Box<Str>).value, "foo");
+        match *str {
+            Val::Str { val } => assert_eq!(val, "foo"),
+            _                => panic!("not a Str")
+        }
     }
 
     #[test]
@@ -50,7 +52,11 @@ mod tests {
         assert!(lisp::atom("*").is_ok());
         assert!(lisp::atom("[").is_err());
         assert!(lisp::atom("").is_err());
-        //assert_eq!(lisp::atom("foo"), Ok("foo"));
+        let str = lisp::atom("foo").unwrap();
+        match *str {
+            Val::Atom { name } => assert_eq!(name, "foo"),
+            _                  => panic!("not an Atom")
+        }
     }
 
     #[test]
@@ -60,7 +66,23 @@ mod tests {
         assert!(lisp::sexp("()").is_ok());
         assert!(lisp::sexp("(").is_err());
         assert!(lisp::sexp("").is_err());
-        //assert_eq!(lisp::sexp("(foo \"bar\")"), Ok(vec!["foo", "\"bar\""]));
+        let sexp = lisp::sexp("(foo \"bar\")").unwrap();
+        match *sexp {
+            Val::Arr { vals } => {
+                assert_eq!(2, vals.len());
+                let first = &vals[0];
+                match **first {
+                    Val::Atom { ref name } => assert_eq!("foo", name),
+                    _                      => panic!("not an Atom")
+                }
+                let second = &vals[1];
+                match **second {
+                    Val::Str { ref val } => assert_eq!("bar", val),
+                    _                    => panic!("not a Str")
+                }
+            }
+            _ => panic!("not a sexp")
+        }
     }
 
     #[test]
