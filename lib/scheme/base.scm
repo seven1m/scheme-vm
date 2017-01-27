@@ -544,9 +544,11 @@
       (= 1 (modulo n 2)))
 
     (define (map fn l)
-      (if (empty? l)
-        '()
-        (cons (fn (car l)) (map fn (cdr l)))))
+      (letrec ((m (lambda (l l2)
+                    (if (empty? l)
+                      l2
+                      (m (cdr l) (cons (fn (car l)) l2))))))
+        (reverse (m l '()))))
 
     (define (string->number str)
       (letrec* ((digits (map (lambda (c)
