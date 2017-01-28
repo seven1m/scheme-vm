@@ -93,13 +93,29 @@ mod tests {
         assert!(lisp::quote("`").is_ok());
         assert!(lisp::quote("").is_err());
         assert!(lisp::quote("/").is_err());
-        //assert_eq!(lisp::sexp("(foo \"bar\")"), Ok(vec!["foo", "\"bar\""]));
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn quoted_sexp() {
         assert!(lisp::quoted_sexp("'(foo)").is_ok());
-        //assert_eq!(lisp::quoted_sexp(",@(foo)"), Ok(vec![",@", vec!["foo"]]));
+        let sexp = lisp::quoted_sexp("'(foo \"bar\")").unwrap();
+        match *sexp {
+            Val::Arr { vals } => {
+                assert_eq!(2, vals.len());
+                let first = &vals[0];
+                match **first {
+                    Val::Atom { ref name } => assert_eq!("'", name),
+                    _                      => panic!("not an Atom")
+                }
+                let second = &vals[1];
+                match **second {
+                    Val::Arr { ref vals } => {},
+                    _                     => panic!("not an Arr")
+                }
+            }
+            _ => panic!("not a sexp")
+        }
     }
 
     #[test]
