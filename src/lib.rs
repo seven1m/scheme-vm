@@ -31,7 +31,7 @@ mod tests {
         assert!(lisp::string("\"quote\\\"in\\.the middle\"").is_ok());
         assert!(lisp::string("\"").is_err());
         assert!(lisp::string("").is_err());
-        let str = lisp::string("\"foo\"").unwrap();
+        let str = lisp::string("\"foo\"").unwrap().unwrap();
         match *str {
             Val::Str { val } => assert_eq!(val, "foo"),
             _                => panic!("not a Str")
@@ -52,7 +52,7 @@ mod tests {
         assert!(lisp::atom("*").is_ok());
         assert!(lisp::atom("[").is_err());
         assert!(lisp::atom("").is_err());
-        let str = lisp::atom("foo").unwrap();
+        let str = lisp::atom("foo").unwrap().unwrap();
         match *str {
             Val::Atom { name } => assert_eq!(name, "foo"),
             _                  => panic!("not an Atom")
@@ -61,12 +61,12 @@ mod tests {
 
     #[test]
     fn sexp() {
-        assert!(lisp::sexp("(foo \"bar\")").is_ok());
+        assert!(lisp::simple_sexp("(foo \"bar\")").is_ok());
         assert!(lisp::sexp("(foo)").is_ok());
         assert!(lisp::sexp("()").is_ok());
         assert!(lisp::sexp("(").is_err());
         assert!(lisp::sexp("").is_err());
-        let sexp = lisp::sexp("(foo \"bar\")").unwrap();
+        let sexp = lisp::sexp("(foo \"bar\")").unwrap().unwrap();
         match *sexp {
             Val::Arr { vals } => {
                 assert_eq!(2, vals.len());
@@ -98,6 +98,7 @@ mod tests {
     #[test]
     #[allow(unused_variables)]
     fn quoted_sexp() {
+        println!("{}", lisp::quoted_sexp("'(foo)").is_ok());
         assert!(lisp::quoted_sexp("'(foo)").is_ok());
         let sexp = lisp::quoted_sexp("'(foo \"bar\")").unwrap();
         match *sexp {

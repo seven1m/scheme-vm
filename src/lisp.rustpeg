@@ -6,17 +6,14 @@ pub whitespace
 pub escape
 	= "\\" .
 
-pub string -> Box<Val>
-	= "\"" s:$(escape / [^"])* "\"" { Box::new(Val::Str { val: s.to_string() }) }
+pub string -> Option<Box<Val>>
+	= "\"" s:$(escape / [^"])* "\"" { Some(Box::new(Val::Str { val: s.to_string() })) }
 
-pub atom -> Box<Val>
-	= n:$([^\(\) \t\n\[\]\{\}]+) { Box::new(Val::Atom { name: n.to_string() }) }
+pub atom -> Option<Box<Val>>
+	= n:$([^\(\) \t\n\[\]\{\}]+) { Some(Box::new(Val::Atom { name: n.to_string() })) }
 
-pub sexp -> Box<Val>
-	= quoted_sexp / simple_sexp
-
-pub simple_sexp -> Box<Val>
-	= "(" whitespace* s:(expression ** whitespace) whitespace* ")" { Box::new(Val::Arr { vals: s }) }
+pub sexp -> Option<Box<Val>>
+	= n:(quoted_sexp / simple_sexp) { Some(n) }
 
 pub quote -> Box<Val>
 	= n:$("'" / ",@" / "," / "`") { Box::new(Val::Atom { name: n.to_string() }) }
@@ -24,5 +21,20 @@ pub quote -> Box<Val>
 pub quoted_sexp -> Box<Val>
 	= q:quote s:simple_sexp { Box::new(Val::Arr { vals: vec![q, s] }) }
 
-pub expression -> Box<Val>
-	= string / atom
+pub simple_sexp -> Box<Val>
+	= "(" whitespace* s:(expression ** whitespace) whitespace* ")" { Box::new(Val::Arr { vals: s.into_iter().filter_map(|i| i).collect() }) }
+
+pub comment -> Option<Box<Val>>
+	= (block_comment / line_comment / datum_comment) { None }
+
+pub block_comment
+	= "#|" (!"|#" .)* "|#"
+
+pub line_comment
+	= ";" [^\n]*
+
+datum_comment
+	= "#;" " "? (atom / sexp)
+
+pub expression -> Option<Box<Val>>
+	= string / atom / sexp / comment
