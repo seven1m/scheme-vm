@@ -1,40 +1,46 @@
 use values::*;
 
-pub whitespace
+whitespace
 	= [ \t\n]+
 
-pub escape
+escape
 	= "\\" .
 
-pub string -> Option<Box<Val>>
+string -> Option<Box<Val>>
 	= "\"" s:$(escape / [^"])* "\"" { Some(Box::new(Val::Str { val: s.to_string() })) }
 
-pub atom -> Option<Box<Val>>
-	= n:$([^\(\) \t\n\[\]\{\}]+) { Some(Box::new(Val::Atom { name: n.to_string() })) }
+atom -> Option<Box<Val>>
+	= n:$([^\(\) \t\n\[\]\{\}"]+) { Some(Box::new(Val::Atom { name: n.to_string() })) }
 
-pub sexp -> Option<Box<Val>>
+sexp -> Option<Box<Val>>
 	= n:(quoted_sexp / simple_sexp) { Some(n) }
 
-pub quote -> Box<Val>
-	= n:$("'" / ",@" / "," / "`") { Box::new(Val::Atom { name: n.to_string() }) }
-
-pub quoted_sexp -> Box<Val>
-	= q:quote s:simple_sexp { Box::new(Val::Arr { vals: vec![q, s] }) }
-
-pub simple_sexp -> Box<Val>
-	= "(" whitespace* s:(expression ** whitespace) whitespace* ")" { Box::new(Val::Arr { vals: s.into_iter().filter_map(|i| i).collect() }) }
-
-pub comment -> Option<Box<Val>>
+comment -> Option<Box<Val>>
 	= (block_comment / line_comment / datum_comment) { None }
 
-pub block_comment
+expression -> Option<Box<Val>>
+	= string / comment / sexp / atom
+
+quote -> Box<Val>
+	= n:$("'" / ",@" / "," / "`") { Box::new(Val::Atom { name: n.to_string() }) }
+
+quoted_sexp -> Box<Val>
+	= q:quote s:simple_sexp { Box::new(Val::Arr { vals: vec![q, s] }) }
+
+simple_sexp -> Box<Val>
+	= "(" s:expressions ")" {s}
+
+block_comment
 	= "#|" (!"|#" .)* "|#"
 
-pub line_comment
+line_comment
 	= ";" [^\n]*
 
 datum_comment
 	= "#;" " "? (atom / sexp)
 
-pub expression -> Option<Box<Val>>
-	= string / atom / sexp / comment
+expressions -> Box<Val>
+	= whitespace* s:(expression ** whitespace) whitespace* { Box::new(Val::Arr { vals: s.into_iter().filter_map(|i| i).collect() }) }
+
+pub program -> Box<Val>
+	= expressions
