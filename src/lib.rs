@@ -21,6 +21,7 @@ methods!(
 #[cfg(test)]
 mod tests {
     use lisp;
+    use values::*;
 
     #[test]
     fn program() {
@@ -39,6 +40,10 @@ mod tests {
 				(foo (bar (baz \"this is a string\"))))
 		");
         assert!(program.is_ok());
+        match *program.unwrap() {
+            Val::Arr { vals } => assert_eq!(7, vals.len()),
+            _                 => panic!()
+        }
     }
 }
 
