@@ -1,7 +1,4 @@
-#[macro_use]
-extern crate ruru;
-
-use ruru::{Boolean, Class, Object, RString};
+extern crate libc;
 
 mod values;
 mod tests;
@@ -10,18 +7,20 @@ mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
 
-methods!(
-   RString,
-   itself,
-
-   fn string_test_rule() -> Boolean {
-       Boolean::new(lisp::program(&itself.to_string()).is_ok())
-   }
-);
-
 #[no_mangle]
-pub extern fn initialize_string() {
-    Class::from_existing("String").define(|itself| {
-        itself.def("test_rule", string_test_rule);
-    });
+pub extern "C" fn is_ok(program_ptr: *const libc::c_char) -> libc::int8_t {
+    let program = string_from_c_ptr(program_ptr);
+    if lisp::program(&program).is_ok() {
+        1
+    } else {
+        0
+    }
+}
+
+fn string_from_c_ptr(c_ptr: *const libc::c_char) -> String {
+    let c_str = unsafe {
+        assert!(!c_ptr.is_null());
+        std::ffi::CStr::from_ptr(c_ptr)
+    };
+    c_str.to_str().unwrap().to_string()
 }
