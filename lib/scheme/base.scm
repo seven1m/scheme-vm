@@ -557,8 +557,13 @@
                 (d->n (lambda (d n)
                         (if (empty? d)
                           n
-                          (d->n (cdr d) (+ (* n 10) (car d)))))))
-               (d->n digits 0)))
+                          (if (and (>= (car d) 0) (<= (car d) 9))
+                            (d->n (cdr d) (+ (* n 10) (car d)))
+                            (d->n (cdr d) n)))))
+                (result (d->n digits 0)))
+               (if (= (car digits) -3)
+                 (* result -1)
+                 result)))
 
     (define (max . nums)
       (letrec ((get-max (lambda (nums biggest)
