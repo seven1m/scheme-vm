@@ -1,8 +1,21 @@
-def run_suite
-  cmd = IO.popen('rspec --color --tty spec 2>&1')
+def run_tests(files, scm_file = nil)
+  if scm_file
+    puts scm_file
+    env = { 'SCM_FILE' => scm_file }
+  else
+    puts files
+    env = {}
+  end
+  cmd = IO.popen(env, "rspec --color --tty #{files} 2>&1")
   print cmd.getc until cmd.eof?
 end
 
-watch('.*') { run_suite }
+watch('^spec/.*_spec\.rb')  { |m| run_tests(m.to_s) }
+watch('^spec/.*-spec\.scm') { |m| run_tests('spec/lib_spec.rb', m.to_s) }
+watch('^lib')               { |m| run_tests('spec/lib_spec.rb') }
+watch('^vm.*')              { |m| run_tests('spec/vm_spec.rb spec/vm/*') }
+watch('^compiler.*')        { |m| run_tests('spec/compiler_spec.rb spec/compiler/*') }
+watch('^program.*')         { |m| run_tests('spec/program_spec.rb spec/program/*') }
+watch('^parser.*')          { |m| run_tests('spec/parser_spec.rb spec/parser/*') }
 
-Signal.trap('QUIT') { run_suite } # Ctrl-\
+Signal.trap('QUIT') { run_tests('spec') } # Ctrl-\
