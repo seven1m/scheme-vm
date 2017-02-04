@@ -58,6 +58,7 @@
    list
    list?
    list->string
+   make-list
    map
    max
    memq
@@ -582,5 +583,12 @@
                                   (get-min (cdr nums) (car nums))
                                   (get-min (cdr nums) smallest))))))
         (get-min (cdr nums) (car nums))))
+
+    (define (make-list count fill)
+      (letrec ((m-l (lambda (c l)
+                      (if (= c 0)
+                        l
+                        (m-l (- c 1) (cons fill l))))))
+        (m-l count '())))
 
   ))
