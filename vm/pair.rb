@@ -36,10 +36,12 @@ class VM
     end
 
     def car
+      return Unspecified.instance if address.nil?
       @heap[address]
     end
 
     def cdr
+      return Unspecified.instance if address.nil?
       @heap[next_node]
     end
 
@@ -54,7 +56,11 @@ class VM
     def to_ruby
       to_a.tap do |ary|
         ary.each_with_index do |address, index|
-          part = @heap[address]
+          part = if address.nil?
+                   Unspecified.instance
+                 else
+                   @heap[address]
+                 end
           ary[index] = part.to_ruby
         end
       end

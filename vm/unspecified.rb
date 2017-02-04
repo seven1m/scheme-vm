@@ -9,5 +9,9 @@ class VM
     def eq?(other)
       self == other
     end
+
+    def to_ruby
+      nil
+    end
   end
 end
