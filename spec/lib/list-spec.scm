@@ -20,3 +20,12 @@
 (assert (equal? (list 3 2 1) (reverse '(1 2 3))))
 
 (assert (equal? "foobarbaz" (list->string (list #\f #\o #\o #\b #\a #\r #\b #\a #\z))))
+
+(assert (equal?
+          (list "foo" "foo" "foo")
+          (make-list 3 "foo")))
+
+(define unspecified (if #f #f))
+(assert (equal?
+          (list unspecified unspecified unspecified)
+          (make-list 3)))
