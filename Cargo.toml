@@ -9,6 +9,7 @@ crate-type = ["dylib"]
 
 [dependencies]
 libc = "0.2.x"
+ruby-sys = "0.2.20"
 
 [build-dependencies]
 peg = { git = "https://github.com/kevinmehall/rust-peg", branch = "master" }

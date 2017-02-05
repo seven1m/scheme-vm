@@ -1,4 +1,5 @@
 extern crate libc;
+extern crate ruby_sys;
 
 mod values;
 mod tests;
@@ -8,10 +9,10 @@ mod lisp {
 }
 
 #[no_mangle]
-pub extern "C" fn is_ok(program_ptr: *const libc::c_char) -> libc::int8_t {
+pub extern "C" fn is_ok(program_ptr: *const libc::c_char) -> i64 {
     let program = string_from_c_ptr(program_ptr);
     if lisp::program(&program).is_ok() {
-        1
+        0x14
     } else {
         0
     }
