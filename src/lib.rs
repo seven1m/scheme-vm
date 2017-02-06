@@ -4,24 +4,24 @@ extern crate ruby_sys;
 mod values;
 mod tests;
 
+#[macro_use] mod rb;
+use rb::{CallbackPtr, Value, RB_TRUE, RB_FALSE};
+
 mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
 
-#[no_mangle]
-pub extern "C" fn is_ok(program_ptr: *const libc::c_char) -> i64 {
-    let program = string_from_c_ptr(program_ptr);
-    if lisp::program(&program).is_ok() {
-        0x14
+fn is_ok(_rself: Value, program: Value) -> Value {
+    let program_str = rbstr2str!(&program);
+    if lisp::program(&program_str).is_ok() {
+        RB_TRUE
     } else {
-        0
+        RB_FALSE
     }
 }
 
-fn string_from_c_ptr(c_ptr: *const libc::c_char) -> String {
-    let c_str = unsafe {
-        assert!(!c_ptr.is_null());
-        std::ffi::CStr::from_ptr(c_ptr)
-    };
-    c_str.to_str().unwrap().to_string()
+#[no_mangle]
+pub extern fn init_parser() {
+  let m_parser = rb::define_module("Parser");
+  rb::define_singleton_method(&m_parser, "ok?", is_ok as CallbackPtr, 1);
 }

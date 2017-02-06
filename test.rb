@@ -1,6 +1,7 @@
 require 'fiddle'
 
 library = Fiddle::dlopen('target/release/libscheme_vm.dylib')
-is_ok = Fiddle::Function.new(library['is_ok'], [Fiddle::TYPE_VOIDP], Fiddle::TYPE_VOIDP)
+init_parser = Fiddle::Function.new(library['init_parser'], [], Fiddle::TYPE_VOID)
+init_parser.call
 
-p is_ok.call(ARGV.first)
+p Parser.ok?(ARGV.first)
