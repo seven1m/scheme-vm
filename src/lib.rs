@@ -10,16 +10,19 @@ mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
 
-fn parse(_rself: Value, program: Value) -> Value {
-    let program_str = rbstr2str!(&program);
+fn parse(rself: Value) -> Value {
+    let program_str = rbstr2str!(&rb::ivar_get(&rself, "@code"));
     match lisp::program(&program_str) {
         Ok(ast) => ast,
         Err(err) => {
-            let expected = rb::vec2rbarr(
-                err.expected.iter().cloned().map(|e| rb::str_new(&e.to_string())).collect()
-            );
-            // TODO: pass expected and other error info back in ruby exception
-            rb::raise("foo".to_owned());
+            //let expected = rb::vec2rbarr(
+            //    err.expected.iter().cloned().map(|e| rb::str_new(&e.to_string())).collect()
+            //);
+            let c_parser = rb::const_get("Parser", &RB_NIL);
+            let c_parse_error = rb::const_get("ParseError", &c_parser);
+            let line = int2rbnum!(err.line);
+            let error = rb::class_new_instance(&c_parse_error, vec![line]);
+            rb::raise_instance(&error);
             RB_NIL
         }
     }
@@ -27,6 +30,6 @@ fn parse(_rself: Value, program: Value) -> Value {
 
 #[no_mangle]
 pub extern fn init_parser() {
-  let m_parser = rb::define_module("Parser");
-  rb::define_singleton_method(&m_parser, "parse", parse as CallbackPtr, 1);
+    let c_parser = rb::const_get("Parser", &RB_NIL);
+    rb::define_method(&c_parser, "parse", parse as CallbackPtr, 0);
 }

@@ -1,7 +1,7 @@
 // borrowed from https://github.com/ubcsanskrit/sanscript.rb (MIT)
 
 use ruby_sys::{class, array, string};
-use ruby_sys::types::{c_char, c_long};
+use ruby_sys::types::{c_char, c_int, c_long};
 use ruby_sys::util::{rb_const_get};
 use ruby_sys::vm::{rb_raise};
 use ruby_sys::value::RubySpecialConsts::{Nil, True, False};
@@ -50,25 +50,69 @@ macro_rules! str2sym {
     }
 }
 
+macro_rules! int2rbnum {
+    ($s:expr) => {
+        unsafe { ::ruby_sys::fixnum::rb_int2inum($s as isize) }
+    }
+}
+
+#[allow(dead_code)]
 pub fn define_module(name: &str) -> Value {
     unsafe { class::rb_define_module(str2cstrp!(name)) }
 }
 
-//pub fn define_module_under(parent: &Value, name: &str) -> Value {
-    //unsafe { class::rb_define_module_under(*parent, str2cstrp!(name)) }
-//}
+#[allow(dead_code)]
+pub fn define_class(name: &str, superclass: &Value) -> Value {
+    let parent = if *superclass == RB_NIL {
+        unsafe { rb_cObject }
+    } else {
+        *superclass
+    };
+    unsafe { class::rb_define_class(str2cstrp!(name), parent) }
+}
 
-//pub fn define_method(module: &Value, name: &str, method: CallbackPtr, argc: i32) {
-    //unsafe { class::rb_define_method(*module, str2cstrp!(name), method, argc) }
-//}
+#[allow(dead_code)]
+pub fn define_class_under(outer: &Value, name: &str, superclass: &Value) -> Value {
+    let parent = if *superclass == RB_NIL {
+        unsafe { rb_cObject }
+    } else {
+        *superclass
+    };
+    unsafe { class::rb_define_class_under(*outer, str2cstrp!(name), parent) }
+}
 
+pub fn class_new_instance(klass: &Value, args: Vec<Value>) -> Value {
+    let argc = args.len() as c_int;
+    unsafe { class::rb_class_new_instance(argc, args.as_ptr(), *klass) }
+}
+
+#[allow(dead_code)]
+pub fn ivar_set(object: &Value, name: &str, value: &Value) -> Value {
+    unsafe { class::rb_ivar_set(*object, str2rbid!(name), *value) }
+}
+
+pub fn ivar_get(object: &Value, name: &str) -> Value {
+    unsafe { class::rb_ivar_get(*object, str2rbid!(name)) }
+}
+
+#[allow(dead_code)]
+pub fn define_module_under(parent: &Value, name: &str) -> Value {
+    unsafe { class::rb_define_module_under(*parent, str2cstrp!(name)) }
+}
+
+pub fn define_method(module: &Value, name: &str, method: CallbackPtr, argc: i32) {
+    unsafe { class::rb_define_method(*module, str2cstrp!(name), method, argc) }
+}
+
+#[allow(dead_code)]
 pub fn define_singleton_method(module: &Value, name: &str, method: CallbackPtr, argc: i32) {
     unsafe { class::rb_define_singleton_method(*module, str2cstrp!(name), method, argc) }
 }
 
-//pub fn extend_object(object: &Value, module: &Value) {
-  //unsafe { class::rb_extend_object(*object, *module) }
-//}
+#[allow(dead_code)]
+pub fn extend_object(object: &Value, module: &Value) {
+  unsafe { class::rb_extend_object(*object, *module) }
+}
 
 pub fn ary_new() -> Value {
     unsafe { array::rb_ary_new() }
@@ -92,9 +136,24 @@ pub fn vec2rbarr(vec: Vec<Value>) -> Value {
     arr
 }
 
-pub fn raise(err: String) {
-    unsafe {
-        let exception = rb_const_get(rb_cObject, str2rbid!("RuntimeError"));
-        rb_raise(exception, str2cstrp!(err));
-    }
+pub fn const_get(name: &str, class: &Value) -> Value {
+    let parent = if *class == RB_NIL {
+        unsafe { rb_cObject }
+    } else {
+        *class
+    };
+  unsafe { rb_const_get(parent, str2rbid!(name)) }
+}
+
+extern "C" {
+    pub fn rb_exc_raise(object: Value);
+}
+
+#[allow(dead_code)]
+pub fn raise(exception: &Value, message: &str) {
+    unsafe { rb_raise(*exception, str2cstrp!(message)) };
+}
+
+pub fn raise_instance(object: &Value) {
+    unsafe { rb_exc_raise(*object) };
 }
