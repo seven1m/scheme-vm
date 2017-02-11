@@ -1,6 +1,7 @@
 use rb;
 use rb::Value;
 use atom::atom;
+use quotes::QUOTES;
 
 whitespace
 	= [ \t\n]+
@@ -9,10 +10,19 @@ escape
 	= "\\" .
 
 string -> Option<Value>
-	= "\"" s:$(escape / [^"])* "\"" { Some(rb::str_new(&s.to_string())) }
+	= s:$("\"" (escape / [^"])* "\"") { Some(rb::str_new(&s.to_string())) }
+
+delimited_identifier -> &'input str
+	= "|" i:$([^|]+) "|" {i}
+
+simple_atom -> Value
+	= a:(delimited_identifier / $([^\(\) \t\n\[\]\{\}\|"]+)) { atom(&a) }
+
+quoted_atom -> Value
+	= q:quote a:simple_atom { rb::vec2rbarr(vec![q, a]) }
 
 atom -> Option<Value>
-	= n:$([^\(\) \t\n\[\]\{\}"]+) { Some(atom(&n)) }
+	= a:(quoted_atom / simple_atom) { Some(a) }
 
 sexp -> Option<Value>
 	= n:(quoted_sexp / simple_sexp) { Some(n) }
@@ -24,7 +34,7 @@ expression -> Option<Value>
 	= string / comment / sexp / atom
 
 quote -> Value
-	= n:$("'" / ",@" / "," / "`") { rb::str_new(&n.to_string()) }
+	= q:$("'" / ",@" / "," / "`") { rb::str_new(&QUOTES.get(&q).unwrap().to_string()) }
 
 quoted_sexp -> Value
 	= q:quote s:simple_sexp { rb::vec2rbarr(vec![q, s]) }

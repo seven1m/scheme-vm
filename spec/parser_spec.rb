@@ -1,9 +1,9 @@
 require_relative './spec_helper'
 
-describe Parser do
+fdescribe Parser do
   describe '#parse' do
-    before do
-      @result = subject.parse(<<-END)
+    subject do
+      described_class.new(<<-END)
         ; comment
         'foo
         '(1 2)
@@ -20,14 +20,14 @@ describe Parser do
     end
 
     it 'parses s-expressions' do
-      expect(@result).to eq([
+      expect(subject.parse).to eq([
         ['quote', 'foo'],
         ['quote', ['1', '2']],
-        ['list'],
+        ['quote', []],
         ['unquote', 'foo'],
-        ['unquote', ['foo', 'bar']], nil, nil,
+        ['unquote', ['foo', 'bar']],
         ['print', 'space in identifier'],
-        ['if', ['<', '1', '2'], nil,
+        ['if', ['<', '1', '2'],
                'x',
                ['foo', ['bar', ['baz', '"this is a string"']]]]
       ])
