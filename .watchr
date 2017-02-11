@@ -16,6 +16,6 @@ watch('^lib')               { |m| run_tests('spec/lib_spec.rb') }
 watch('^vm.*')              { |m| run_tests('spec/vm_spec.rb spec/vm/*') }
 watch('^compiler.*')        { |m| run_tests('spec/compiler_spec.rb spec/compiler/*') }
 watch('^program.*')         { |m| run_tests('spec/program_spec.rb spec/program/*') }
-watch('^parser.*')          { |m| run_tests('spec/parser_spec.rb spec/parser/*') }
+watch('^parser.*')          { |m| run_tests('spec/parser_spec.rb') }
 
 Signal.trap('QUIT') { run_tests('spec') } # Ctrl-\
