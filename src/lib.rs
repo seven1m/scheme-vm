@@ -4,6 +4,7 @@ extern crate ruby_sys;
 #[macro_use] mod rb;
 use rb::{CallbackPtr, Value, RB_NIL};
 
+mod atom;
 mod tests;
 
 mod lisp {

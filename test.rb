@@ -1,6 +1,6 @@
 require 'fiddle'
 require 'benchmark'
-require_relative './parser'
+require_relative './vm'
 
 class Parser
   class ParseError < StandardError

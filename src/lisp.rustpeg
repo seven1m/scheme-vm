@@ -1,5 +1,6 @@
 use rb;
 use rb::Value;
+use atom::atom;
 
 whitespace
 	= [ \t\n]+
@@ -11,7 +12,7 @@ string -> Option<Value>
 	= "\"" s:$(escape / [^"])* "\"" { Some(rb::str_new(&s.to_string())) }
 
 atom -> Option<Value>
-	= n:$([^\(\) \t\n\[\]\{\}"]+) { Some(rb::str_new(&n.to_string())) }
+	= n:$([^\(\) \t\n\[\]\{\}"]+) { Some(atom(&n)) }
 
 sexp -> Option<Value>
 	= n:(quoted_sexp / simple_sexp) { Some(n) }
