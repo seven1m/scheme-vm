@@ -26,7 +26,7 @@ macro_rules! str2cstr {
 }
 
 macro_rules! str2cstrp {
-    ($s:expr) => { str2cstr!($s).as_ptr() }
+    ($s:expr) => { str2cstr!($s).into_raw() }
 }
 
 macro_rules! rbstr2cstrp {
@@ -118,8 +118,8 @@ pub fn ary_new() -> Value {
     unsafe { array::rb_ary_new() }
 }
 
-pub fn ary_push(array: &Value, item: &Value) -> Value {
-    unsafe { array::rb_ary_push(*array, *item) }
+pub fn ary_push(array: Value, item: Value) -> Value {
+    unsafe { array::rb_ary_push(array, item) }
 }
 
 pub fn str_new(string: &String) -> Value {
@@ -131,7 +131,7 @@ pub fn str_new(string: &String) -> Value {
 pub fn vec2rbarr(vec: Vec<Value>) -> Value {
     let mut arr = ary_new();
     for item in vec {
-        arr = ary_push(&arr, &item);
+        arr = ary_push(arr, item);
     }
     arr
 }
