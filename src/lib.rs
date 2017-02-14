@@ -13,7 +13,7 @@ mod lisp {
     include!(concat!(env!("OUT_DIR"), "/lisp.rs"));
 }
 
-fn parse(rself: Value) -> Value {
+fn parse_native(rself: Value) -> Value {
     let program_str = rbstr2str!(&rb::ivar_get(&rself, "@code"));
     match lisp::program(&program_str) {
         Ok(ast) => ast,
@@ -36,5 +36,5 @@ fn parse(rself: Value) -> Value {
 #[no_mangle]
 pub extern fn init_parser() {
     let c_parser = rb::const_get("Parser", &RB_NIL);
-    rb::define_method(&c_parser, "parse", parse as CallbackPtr, 0);
+    rb::define_method(&c_parser, "parse_native", parse_native as CallbackPtr, 0);
 }

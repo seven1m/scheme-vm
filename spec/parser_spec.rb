@@ -1,6 +1,6 @@
 require_relative './spec_helper'
 
-fdescribe Parser do
+describe Parser do
   describe '#parse' do
     subject do
       described_class.new(<<-END)
