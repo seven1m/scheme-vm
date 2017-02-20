@@ -17,10 +17,6 @@ pub const RB_TRUE: Value = Value { value: True as usize };
 #[allow(dead_code)]
 pub const RB_FALSE: Value = Value { value: False as usize };
 
-//
-// Helper functions/macros for dealing with Ruby and CStrings
-//
-
 macro_rules! str2cstr {
     ($s:expr) => { ::std::ffi::CString::new($s).unwrap() }
 }
@@ -39,7 +35,6 @@ macro_rules! rbstr2str {
     }
 }
 
-#[macro_export]
 macro_rules! str2rbid {
     ($s:expr) => { ::ruby_sys::util::rb_intern(str2cstrp!($s)) }
 }
@@ -111,7 +106,7 @@ pub fn define_singleton_method(module: &Value, name: &str, method: CallbackPtr, 
 
 #[allow(dead_code)]
 pub fn extend_object(object: &Value, module: &Value) {
-  unsafe { class::rb_extend_object(*object, *module) }
+    unsafe { class::rb_extend_object(*object, *module) }
 }
 
 pub fn ary_new() -> Value {
@@ -142,7 +137,7 @@ pub fn const_get(name: &str, class: &Value) -> Value {
     } else {
         *class
     };
-  unsafe { rb_const_get(parent, str2rbid!(name)) }
+    unsafe { rb_const_get(parent, str2rbid!(name)) }
 }
 
 extern "C" {
