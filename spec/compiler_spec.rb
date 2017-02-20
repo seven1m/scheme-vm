@@ -362,6 +362,23 @@ describe Compiler do
         end
       end
 
+      context 'given an empty list' do
+        before do
+          @result = subject.compile(<<-END)
+            (quote ())
+          END
+        end
+
+        it 'compiles into vm instructions' do
+          expect(d(@result)).to eq([
+            'VM::PUSH_NUM', 0,
+            'VM::PUSH_LIST',
+            'VM::POP',
+            'VM::HALT'
+          ])
+        end
+      end
+
       context 'given an atom' do
         before do
           @result = subject.compile(<<-END)
