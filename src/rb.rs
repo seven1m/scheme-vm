@@ -1,5 +1,6 @@
 // borrowed from https://github.com/ubcsanskrit/sanscript.rb (MIT)
 
+use std::mem;
 use ruby_sys::{class, array, string};
 use ruby_sys::types::{c_char, c_int, c_long};
 use ruby_sys::util::{rb_const_get};
@@ -78,7 +79,9 @@ pub fn define_class_under(outer: &Value, name: &str, superclass: &Value) -> Valu
 
 pub fn class_new_instance(klass: &Value, args: Vec<Value>) -> Value {
     let argc = args.len() as c_int;
-    unsafe { class::rb_class_new_instance(argc, args.as_ptr(), *klass) }
+    let instance = unsafe { class::rb_class_new_instance(argc, args.as_ptr(), *klass) };
+    mem::forget(args);
+    instance
 }
 
 #[allow(dead_code)]
@@ -97,11 +100,13 @@ pub fn define_module_under(parent: &Value, name: &str) -> Value {
 
 pub fn define_method(module: &Value, name: &str, method: CallbackPtr, argc: i32) {
     unsafe { class::rb_define_method(*module, str2cstrp!(name), method, argc) }
+    mem::forget(method);
 }
 
 #[allow(dead_code)]
 pub fn define_singleton_method(module: &Value, name: &str, method: CallbackPtr, argc: i32) {
     unsafe { class::rb_define_singleton_method(*module, str2cstrp!(name), method, argc) }
+    mem::forget(method);
 }
 
 #[allow(dead_code)]
@@ -114,19 +119,25 @@ pub fn ary_new() -> Value {
 }
 
 pub fn ary_push(array: Value, item: Value) -> Value {
-    unsafe { array::rb_ary_push(array, item) }
+    let new_array = unsafe { array::rb_ary_push(array, item) };
+    mem::forget(array);
+    mem::forget(item);
+    new_array
 }
 
 pub fn str_new(string: &String) -> Value {
     let str = string.as_ptr() as *const c_char;
     let len = string.len() as c_long;
-    unsafe { string::rb_str_new(str, len) }
+    let rb_str = unsafe { string::rb_str_new(str, len) };
+    mem::forget(string);
+    rb_str
 }
 
 pub fn vec2rbarr(vec: Vec<Value>) -> Value {
     let mut arr = ary_new();
     for item in vec {
         arr = ary_push(arr, item);
+        mem::forget(item);
     }
     arr
 }

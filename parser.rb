@@ -22,7 +22,8 @@ class Parser
   def parse
     # FIXME: there is a use-after-free error somewhere in my Rust code.
     # I'm deep duping the AST until I can learn how to valgrind. :-)
-    deep_dup(parse_native)
+    #deep_dup(parse_native)
+    parse_native
   end
 
   private
