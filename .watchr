@@ -1,4 +1,8 @@
 def run_tests(files, scm_file = nil)
+  if (ft = focused_tests).any?
+    puts "Running focused test(s)..."
+    files = ft.join(' ')
+  end
   if scm_file
     puts scm_file
     env = { 'SCM_FILE' => scm_file }
@@ -11,8 +15,15 @@ def run_tests(files, scm_file = nil)
 end
 
 def compile
+  puts
+  puts '========================================='
+  puts
   cmd = IO.popen('cargo build --release')
   print cmd.getc until cmd.eof?
+end
+
+def focused_tests
+  Dir['spec/**/*_spec.rb'].to_a.select { |f| File.read(f).match(/focus|focus:|fdescribe|fcontext|fit ['"]/) rescue nil }
 end
 
 watch('^spec/.*_spec\.rb')  { |m| run_tests(m.to_s) }
