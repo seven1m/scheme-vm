@@ -15,9 +15,14 @@ mod lisp {
 
 fn parse_native(rself: Value) -> Value {
     let program_str = rbstr2str!(&rb::ivar_get(&rself, "@code"));
+    rb::gc_disable();
     match lisp::program(&program_str) {
-        Ok(ast) => ast,
+        Ok(ast) => {
+            rb::gc_enable();
+            ast
+        },
         Err(err) => {
+            rb::gc_enable();
             //let expected = rb::vec2rbarr(
                 //err.expected.iter().cloned().map(|e| rb::str_new(&e.to_string())).collect()
             //);

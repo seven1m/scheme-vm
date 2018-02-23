@@ -20,20 +20,7 @@ class Parser
   end
 
   def parse
-    # FIXME: there is a use-after-free error somewhere in my Rust code.
-    # I'm deep duping the AST until I can learn how to valgrind. :-)
-    #deep_dup(parse_native)
     parse_native
-  end
-
-  private
-
-  def deep_dup(ary)
-    if ary.respond_to?(:map)
-      ary.map { |i| deep_dup(i) }
-    else
-      ary.dup
-    end
   end
 end
 
