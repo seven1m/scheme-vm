@@ -32,5 +32,12 @@ describe Parser do
                ['foo', ['bar', ['baz', '"this is a string"']]]]
       ])
     end
+
+    it 'parses touching parens' do
+      expect(described_class.new('(foo)(bar)').parse).to eq([
+        ['foo'],
+        ['bar']
+      ])
+    end
   end
 end

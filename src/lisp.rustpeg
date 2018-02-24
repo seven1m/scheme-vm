@@ -6,7 +6,7 @@ use atom::atom;
 use quotes::QUOTES;
 
 whitespace
-	= [ \t\n]+
+	= [ \t\n]*
 
 escape
 	= "\\" .
@@ -54,7 +54,7 @@ datum_comment
 	= "#;" " "? (atom / sexp)
 
 expressions -> Value
-  = whitespace* s:(expression ** whitespace) whitespace* { rb::vec2rbarr(s.into_iter().filter_map(|i| i).collect()) }
+  = whitespace s:(expression ** whitespace) whitespace { rb::vec2rbarr(s.into_iter().filter_map(|i| i).collect()) }
 
 pub program -> Value
 	= expressions
