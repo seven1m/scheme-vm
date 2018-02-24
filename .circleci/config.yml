@@ -1,0 +1,32 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: timmorgan/rust-ruby-circleci
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: project-cache
+      #- run:
+      #    name: Check formatting
+      #    command: |
+      #      rustfmt --version
+      #      cargo fmt -- --write-mode=diff
+      - run:
+          name: Build Rust Source
+          command: |
+            rustc --version --verbose
+            cargo --version --verbose
+            cargo build
+      - run:
+          name: Run Rspec
+          command: |
+            bundle install
+            rspec
+      - save_cache:
+          key: project-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
