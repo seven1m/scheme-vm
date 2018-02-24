@@ -22,13 +22,9 @@ class VM
       to_s
     end
 
-    def copy_and_rename(name)
+    def mangle(version)
+      name = "##{self}.v#{version}"
       self.class.new(name, filename, offset, line, column)
-    end
-
-    def sub(*_args)
-      new_name = super
-      copy_and_rename(new_name)
     end
   end
 end

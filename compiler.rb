@@ -46,7 +46,7 @@ class Compiler
   def mangle_identifier(name)
     @mangled_identifiers[name] ||= 0
     version = @mangled_identifiers[name] += 1
-    name.sub(/.+/, "##{name}.v#{version}")
+    name.mangle(version)
   end
 
   def built_in_function?(name)
