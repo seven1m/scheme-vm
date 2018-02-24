@@ -1,3 +1,5 @@
+#![arguments(filename: &str)]
+
 use rb;
 use rb::Value;
 use atom::atom;
@@ -16,7 +18,7 @@ delimited_identifier -> &'input str
 	= "|" i:$([^|]+) "|" {i}
 
 simple_atom -> Value
-	= a:(delimited_identifier / $([^\(\) \t\n\[\]\{\}\|"]+)) { atom(&a) }
+	= p:#position a:(delimited_identifier / $([^\(\) \t\n\[\]\{\}\|"]+)) { atom(&a, &filename, p, __input) }
 
 quoted_atom -> Value
 	= q:quote a:simple_atom { rb::vec2rbarr(vec![q, a]) }

@@ -46,7 +46,7 @@ class Program
   end
 
   def error_details_to_s(e)
-    return '' unless e.filename && @compiler.source[e.filename]
+    return '' unless e.filename && e.filename != '' && @compiler.source[e.filename]
     lines_range = (e.line - 2)..(e.line - 1)
     code = @compiler.source[e.filename].split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
     line = "#{e.filename}##{e.line}"

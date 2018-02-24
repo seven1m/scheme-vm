@@ -215,7 +215,7 @@ describe Program do
 
     context 'exception in macro in another file' do
       let(:code) do
-        '(include "./fixtures/bad-macro")' \
+        '(include "./fixtures/bad-macro") ' \
         '(bad-macro)'
       end
 

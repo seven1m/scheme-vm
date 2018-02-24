@@ -15,8 +15,9 @@ mod lisp {
 
 fn parse_native(rself: Value) -> Value {
     let program_str = rbstr2str!(&rb::ivar_get(&rself, "@code"));
+    let filename = rbstr2str!(&rb::ivar_get(&rself, "@filename"));
     rb::gc_disable();
-    match lisp::program(&program_str) {
+    match lisp::program(&program_str, &filename) {
         Ok(ast) => {
             rb::gc_enable();
             ast
@@ -26,8 +27,11 @@ fn parse_native(rself: Value) -> Value {
             //let expected = rb::vec2rbarr(
                 //err.expected.iter().cloned().map(|e| rb::str_new(&e.to_string())).collect()
             //);
+            println!("{}", err.line);
             println!("{}", err.column);
             println!("{:?}", err.expected);
+            println!("{:?}", &program_str);
+            println!("{:?}", &program_str[err.column..]);
             let c_parser = rb::const_get("Parser", &RB_NIL);
             let c_parse_error = rb::const_get("ParseError", &c_parser);
             let line = int2rbnum!(err.line);

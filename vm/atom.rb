@@ -2,11 +2,12 @@ require 'parslet'
 
 class VM
   class Atom < String
-    attr_reader :filename, :line, :column
+    attr_reader :filename, :offset, :line, :column
 
-    def initialize(name, filename: nil, line: nil, column: nil)
+    def initialize(name, filename = nil, offset = nil, line = nil, column = nil)
       super(name.to_s)
       @filename = filename
+      @offset = offset
       @line = line
       @column = column
     end
@@ -22,7 +23,7 @@ class VM
     end
 
     def copy_and_rename(name)
-      self.class.new(name, filename: filename, line: line, column: column)
+      self.class.new(name, filename, offset, line, column)
     end
 
     def sub(*_args)

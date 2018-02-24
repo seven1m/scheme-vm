@@ -16,7 +16,7 @@ class Parser
 
   def initialize(code = nil, filename: nil)
     @code = code
-    @filename = filename
+    @filename = filename || ''
   end
 
   def parse
