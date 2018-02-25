@@ -12,6 +12,7 @@ Requirements:
 
 * Rust 1.24.0 or better
 * Ruby 2.4.0 or better
+  * Compiled with `--enable-shared` (`CONFIGURE_OPTS=--enable-shared rbenv install 2.4.0`)
   * Bundler gem (`gem install bundler`)
 
 ```
