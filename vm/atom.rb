@@ -1,5 +1,3 @@
-require 'parslet'
-
 class VM
   class Atom < String
     attr_reader :filename, :offset, :line, :column
