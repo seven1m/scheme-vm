@@ -1,5 +1,6 @@
 require 'fiddle'
 require_relative 'vm/atom'
+require 'pathname'
 
 class Parser
   class ParseError < StandardError
@@ -31,7 +32,8 @@ LIB_PATHS = %w[
   target/debug/libscheme_vm.dylib
 ]
 
-library_path = LIB_PATHS.detect { |path| File.exist?(path) }
+root = Pathname.new(File.expand_path('../', __FILE__))
+library_path = LIB_PATHS.detect { |path| root.join(path).exist? }
 library = Fiddle::dlopen(library_path)
 init_parser = Fiddle::Function.new(library['init_parser'], [], Fiddle::TYPE_VOID)
 init_parser.call
