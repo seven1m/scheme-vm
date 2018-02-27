@@ -120,7 +120,7 @@ pub fn ary_push(array: Value, item: Value) -> Value {
     new_array
 }
 
-pub fn str_new(string: &String) -> Value {
+pub fn str_new(string: &str) -> Value {
     let str = string.as_ptr() as *const c_char;
     let len = string.len() as c_long;
     unsafe { string::rb_str_new(str, len) }
