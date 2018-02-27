@@ -16,7 +16,7 @@ Requirements:
   * Bundler gem (`gem install bundler`)
 
 ```
-cargo build
+RUBY=$(rbenv which ruby) cargo build
 bundle install
 ```
 
