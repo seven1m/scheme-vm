@@ -18,7 +18,7 @@ def compile
   puts
   puts '========================================='
   puts
-  cmd = IO.popen('cargo build --release')
+  cmd = IO.popen('cargo build')
   print cmd.getc until cmd.eof?
 end
 
