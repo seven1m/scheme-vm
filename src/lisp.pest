@@ -1,0 +1,37 @@
+whitespace = _{ "\t" | "\n" | " " }
+
+escape = _{ "\\" ~ any }
+
+string = ${ "\"" ~ ((!("\"" | "\\") ~ any) | escape)* ~ "\"" }
+
+delimited_identifier_inner = ${ (!"|" ~ any)+ }
+
+delimited_identifier = _{ "|" ~ delimited_identifier_inner ~ "|" }
+
+simple_atom = ${ (!("(" | ")" | " " | "\t" | "\n" | "[" | "]" | "{" | "}" | "|") ~ any)+ }
+
+quoted_atom = ${ quote ~ simple_atom }
+
+atom = _{ quoted_atom | delimited_identifier | simple_atom }
+
+sexp = _{ quoted_sexp | simple_sexp }
+
+comment = { block_comment | line_comment | datum_comment }
+
+expression = _{ string | comment | sexp | atom }
+
+quote = !{ "'" | ",@" | "," | "`" }
+
+quoted_sexp = ${ quote ~ simple_sexp }
+
+simple_sexp = ${ "(" ~ whitespace* ~ expressions* ~ whitespace* ~ ")" }
+
+block_comment = @{ "#|" ~ (!"|#" ~ any)* ~ "|#" }
+
+line_comment = @{ ";" ~ (!"\n" ~ any)* }
+
+datum_comment = @{ "#;" ~ " "? ~ (sexp | atom) }
+
+expressions = _{ expression ~ (whitespace* ~ expression)* }
+
+program = { soi ~ whitespace* ~ expressions ~ whitespace* ~ eoi }
