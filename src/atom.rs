@@ -4,7 +4,10 @@ use rb::{Value, RB_NIL};
 pub fn atom(name: &str, filename: &str, offset: usize, newlines: &Vec<usize>) -> Value {
     let lines_before: Vec<usize> = newlines.iter().take_while(|i| *i < &offset).map(|i| *i).collect();
     let line = int2rbnum!(lines_before.len() + 1);
-    let column = int2rbnum!(offset - lines_before.last().unwrap_or(&0));
+    let column = match lines_before.last() {
+        Some(i) => int2rbnum!(offset - i),
+        None => int2rbnum!(offset + 1)
+    };
     let name = rb::str_new(&name.to_string());
     let filename = rb::str_new(&filename.to_string());
     let vm = rb::const_get("VM", &RB_NIL);

@@ -213,6 +213,23 @@ describe Program do
       end
     end
 
+    context 'when an undefined variable is referenced on line 1 with weird spacing' do
+      let(:code) do
+        ' ( foo)'
+      end
+
+      it 'shows the cursor at the proper position' do
+        subject.run
+        stdout.rewind
+        expect(stdout.read).to eq(
+          "Error: foo is not defined\n\n" \
+            "#{__FILE__}#1\n\n" \
+            "   ( foo)\n" \
+            "     ^ foo is not defined\n"
+        )
+      end
+    end
+
     context 'exception in macro in another file' do
       let(:code) do
         '(include "./fixtures/bad-macro") ' \
