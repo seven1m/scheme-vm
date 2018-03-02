@@ -8,15 +8,16 @@ _a work-in-progress R7RS scheme implementation in Ruby & Rust for my own amuseme
 
 ## Build
 
-Requirements:
+_requires Ruby and Rust 1.24.0 or better_
 
-* Rust 1.24.0 or better
-* Ruby 2.4.0 or better
-  * Compiled with `--enable-shared` (`CONFIGURE_OPTS=--enable-shared rbenv install 2.4.0`)
-  * Bundler gem (`gem install bundler`)
+Assuming you have [rbenv](https://github.com/rbenv/rbenv):
 
 ```
+git clone https://github.com/seven1m/scheme-vm
+cd scheme-vm
+CONFIGURE_OPTS=--enable-shared rbenv install
 RUBY=$(rbenv which ruby) cargo build
+gem install bundler
 bundle install
 ```
 
