@@ -12,7 +12,9 @@ class Program
     @args = args
     @stdout = stdout
     @code = code
+    start_parse = Time.now
     @compiler = Compiler.new(code, filename: filename)
+    @total_parse = Time.now - start_parse
   rescue Parser::ParseError => e
     print_syntax_error(e)
     @error_parsing = true
@@ -22,14 +24,13 @@ class Program
     return EXIT_CODE_SYNTAX_ERROR if @error_parsing
     start_compile = Time.now
     @instr = @compiler.compile(code)
-    total_compile = Time.now - start_compile
+    @total_compile = Time.now - start_compile
     VM::PrettyPrinter.new(@instr, grouped: true, ip: true).print if debug >= 1
     vm.debug = debug
     start_execute = Time.now
     vm.execute(@instr)
-    total_execute = Time.now - start_execute
-    puts "compile: #{total_compile}" if false # TEMP
-    puts "execute: #{total_execute}" if false
+    @total_execute = Time.now - start_execute
+    print_timings if ENV['PRINT_TIMINGS']
     vm.return_value
   rescue VM::VariableUndefined => e
     print_variable_undefined_error(e)
@@ -86,5 +87,11 @@ class Program
   def print_syntax_error(e)
     message = 'Syntax Error:' + error_details_to_s(e, @code)
     @stdout.puts(message)
+  end
+
+  def print_timings
+    puts "parse:   #{@total_parse}"
+    puts "compile: #{@total_compile}"
+    puts "execute: #{@total_execute}"
   end
 end
