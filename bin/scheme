@@ -6,7 +6,7 @@ require_relative '../program'
 options = { debug: 0 }
 opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: scheme [options] path [arguments]\n" \
-                '       scheme [options] -e "(print (+ 2 2))" [arguments]'
+                "       scheme [options] -e '(import (scheme write)) (write \"hello world\")' [arguments]"
 
   opts.on('-e SCRIPT', 'Execute script passed as argument') do |script|
     options[:script] = script
