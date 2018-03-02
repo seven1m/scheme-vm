@@ -2,6 +2,7 @@
 name = "scheme-vm"
 version = "0.1.0"
 authors = ["Tim Morgan <tim@timmorgan.org>"]
+build = "build.rs"
 
 [lib]
 crate-type = ["dylib"]
@@ -10,5 +11,6 @@ crate-type = ["dylib"]
 libc = "0.2.37"
 ruby-sys = "0.3.0"
 lazy_static = "1.0.0"
-pest = "^1.0"
-pest_derive = "^1.0"
+
+[build-dependencies]
+peg = { git = "https://github.com/kevinmehall/rust-peg", branch = "master" }

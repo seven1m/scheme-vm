@@ -2,10 +2,9 @@ class VM
   class Atom < String
     attr_reader :filename, :offset, :line, :column
 
-    def initialize(name, filename = nil, offset = nil, line = nil, column = nil)
+    def initialize(name, filename = nil, line = nil, column = nil)
       super(name.to_s)
       @filename = filename
-      @offset = offset
       @line = line
       @column = column
     end
@@ -22,7 +21,7 @@ class VM
 
     def mangle(version)
       name = "##{self}.v#{version}"
-      self.class.new(name, filename, offset, line, column)
+      self.class.new(name, filename, line, column)
     end
   end
 end
