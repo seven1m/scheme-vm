@@ -15,7 +15,8 @@ mod lisp {
 
 fn parse_native(rself: Value) -> Value {
     let code = rbstr2str!(&rb::ivar_get(&rself, "@code"));
-    let filename = rbstr2str!(&rb::ivar_get(&rself, "@filename"));
+    let filename_rbstr = rb::ivar_get(&rself, "@filename");
+    let filename = rbstr2str!(&filename_rbstr);
     let newlines: Vec<usize> = code.match_indices("\n").map(|(i, _s)| i).collect();
     rb::gc_disable();
     match lisp::program(&code, &filename, &newlines) {
@@ -24,23 +25,24 @@ fn parse_native(rself: Value) -> Value {
             ast
         },
         Err(err) => {
-            rb::gc_enable();
-            //let expected = rb::vec2rbarr(
-                //err.expected.iter().cloned().map(|e| rb::str_new(&e.to_string())).collect()
-            //);
-            println!("{}", err.line);
-            println!("{}", err.column);
-            println!("{:?}", err.expected);
-            println!("{:?}", &code);
-            println!("{:?}", &code[err.column..]);
-            let c_parser = rb::const_get("Parser", &RB_NIL);
-            let c_parse_error = rb::const_get("ParseError", &c_parser);
-            let line = int2rbnum!(err.line);
-            let error = rb::class_new_instance(&c_parse_error, vec![line]);
-            rb::raise_instance(&error);
+            raise_syntax_error(err, filename_rbstr);
             RB_NIL
         }
     }
+}
+
+fn raise_syntax_error(err: lisp::ParseError, filename_rbstr: Value) {
+    let c_parser = rb::const_get("Parser", &RB_NIL);
+    let c_parse_error = rb::const_get("ParseError", &c_parser);
+    let line = int2rbnum!(err.line);
+    let column = int2rbnum!(err.column);
+    let mut expected = rb::ary_new();
+    for token in err.expected {
+        expected = rb::ary_push(expected, rb::str_new(token));
+    }
+    let error = rb::class_new_instance(&c_parse_error, vec![filename_rbstr, line, column, expected]);
+    rb::gc_enable();
+    rb::raise_instance(&error);
 }
 
 #[no_mangle]

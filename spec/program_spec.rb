@@ -231,5 +231,30 @@ describe Program do
         )
       end
     end
+
+    context 'when a syntax error occurs' do
+      let(:code) do
+        "(foo)\n" \
+        "\n" \
+        '      (()'
+      end
+
+      it 'sets the exit code to 3' do
+        expect(subject.run).to eq(3)
+      end
+
+      it 'shows the filename, line and column of the error' do
+        subject.run
+        stdout.rewind
+        expected = ["\"", "#;", "#|", "'", "(", ")", ",", ",@", ";", "[ \t\n]", "[^() \t\n[]{}|\"]", "`", "|"]
+        expect(stdout.read).to eq(
+          "Syntax Error:\n\n" \
+            "#{__FILE__}#3\n\n" \
+            "  \n" \
+            "        (()\n" \
+            "           ^ expected one of: #{expected.inspect}\n"
+        )
+      end
+    end
   end
 end

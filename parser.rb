@@ -4,14 +4,17 @@ require 'pathname'
 
 class Parser
   class ParseError < StandardError
-    attr_reader :line
+    attr_reader :filename, :line, :column, :expected
 
-    def initialize(line)
+    def initialize(filename, line, column, expected)
+      @filename = filename
       @line = line
+      @column = column
+      @expected = expected
     end
 
     def message
-      "error parsing at line #{line}"
+      "expected one of: #{expected.sort.inspect}"
     end
   end
 

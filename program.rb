@@ -1,26 +1,42 @@
 require_relative 'parser'
 require_relative 'compiler'
+require 'time'
 
 class Program
+  EXIT_CODE_VAR_UNDEFINED  = 1
+  EXIT_CODE_STACK_TOO_DEEP = 2
+  EXIT_CODE_SYNTAX_ERROR   = 3
+
   def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
     @filename = filename
     @args = args
     @stdout = stdout
+    @code = code
     @compiler = Compiler.new(code, filename: filename)
+  rescue Parser::ParseError => e
+    print_syntax_error(e)
+    @error_parsing = true
   end
 
   def run(code: nil, debug: 0)
+    return EXIT_CODE_SYNTAX_ERROR if @error_parsing
+    start_compile = Time.now
     @instr = @compiler.compile(code)
+    total_compile = Time.now - start_compile
     VM::PrettyPrinter.new(@instr, grouped: true, ip: true).print if debug >= 1
     vm.debug = debug
+    start_execute = Time.now
     vm.execute(@instr)
+    total_execute = Time.now - start_execute
+    puts "compile: #{total_compile}" if false # TEMP
+    puts "execute: #{total_execute}" if false
     vm.return_value
   rescue VM::VariableUndefined => e
     print_variable_undefined_error(e)
-    1
+    EXIT_CODE_VAR_UNDEFINED
   rescue VM::CallStackTooDeep => e
     print_call_stack_too_deep_error(e)
-    2
+    EXIT_CODE_STACK_TOO_DEEP
   end
 
   def filename=(f)
@@ -45,10 +61,11 @@ class Program
     @stdout.puts(message)
   end
 
-  def error_details_to_s(e)
-    return '' unless e.filename && e.filename != '' && @compiler.source[e.filename]
+  def error_details_to_s(e, code = nil)
+    return '' unless e.filename && e.filename != ''
+    return '' unless (code ||= @compiler.source[e.filename])
     lines_range = (e.line - 2)..(e.line - 1)
-    code = @compiler.source[e.filename].split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
+    code = code.split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
     line = "#{e.filename}##{e.line}"
     pointer = " #{' ' * e.column}^ #{e.message}"
     "\n\n#{line}\n\n#{code}\n#{pointer}"
@@ -64,5 +81,10 @@ class Program
       @stdout.puts "  #{code}"
       @stdout.puts " #{' ' * name.column}^"
     end
+  end
+
+  def print_syntax_error(e)
+    message = 'Syntax Error:' + error_details_to_s(e, @code)
+    @stdout.puts(message)
   end
 end
