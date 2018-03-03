@@ -1177,7 +1177,7 @@ describe VM do
               n))
           (fn 2)
         END
-        instr = c.compile(keep_last: true)
+        instr = c.compile
         subject.execute(instr)
       end
 
@@ -1205,7 +1205,7 @@ describe VM do
               (fn (- n 1))))
           (fn 2)
         END
-        instr = c.compile(keep_last: true)
+        instr = c.compile
         subject.execute(instr)
       end
 
@@ -1235,7 +1235,7 @@ describe VM do
               #f))
           (fn 2)
         END
-        instr = c.compile(keep_last: true)
+        instr = c.compile
         subject.execute(instr)
       end
 
@@ -1263,7 +1263,7 @@ describe VM do
               n))
           (fn 2)
         END
-        instr = c.compile(keep_last: true)
+        instr = c.compile
         subject.execute(instr)
       end
 
