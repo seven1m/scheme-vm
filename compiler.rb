@@ -35,12 +35,12 @@ class Compiler
   attr_reader :variables, :arguments, :syntax, :source, :libs
   attr_accessor :filename
 
-  def compile(code = nil, halt: true)
+  def compile(code = nil)
     if code
       @source[@filename] = code
       @sexps = Parser.new(code, filename: filename).parse
     end
-    compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }, halt: halt)
+    compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }) + [VM::HALT]
   end
 
   def mangle_identifier(name)
@@ -60,14 +60,14 @@ class Compiler
 
   private
 
-  def compile_sexps(sexps, options:, halt: false)
-    instructions = sexps
-                   .each_with_index
-                   .map { |s, i| compile_sexp(s, options) }
-                   .flatten
-                   .compact
-    instructions << VM::HALT if halt
-    optimize(instructions)
+  def compile_sexps(sexps, options:)
+    optimize(
+      sexps
+        .each_with_index
+        .map { |s, i| compile_sexp(s, options) }
+        .flatten
+        .compact
+    )
   end
 
   def optimize(instructions)
