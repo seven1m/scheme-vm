@@ -63,8 +63,7 @@ class Compiler
   def compile_sexps(sexps, options:)
     optimize(
       sexps
-        .each_with_index
-        .map { |s, i| compile_sexp(s, options) }
+        .map { |s| compile_sexp(s, options) }
         .flatten
         .compact
     )
