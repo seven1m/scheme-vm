@@ -4,7 +4,7 @@ class Compiler
       module Base
         def base_append(args, options)
           [
-            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+            args.map { |arg| compile_sexp_use(arg, options) },
             VM::PUSH_NUM, args.size,
             VM::APPEND,
             pop_maybe(options)
@@ -14,10 +14,10 @@ class Compiler
         def base_apply((lambda, *args), options)
           raise 'apply expects at least 2 arguments' if args.empty?
           [
-            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+            args.map { |arg| compile_sexp_use(arg, options) },
             VM::PUSH_NUM, args.size,
             VM::SET_ARGS,
-            compile_sexp(lambda, options.merge(use: true)),
+            compile_sexp_use(lambda, options),
             VM::APPLY
           ]
         end
@@ -33,7 +33,7 @@ class Compiler
           else
             options[:locals][name] = true
             [
-              compile_sexp(body.first, options.merge(use: true)),
+              compile_sexp_use(body.first, options),
               VM::DEFINE_VAR, name
             ]
           end
@@ -51,14 +51,14 @@ class Compiler
 
         def base_call_cc((fn), options)
           [
-            compile_sexp(fn, options.merge(use: true)),
+            compile_sexp_use(fn, options),
             VM::CALL_WITH_CC
           ]
         end
 
         def base_car((arg, *_rest), options)
           [
-            compile_sexp(arg, options.merge(use: true)),
+            compile_sexp_use(arg, options),
             VM::CAR,
             pop_maybe(options)
           ]
@@ -67,7 +67,7 @@ class Compiler
         def base_cons(args, options)
           raise 'cons expects exactly 2 arguments' if args.size != 2
           [
-            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+            args.map { |arg| compile_sexp_use(arg, options) },
             VM::CONS,
             pop_maybe(options)
           ]
@@ -75,18 +75,18 @@ class Compiler
 
         def base_cdr((arg, *_rest), options)
           [
-            compile_sexp(arg, options.merge(use: true)),
+            compile_sexp_use(arg, options),
             VM::CDR,
             pop_maybe(options)
           ]
         end
 
         def base_if((condition, true_body, false_body), options)
-          true_instr  = compile_sexp(true_body, options.merge(use: true)).flatten.compact
-          false_instr = compile_sexp(false_body, options.merge(use: true)).flatten.compact
+          true_instr  = compile_sexp_use(true_body, options).flatten.compact
+          false_instr = compile_sexp_use(false_body, options).flatten.compact
           false_instr = [VM::PUSH_UNDEF] if false_instr.empty?
           [
-            compile_sexp(condition, options.merge(use: true)),
+            compile_sexp_use(condition, options),
             VM::JUMP_IF_FALSE, true_instr.size + 3,
             true_instr,
             VM::JUMP, false_instr.size + 1,
@@ -134,10 +134,8 @@ class Compiler
         end
 
         def compile_lambda_body(body, locals, options)
-          body_opts = options.merge(use: true, locals: locals, syntax: options[:syntax].dup)
-          body.each_with_index.map do |sexp, index|
-            compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
-          end
+          body_opts = options.merge(locals: locals, syntax: options[:syntax].dup)
+          compile_sexps_use_last(body, options: body_opts)
         end
 
         def base_let_syntax((bindings, *body), options)
@@ -163,14 +161,12 @@ class Compiler
               transformer: transformer
             }
           end
-          body.each_with_index.map do |sexp, index|
-            compile_sexp(sexp, body_opts.merge(use: index == body.size - 1))
-          end
+          compile_sexps_use_last(body, options: body_opts)
         end
 
         def base_list(args, options)
           members = args.flat_map do |arg|
-            expr = compile_sexp(arg, options.merge(use: true))
+            expr = compile_sexp_use(arg, options)
             if expr.first == 'splice'
               expr.last
             else
@@ -187,7 +183,7 @@ class Compiler
 
         def base_list_to_string((list, *_rest), options)
           [
-            compile_sexp(list, options.merge(use: true)),
+            compile_sexp_use(list, options),
             VM::TO_STR,
             pop_maybe(options)
           ]
@@ -195,7 +191,7 @@ class Compiler
 
         def base_null?((arg, *_rest), options)
           [
-            compile_sexp(arg, options.merge(use: true)),
+            compile_sexp_use(arg, options),
             VM::CMP_NULL,
             pop_maybe(options)
           ]
@@ -219,15 +215,15 @@ class Compiler
 
         def base_set_car!((pair, new_car), options)
           [
-            compile_sexp(pair, options.merge(use: true)),
-            compile_sexp(new_car, options.merge(use: true)),
+            compile_sexp_use(pair, options),
+            compile_sexp_use(new_car, options),
             VM::SET_CAR
           ]
         end
 
         def base_set!((name, val), options)
           [
-            compile_sexp(val, options.merge(use: true)),
+            compile_sexp_use(val, options),
             VM::SET_VAR,
             name
           ]
@@ -235,15 +231,15 @@ class Compiler
 
         def base_set_cdr!((pair, new_cdr), options)
           [
-            compile_sexp(pair, options.merge(use: true)),
-            compile_sexp(new_cdr, options.merge(use: true)),
+            compile_sexp_use(pair, options),
+            compile_sexp_use(new_cdr, options),
             VM::SET_CDR
           ]
         end
 
         def base_string(chars, options)
           [
-            chars.map { |char| compile_sexp(char, options.merge(use: true)) },
+            chars.map { |char| compile_sexp_use(char, options) },
             VM::PUSH_NUM, chars.size,
             VM::PUSH_LIST,
             VM::TO_STR,
@@ -253,7 +249,7 @@ class Compiler
 
         def base_string_length((string, *_rest), options)
           [
-            compile_sexp(string, options.merge(use: true)),
+            compile_sexp_use(string, options),
             VM::STR_LEN,
             pop_maybe(options)
           ]
@@ -261,8 +257,8 @@ class Compiler
 
         def base_string_ref((string, index), options)
           [
-            compile_sexp(string, options.merge(use: true)),
-            compile_sexp(index, options.merge(use: true)),
+            compile_sexp_use(string, options),
+            compile_sexp_use(index, options),
             VM::STR_REF,
             pop_maybe(options)
           ]
@@ -270,14 +266,14 @@ class Compiler
 
         def base_char_to_integer((char), options)
           [
-            compile_sexp(char, options.merge(use: true)),
+            compile_sexp_use(char, options),
             VM::RAW
           ]
         end
 
         def base_integer_to_char((int), options)
           [
-            compile_sexp(int, options.merge(use: true)),
+            compile_sexp_use(int, options),
             VM::TO_CHAR
           ]
         end
@@ -291,7 +287,7 @@ class Compiler
         }.each do |name, type|
           define_method "base_#{name}" do |(arg, *_rest), options|
             [
-              compile_sexp(arg, options.merge(use: true)),
+              compile_sexp_use(arg, options),
               VM::TYPE,
               VM::PUSH_NUM, VM::TYPES.index(type),
               VM::CMP_EQ,
@@ -318,7 +314,7 @@ class Compiler
         end
 
         def arith(instruction, args, options)
-          args = args.map { |arg| compile_sexp(arg, options.merge(use: true)) }
+          args = args.map { |arg| compile_sexp_use(arg, options) }
           first_two = args.shift(2)
           rest = args.zip([instruction] * args.size)
           [
@@ -343,7 +339,7 @@ class Compiler
         def compare(instruction, args, options)
           raise "wrong number of arguments (expected 2, got #{args.size})" if args.size != 2
           [
-            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+            args.map { |arg| compile_sexp_use(arg, options) },
             instruction,
             pop_maybe(options)
           ]

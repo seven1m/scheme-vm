@@ -69,6 +69,12 @@ class Compiler
     )
   end
 
+  def compile_sexps_use_last(sexps, options:)
+    return [] if sexps.empty?
+    sexps[0..-2].map { |s| compile_sexp_discard(s, options) } +
+      [compile_sexp_use(sexps.last, options)]
+  end
+
   def optimize(instructions)
     Optimizer.new(instructions).optimize
   end
@@ -78,6 +84,14 @@ class Compiler
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
     return [] if sexp.empty? && !options[:quote]
     dispatch(sexp, options)
+  end
+
+  def compile_sexp_use(sexp, options = { locals: {} })
+    compile_sexp(sexp, options.merge(use: true))
+  end
+
+  def compile_sexp_discard(sexp, options = { locals: {} })
+    compile_sexp(sexp, options.merge(use: false))
   end
 
   def dispatch(sexp, options)
@@ -121,7 +135,7 @@ class Compiler
     end
   end
 
-  def compile_literal(literal, options = { use: false, locals: {} })
+  def compile_literal(literal, options = { locals: {} })
     case literal.to_s.strip
     when /\A-?[0-9]+\z/
       compile_number(literal, options)
@@ -221,9 +235,9 @@ class Compiler
   end
 
   def call((lambda, *args), options)
-    function = compile_sexp(lambda, options.merge(use: true))
+    function = compile_sexp_use(lambda, options)
     [
-      args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+      args.map { |arg| compile_sexp_use(arg, options) },
       args.any? ? [VM::PUSH_NUM, args.size, VM::SET_ARGS] : nil,
       function,
       VM::CALL
@@ -232,8 +246,8 @@ class Compiler
 
   def compile_pair((car, _, cdr), options)
     [
-      compile_sexp(car, options.merge(use: true)),
-      compile_sexp(cdr, options.merge(use: true)),
+      compile_sexp_use(car, options),
+      compile_sexp_use(cdr, options),
       VM::CONS,
       pop_maybe(options)
     ]

@@ -106,8 +106,7 @@ class Compiler
       }
       imports = []
       begins = []
-      # TODO: probably shouldn't dup locals either
-      lib_opts = options.merge(use: true, locals: options[:locals].dup, syntax: exports[:syntax], lib: name_as_string)
+      lib_opts = options.merge(syntax: exports[:syntax], lib: name_as_string)
       declarations.each do |(type, *args)|
         case type
         when 'export'
@@ -121,7 +120,7 @@ class Compiler
       [
         VM::SET_LIB, name_as_string,
         imports,
-        begins.map { |s| compile_sexp(s, lib_opts) },
+        begins.map { |s| compile_sexp_discard(s, lib_opts) },
         VM::ENDL
       ]
     end

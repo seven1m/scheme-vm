@@ -4,7 +4,7 @@ class Compiler
       module ProcessContext
         def process_exit((arg, *_rest), options)
           [
-            arg && compile_sexp(arg, options.merge(use: true)),
+            arg && compile_sexp_use(arg, options),
             VM::HALT
           ]
         end

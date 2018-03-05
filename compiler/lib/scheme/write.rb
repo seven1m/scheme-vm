@@ -4,7 +4,7 @@ class Compiler
       module Write
         def write(args, options)
           [
-            args.map { |arg| compile_sexp(arg, options.merge(use: true)) },
+            args.map { |arg| compile_sexp_use(arg, options) },
             VM::INT, VM::INT_WRITE
           ]
         end
