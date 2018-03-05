@@ -76,7 +76,6 @@ class Compiler
   def compile_sexp(sexp, options = { use: false, locals: {} })
     sexp = sexp.to_ruby if sexp.is_a?(VM::Pair)
     return compile_literal(sexp, options) unless sexp.is_a?(Array)
-    sexp.compact! # datum comments #;(...) come in as nil due to our parser :-(
     return [] if sexp.empty? && !options[:quote]
     dispatch(sexp, options)
   end
