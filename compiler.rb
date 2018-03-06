@@ -178,8 +178,15 @@ class Compiler
 
   def compile_character(name, options)
     code = {
-      'space'   => ' ',
-      'newline' => "\n"
+      'space'     => ' ',
+      'newline'   => "\n",
+      'alarm'     => "\a",
+      'backspace' => "\b",
+      'delete'    => "\x7F",
+      'escape'    => "\x1B",
+      'null'      => "\x00",
+      'return'    => "\r",
+      'tab'       => "\t"
     }.fetch(name, name[0]).ord
     [
       VM::PUSH_NUM, code,

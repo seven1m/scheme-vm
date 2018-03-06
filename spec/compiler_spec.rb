@@ -105,20 +105,28 @@ describe Compiler do
           #\\c
           #\\space
           #\\newline
+          #\\alarm
+          #\\backspace
+          #\\delete
+          #\\escape
+          #\\null
+          #\\return
+          #\\tab
         END
       end
 
       it 'compiles into vm instructions' do
         expect(d(@result)).to eq([
-          'VM::PUSH_NUM', 99,
-          'VM::TO_CHAR',
-          'VM::POP',
-          'VM::PUSH_NUM', 32,
-          'VM::TO_CHAR',
-          'VM::POP',
-          'VM::PUSH_NUM', 10,
-          'VM::TO_CHAR',
-          'VM::POP',
+          'VM::PUSH_NUM', 99,  'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 32,  'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 10,  'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 7,   'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 8,   'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 127, 'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 27,  'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 0,   'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 13,  'VM::TO_CHAR', 'VM::POP',
+          'VM::PUSH_NUM', 9,   'VM::TO_CHAR', 'VM::POP',
           'VM::HALT'
         ])
       end
