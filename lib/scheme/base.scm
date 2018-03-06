@@ -473,11 +473,17 @@
                 #f))
           #f))
 
-    (define (string=? a b)
-      (and
-        (string? a)
-        (string? b)
-        (list=? (string->list a) (string->list b))))
+    (define (string=? . strings)
+      (if (< (length strings) 2)
+        #t
+        (let ((s1 (car strings))
+              (s2 (cadr strings)))
+          (if (and
+                (string? s1)
+                (string? s2)
+                (list=? (string->list s1) (string->list s2)))
+            (apply string=? (cdr strings))
+            #f))))
 
     (define (pair=? a b) ; don't export this
       (if (equal? (car a) (car b))

@@ -13,8 +13,11 @@
 (assert (equal? '(#\f #\o #\o #\b #\a #\r #\b #\a #\z) (string->list "foobarbaz")))
 
 (assert (string=? "foo" "foo"))
+(assert (string=? "foo" "foo" "foo"))
+(assert (not (string=? "foo" "foo" "baz")))
 (assert (not (string=? "foo" "bar")))
 (assert (not (string=? "foo" 1)))
+(assert (not (string=? 1 1)))
 
 (assert (equal? "" (string)))
 (assert (equal? "a" (string #\a)))
