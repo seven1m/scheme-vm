@@ -128,9 +128,18 @@ class VM
     end
 
     def do_to_str
-      list = pop_val
-      chars = list.to_ruby.map(&:to_s)
-      push_val(ByteArray.new(chars.join))
+      value = pop_val
+      case value
+      when Pair
+        chars = value.to_ruby.map(&:to_s)
+        push_val(ByteArray.new(chars.join))
+      when EmptyList
+        push_val(ByteArray.new(''))
+      when Atom
+        push_val(ByteArray.new(value.to_ruby))
+      else
+        raise "unknown value type: #{value.inspect}"
+      end
     end
 
     def do_call(new_ip = pop)

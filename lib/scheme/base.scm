@@ -90,6 +90,8 @@
    string->number
    string-append
    symbol?
+   symbol=?
+   symbol->string
    unless
    when
    write-string
@@ -136,6 +138,7 @@
     (--define-native string-length base_string_length)
     (--define-native string-ref base_string_ref)
     (--define-native symbol? base_symbol?)
+    (--define-native symbol->string base_symbol_to_string)
 
     (define-syntax begin
       (syntax-rules ()
@@ -521,6 +524,18 @@
        ((and (string? a)  (string? b))  (string=? a b))
        ((and (symbol? a)  (symbol? b))  (eq? a b))
        (else #f)))
+
+    (define (symbol=? . symbols)
+      (if (< (length symbols) 2)
+        #t
+        (let ((s1 (car symbols))
+              (s2 (cadr symbols)))
+          (if (and
+                (symbol? s1)
+                (symbol? s2)
+                (eq? s1 s2))
+            (apply symbol=? (cdr symbols))
+            #f))))
 
     (define-syntax when
       (syntax-rules ()

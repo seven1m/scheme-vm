@@ -189,6 +189,14 @@ class Compiler
           ]
         end
 
+        def base_symbol_to_string((symbol, *_rest), options)
+          [
+            compile_sexp_use(symbol, options),
+            VM::TO_STR,
+            pop_maybe(options)
+          ]
+        end
+
         def base_null?((arg, *_rest), options)
           [
             compile_sexp_use(arg, options),
