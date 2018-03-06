@@ -299,10 +299,6 @@ class Compiler
               VM::TYPE,
               VM::PUSH_NUM, VM::TYPES.index(type),
               VM::CMP_EQ,
-              VM::JUMP_IF_FALSE, 4,
-              VM::PUSH_TRUE,
-              VM::JUMP, 2,
-              VM::PUSH_FALSE,
               pop_maybe(options)
             ]
           end
