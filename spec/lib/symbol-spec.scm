@@ -8,6 +8,9 @@
 (assert (equal? (symbol->string 'a) "a"))
 (assert (not (equal? (symbol->string 'b) "a")))
 
+(assert (equal? 'a (string->symbol "a")))
+(assert (not (equal? 'a (string->symbol "b"))))
+
 (assert (symbol=?))
 (assert (symbol=? 'a))
 (assert (symbol=? 'a 'a 'a))

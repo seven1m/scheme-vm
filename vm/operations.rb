@@ -24,6 +24,11 @@ class VM
       do_call(new_ip)
     end
 
+    def do_to_atom
+      name = pop_val
+      push_val(Atom.new(name))
+    end
+
     def do_to_char
       code = pop_raw
       push_val(Char.new(code))

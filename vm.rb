@@ -74,6 +74,7 @@ class VM
     ['STR_LEN',       0],
     ['STR_REF',       0],
     ['SUB',           0],
+    ['TO_ATOM',       0],
     ['TO_CHAR',       0],
     ['TO_STR',        0],
     ['TYPE',          0]

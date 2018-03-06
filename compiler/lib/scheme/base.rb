@@ -189,6 +189,14 @@ class Compiler
           ]
         end
 
+        def base_string_to_symbol((string, *_rest), options)
+          [
+            compile_sexp_use(string, options),
+            VM::TO_ATOM,
+            pop_maybe(options)
+          ]
+        end
+
         def base_symbol_to_string((symbol, *_rest), options)
           [
             compile_sexp_use(symbol, options),

@@ -88,6 +88,7 @@
    string-ref
    string->list
    string->number
+   string->symbol
    string-append
    symbol?
    symbol=?
@@ -137,6 +138,7 @@
     (--define-native string? base_string?)
     (--define-native string-length base_string_length)
     (--define-native string-ref base_string_ref)
+    (--define-native string->symbol base_string_to_symbol)
     (--define-native symbol? base_symbol?)
     (--define-native symbol->string base_symbol_to_string)
 
