@@ -469,14 +469,13 @@
 
     (define equal? '()) ; temporary
 
-    (define (list=? a b) ; don't export this
-      (if (= (length a) (length b))
-          (if (empty? a)
-              #t
-              (if (equal? (car a) (car b))
-                (list=? (cdr a) (cdr b))
-                #f))
-          #f))
+    (define (list=? list1 list2) ; don't export this
+      (letrec ((l=? (lambda (l1 l2)
+                      (or (empty? l1)
+                          (and (equal? (car l1) (car l2))
+                               (l=? (cdr l1) (cdr l2)))))))
+        (and (= (length list1) (length list2))
+             (l=? list1 list2))))
 
     (define (string=? . strings)
       (if (< (length strings) 2)
