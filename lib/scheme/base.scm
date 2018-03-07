@@ -30,6 +30,11 @@
    char<=?
    char>?
    char>=?
+   char-ci=?
+   char-ci<?
+   char-ci<=?
+   char-ci>?
+   char-ci>=?
    char->integer
    char-downcase
    char-upcase
@@ -514,6 +519,23 @@
 
     (define (char>=? a b)
       (or (char>? a b) (char=? a b)))
+
+    (define map '()) ; temporary
+
+    (define (char-ci=? . chars)
+      (apply char=? (map char-downcase chars)))
+
+    (define (char-ci<? . chars)
+      (apply char<? (map char-downcase chars)))
+
+    (define (char-ci<=? . chars)
+      (apply char<=? (map char-downcase chars)))
+
+    (define (char-ci>? . chars)
+      (apply char>? (map char-downcase chars)))
+
+    (define (char-ci>=? . chars)
+      (apply char>=? (map char-downcase chars)))
 
     (define (equal? a b)
       (cond
