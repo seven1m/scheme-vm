@@ -149,7 +149,7 @@ class VM
 
     def do_call(new_ip = pop)
       raise VM::FatalError.new(@call_stack, "tried to call undefined value: #{@last_atom}") if new_ip.nil?
-      raise "ip #{new_ip.inspect} is invalid" unless new_ip.is_a?(Integer)
+      raise VM::FatalError.new(@call_stack, "#{new_ip.inspect} doesn't look like an address") unless new_ip.is_a?(Integer)
       return do_call_continuation(new_ip) if heap[new_ip].is_a?(Continuation)
       name = @last_atom if find_address_for_name(@last_atom) == new_ip
       if @heap[@ip] == RETURN
@@ -157,7 +157,7 @@ class VM
         @call_stack.last[:args] = @call_args
         @call_stack.last[:name] = name
       else
-        @call_stack << { name: name, func: new_ip, return: @ip, args: @call_args, named_args: {} }
+        @call_stack << { name: name, orig_name: name, func: new_ip, return: @ip, args: @call_args, named_args: {} }
       end
       raise CallStackTooDeep.new(@call_stack) if @call_stack.size > MAX_CALL_DEPTH
       @ip = new_ip

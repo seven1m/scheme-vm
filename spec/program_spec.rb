@@ -230,6 +230,30 @@ describe Program do
       end
     end
 
+    context 'when something other than a lambda is called' do
+      let(:code) do
+        "; undefined variable\n" \
+        "(import (scheme base))\n" \
+        "(define (foo) (1))\n" \
+        '(foo)'
+      end
+
+      it 'sets the exit code to 1' do
+        expect(subject.run).to eq(4)
+      end
+
+      it 'shows the filename, line and column of the error' do
+        subject.run
+        stdout.rewind
+        expect(stdout.read).to eq(
+          "Error: 1 is not callable\n" \
+            "#{__FILE__}#4\n" \
+            "  (foo)\n" \
+            "   ^ 1 is not callable\n"
+        )
+      end
+    end
+
     context 'exception in macro in another file' do
       let(:code) do
         '(include "./fixtures/bad-macro") ' \

@@ -142,7 +142,7 @@ class VM
   end
 
   def fetch
-    raise "heap[#{@ip}] (#{resolve(@ip)}) is not executable" unless executable?(@ip)
+    raise VM::FatalError.new(@call_stack, "#{resolve(@ip)} is not callable") unless executable?(@ip)
     instruction = @heap[@ip]
     @ip += 1
     instruction

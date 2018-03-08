@@ -76,13 +76,13 @@ class Program
     "\n\n#{line}\n\n#{code}\n#{pointer}"
   end
 
-  def print_call_stack(call_stack)
+  def print_call_stack(call_stack, message = nil)
     call_stack.reverse.each do |frame|
-      next unless (name = frame[:name])
+      next unless (name = frame[:name] || frame[:orig_name])
       @stdout.puts "#{name.filename}##{name.line}"
       code = @compiler.source[name.filename].split("\n")[name.line - 1]
       @stdout.puts "  #{code}"
-      @stdout.puts " #{' ' * name.column}^"
+      @stdout.puts " #{' ' * name.column}^#{' ' + message if message}"
     end
   end
 
@@ -98,9 +98,9 @@ class Program
   end
 
   def print_fatal_error(e)
-    message = "Fatal Error: #{e.message}"
+    message = "Error: #{e.message}"
     @stdout.puts(message)
-    print_call_stack(e.call_stack)
+    print_call_stack(e.call_stack, e.message)
   end
 
   def print_timings

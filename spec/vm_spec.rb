@@ -119,7 +119,7 @@ describe VM do
         expect(continuation.ip).to eq(10)
         expect(continuation.call_stack).to eq([
           { args: [], named_args: {} },
-          { name: nil, func: 7, return: 13, args: [], named_args: {} }
+          { name: nil, orig_name: nil, func: 7, return: 13, args: [], named_args: {} }
         ])
       end
     end
