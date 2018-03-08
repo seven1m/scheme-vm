@@ -39,4 +39,13 @@ class VM
       'call stack too deep'
     end
   end
+
+  class FatalError < StandardError
+    attr_reader :call_stack, :message
+
+    def initialize(call_stack, message = 'fatal error')
+      @call_stack = call_stack
+      @message = message
+    end
+  end
 end

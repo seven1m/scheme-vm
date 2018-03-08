@@ -6,6 +6,7 @@ class Program
   EXIT_CODE_VAR_UNDEFINED  = 1
   EXIT_CODE_STACK_TOO_DEEP = 2
   EXIT_CODE_SYNTAX_ERROR   = 3
+  EXIT_CODE_FATAL_ERROR    = 4
 
   def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
     @filename = filename
@@ -38,6 +39,9 @@ class Program
   rescue VM::CallStackTooDeep => e
     print_call_stack_too_deep_error(e)
     EXIT_CODE_STACK_TOO_DEEP
+  rescue VM::FatalError => e
+    print_fatal_error(e)
+    EXIT_CODE_FATAL_ERROR
   end
 
   def filename=(f)
@@ -72,10 +76,8 @@ class Program
     "\n\n#{line}\n\n#{code}\n#{pointer}"
   end
 
-  def print_call_stack_too_deep_error(e)
-    message = "Error: #{e.message}"
-    @stdout.puts(message)
-    e.call_stack.reverse.each do |frame|
+  def print_call_stack(call_stack)
+    call_stack.reverse.each do |frame|
       next unless (name = frame[:name])
       @stdout.puts "#{name.filename}##{name.line}"
       code = @compiler.source[name.filename].split("\n")[name.line - 1]
@@ -84,9 +86,21 @@ class Program
     end
   end
 
+  def print_call_stack_too_deep_error(e)
+    message = "Error: #{e.message}"
+    @stdout.puts(message)
+    print_call_stack(e.call_stack)
+  end
+
   def print_syntax_error(e)
     message = 'Syntax Error:' + error_details_to_s(e, @code)
     @stdout.puts(message)
+  end
+
+  def print_fatal_error(e)
+    message = "Fatal Error: #{e.message}"
+    @stdout.puts(message)
+    print_call_stack(e.call_stack)
   end
 
   def print_timings
