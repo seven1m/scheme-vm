@@ -49,3 +49,18 @@
 (assert (char-ci>=? #\b #\A))
 (assert (char-ci>=? #\b #\B))
 (assert (not (char-ci>=? #\a #\B)))
+
+(assert (char-alphabetic? #\a))
+(assert (not (char-alphabetic? #\1)))
+
+(assert (char-numeric? #\1))
+(assert (not (char-numeric? #\a)))
+
+(assert (char-whitespace? #\space))
+(assert (not (char-whitespace? #\a)))
+
+(assert (char-upper-case? #\A))
+(assert (not (char-upper-case? #\a)))
+
+(assert (char-lower-case? #\a))
+(assert (not (char-lower-case? #\A)))

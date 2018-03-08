@@ -24,20 +24,12 @@
    caaaar caaadr caadar caaddr cadaar cadadr caddar cadddr cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr
    case
    cdr
-   char?
-   char=?
-   char<?
-   char<=?
-   char>?
-   char>=?
-   char-ci=?
-   char-ci<?
-   char-ci<=?
-   char-ci>?
-   char-ci>=?
    char->integer
-   char-downcase
-   char-upcase
+   char-alphabetic? char-numeric? char-whitespace?
+   char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>?
+   char-downcase char-upcase
+   char-lower-case? char-upper-case?
+   char<=? char<? char=? char>=? char>? char?
    cond
    cons
    define
@@ -536,6 +528,36 @@
 
     (define (char-ci>=? . chars)
       (apply char>=? (map char-downcase chars)))
+
+    (define (char-upper-case? c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (and (>= i 65) (<= i 90)))))
+
+    (define (char-lower-case? c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (and (>= i 97) (<= i 122)))))
+
+    (define (char-alphabetic? c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (or
+            (and (>= i 65) (<= i 90))
+            (and (>= i 97) (<= i 122))))))
+
+    (define (char-numeric? c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (and (>= i 48) (<= i 57)))))
+
+    (define (char-whitespace? c)
+      (if (char? c)
+        (let ((i (char->integer c)))
+          (or
+            (and (>= i 9) (<= i 13))
+            (= i 32)
+            (= i 133)))))
 
     (define (equal? a b)
       (cond
