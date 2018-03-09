@@ -176,16 +176,16 @@ describe Program do
         subject.run
         stdout.rewind
         expect(stdout.read).to eq(
-          "Error: call stack too deep\n" \
+          "Error: call stack too deep\n\n" \
           "#{__FILE__}#6\n" \
           "          (fib (- n 1))\n" \
-          "           ^\n" \
+          "           ^ call stack too deep\n" \
           "#{__FILE__}#6\n" \
           "          (fib (- n 1))\n" \
-          "           ^\n" \
+          "           ^ call stack too deep\n" \
           "#{__FILE__}#8\n" \
           "  (fib 3)\n" \
-          "   ^\n"
+          "   ^ call stack too deep\n"
         )
       end
     end
@@ -246,7 +246,7 @@ describe Program do
         subject.run
         stdout.rewind
         expect(stdout.read).to eq(
-          "Error: 1 is not callable\n" \
+          "Error: 1 is not callable\n\n" \
             "#{__FILE__}#4\n" \
             "  (foo)\n" \
             "   ^ 1 is not callable\n"

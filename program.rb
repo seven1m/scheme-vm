@@ -12,12 +12,11 @@ class Program
     @filename = filename
     @args = args
     @stdout = stdout
-    @code = code
     start_parse = Time.now
     @compiler = Compiler.new(code, filename: filename)
     @total_parse = Time.now - start_parse
   rescue Parser::ParseError => e
-    print_syntax_error(e)
+    print_syntax_error(e, code)
     @error_parsing = true
   end
 
@@ -34,10 +33,10 @@ class Program
     print_timings if ENV['PRINT_TIMINGS']
     vm.return_value
   rescue VM::VariableUndefined => e
-    print_variable_undefined_error(e)
+    print_general_error(e)
     EXIT_CODE_VAR_UNDEFINED
   rescue VM::CallStackTooDeep => e
-    print_call_stack_too_deep_error(e)
+    print_fatal_error(e)
     EXIT_CODE_STACK_TOO_DEEP
   rescue VM::FatalError => e
     print_fatal_error(e)
@@ -60,47 +59,30 @@ class Program
     @vm ||= VM.new(stdout: @stdout, args: @args)
   end
 
-  def print_variable_undefined_error(e)
-    message = "Error: #{e.message}"
-    message += error_details_to_s(e)
-    @stdout.puts(message)
+  def print_general_error(e)
+    code = @compiler.source[e.filename]
+    VM::SourceCodeErrorPrinter.new(
+      title: "Error: #{e.message}",
+      code: code,
+      error: e
+    ).print(@stdout)
   end
 
-  def error_details_to_s(e, code = nil)
-    return '' unless e.filename && e.filename != ''
-    return '' unless (code ||= @compiler.source[e.filename])
-    lines_range = (e.line - 2)..(e.line - 1)
-    code = code.split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
-    line = "#{e.filename}##{e.line}"
-    pointer = " #{' ' * e.column}^ #{e.message}"
-    "\n\n#{line}\n\n#{code}\n#{pointer}"
-  end
-
-  def print_call_stack(call_stack, message = nil)
-    call_stack.reverse.each do |frame|
-      next unless (name = frame[:name] || frame[:orig_name])
-      @stdout.puts "#{name.filename}##{name.line}"
-      code = @compiler.source[name.filename].split("\n")[name.line - 1]
-      @stdout.puts "  #{code}"
-      @stdout.puts " #{' ' * name.column}^#{' ' + message if message}"
-    end
-  end
-
-  def print_call_stack_too_deep_error(e)
-    message = "Error: #{e.message}"
-    @stdout.puts(message)
-    print_call_stack(e.call_stack)
-  end
-
-  def print_syntax_error(e)
-    message = 'Syntax Error:' + error_details_to_s(e, @code)
-    @stdout.puts(message)
+  def print_syntax_error(e, code)
+    VM::SourceCodeErrorPrinter.new(
+      title: "Syntax Error:",
+      code: code,
+      error: e
+    ).print(@stdout)
   end
 
   def print_fatal_error(e)
-    message = "Error: #{e.message}"
-    @stdout.puts(message)
-    print_call_stack(e.call_stack, e.message)
+    VM::CallStackPrinter.new(
+      title: "Error: #{e.message}",
+      call_stack: e.call_stack,
+      compiler: @compiler,
+      message: e.message
+    ).print(@stdout)
   end
 
   def print_timings
