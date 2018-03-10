@@ -15,7 +15,7 @@ class Compiler
     def do_include(paths, relative_to, options)
       paths.map do |path|
         raise "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
-        filename = "#{$1}.scm"
+        filename = $1
         sexps = parse_file(filename, relative_to: relative_to)
         compile_sexps(sexps, options: options)
       end
@@ -95,7 +95,7 @@ class Compiler
 
     def include_library_if_needed(name, relative_to, options)
       return [] if @libs.key?(name)
-      do_include(["\"#{name}\""], relative_to, options)
+      do_include(["\"#{name}.scm\""], relative_to, options)
     end
 
     def do_define_library((name, *declarations), options)

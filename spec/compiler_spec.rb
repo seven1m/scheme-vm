@@ -348,7 +348,7 @@ describe Compiler do
     context 'variable out of scope' do
       let(:erroring_ast) do
         [
-          [VM::Atom.new('include', __FILE__), '"./fixtures/library-test"'],
+          [VM::Atom.new('include', __FILE__), '"./fixtures/library-test.scm"'],
           ['lambda', [],
             'n'],
           ['define', 'n', '10']
@@ -1129,7 +1129,7 @@ describe Compiler do
         let(:ast) do
           [
             [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
-            [VM::Atom.new('include', __FILE__), '"./fixtures/include-test"'],
+            [VM::Atom.new('include', __FILE__), '"./fixtures/include-test.scm"'],
             '"hello from main"'
           ]
         end
@@ -1153,7 +1153,7 @@ describe Compiler do
       context 'given a path to a library' do
         let(:erroring_ast) do
           [
-            [VM::Atom.new('include', __FILE__), '"./fixtures/library-test"'],
+            [VM::Atom.new('include', __FILE__), '"./fixtures/library-test.scm"'],
             ['macro']
           ]
         end

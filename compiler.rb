@@ -10,7 +10,7 @@ require 'pry'
 
 class Compiler
   ROOT_PATH = VM::ROOT_PATH
-  LOAD_PATH = [File.join(ROOT_PATH, 'lib'), File.join(ROOT_PATH, 'spec')].freeze
+  LOAD_PATH = [File.join(ROOT_PATH, 'lib')].freeze
 
   include Compiler::Libraries
   include Compiler::Lib::Scheme::Base

@@ -1,6 +1,8 @@
 (import (scheme base)
         (assert))
 
+(include "../fixtures/library-test.scm")
+
 ; import all
 (begin
   (import (fixtures library-test))
