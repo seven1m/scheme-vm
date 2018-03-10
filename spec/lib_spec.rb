@@ -1,24 +1,17 @@
 require_relative './spec_helper'
-require_relative './support/dumpable_string_io'
 require 'stringio'
-
-out = DumpableStringIO.new
-program = Program.new('(import (scheme base) (assert))', stdout: out)
-program.run
-cached_program = Marshal.dump(program)
 
 Dir[File.expand_path('../lib/**/*.scm', __FILE__)].each do |path|
   describe File.split(path).last do
-    code = File.read(path).sub(/\(import \(scheme base\)\s+\(assert\)\s*\)/, '')
+    code = File.read(path)
     focus = !(code =~ /^;; focus/).nil? || ENV['SCM_FILE'] == path[-ENV['SCM_FILE'].to_s.size..-1]
     skip = !(code =~ /^;; skip/).nil?
     debug = code =~ /^;; debug/ ? 2 : 0
     it 'passes all tests', focus: focus, skip: skip do
-      out = DumpableStringIO.new
-      program = Marshal.load(cached_program)
-      program.filename = path
-      program.stdout = out
-      program.run(code: code, debug: debug)
+      out = StringIO.new
+      program = Program.new(code, filename: path, stdout: out)
+      program.debug = debug
+      program.run
       out.rewind
       result = out.read
       raise result unless result == ''

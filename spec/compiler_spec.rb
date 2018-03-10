@@ -1,20 +1,22 @@
 require_relative './spec_helper'
 
 describe Compiler do
-  before(:all) do
-    base_compiler = described_class.new(filename: __FILE__)
-    base_compiler.compile('(import (scheme base))')
-    @compiler_cache = Marshal.dump(base_compiler)
-  end
+  let(:ast)     { [] }
+  let(:out)     { StringIO.new }
+  let(:program) { Program.new('', stdout: out) }
 
-  subject { Marshal.load(@compiler_cache) }
+  subject { described_class.new(ast, filename: __FILE__, program: program) }
+
+  before do
+    @result = subject.compile
+  end
 
   describe '#compile' do
     context 'number' do
-      before do
-        @result = subject.compile(<<-END)
-          1
-        END
+      let(:ast) do
+        [
+          '1'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -27,11 +29,11 @@ describe Compiler do
     end
 
     context '#t' do
-      before do
-        @result = subject.compile(<<-END)
-          #t
-          #true
-        END
+      let(:ast) do
+        [
+          '#t',
+          '#true'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -46,11 +48,11 @@ describe Compiler do
     end
 
     context '#f' do
-      before do
-        @result = subject.compile(<<-END)
-          #f
-          #false
-        END
+      let(:ast) do
+        [
+          '#f',
+          '#false'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -65,10 +67,10 @@ describe Compiler do
     end
 
     context '"a string"' do
-      before do
-        @result = subject.compile(<<-END)
-          "a string"
-        END
+      let(:ast) do
+        [
+          '"a string"'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -82,10 +84,11 @@ describe Compiler do
     end
 
     context 'a . pair' do
-      before do
-        @result = subject.compile(<<-END)
-          (quote (1 . 2))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['quote', ['1', '.', '2']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -100,19 +103,19 @@ describe Compiler do
     end
 
     context 'character #\c' do
-      before do
-        @result = subject.compile(<<-END)
-          #\\c
-          #\\space
-          #\\newline
-          #\\alarm
-          #\\backspace
-          #\\delete
-          #\\escape
-          #\\null
-          #\\return
-          #\\tab
-        END
+      let(:ast) do
+        [
+          '#\c',
+          '#\space',
+          '#\newline',
+          '#\alarm',
+          '#\backspace',
+          '#\delete',
+          '#\escape',
+          '#\null',
+          '#\return',
+          '#\tab'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -133,10 +136,11 @@ describe Compiler do
     end
 
     context 'list->string' do
-      before do
-        @result = subject.compile(<<-END)
-          (list->string (list #\\a #\\b))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['list->string', ['list', '#\a', '#\b']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -155,10 +159,11 @@ describe Compiler do
     end
 
     context 'append' do
-      before do
-        @result = subject.compile(<<-END)
-          (append (list 1 2) (list 3 4))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['append', ['list', '1', '2'], ['list', '3', '4']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -180,10 +185,11 @@ describe Compiler do
     end
 
     context 'car' do
-      before do
-        @result = subject.compile(<<-END)
-          (car (list 1 2 3))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['car', ['list', '1', '2', '3']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -201,10 +207,11 @@ describe Compiler do
     end
 
     context 'cdr' do
-      before do
-        @result = subject.compile(<<-END)
-          (cdr (list 1 2 3))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['cdr', ['list', '1', '2', '3']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -222,10 +229,11 @@ describe Compiler do
     end
 
     context 'cons' do
-      before do
-        @result = subject.compile(<<-END)
-          (cons 1 (list 2 3))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['cons', '1', ['list', '2', '3']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -243,10 +251,11 @@ describe Compiler do
     end
 
     context 'set-car!' do
-      before do
-        @result = subject.compile(<<-END)
-          (set-car! (quote (1 . 2)) 3)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['set-car!', ['quote', ['1', '.', '2']], '3']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -262,10 +271,11 @@ describe Compiler do
     end
 
     context 'set-cdr!' do
-      before do
-        @result = subject.compile(<<-END)
-          (set-cdr! (quote (1 . 2)) 3)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['set-cdr!', ['quote', ['1', '.', '2']], '3']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -281,10 +291,11 @@ describe Compiler do
     end
 
     context 'null?' do
-      before do
-        @result = subject.compile(<<-END)
-          (null? (list))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['null?', ['list']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -299,16 +310,17 @@ describe Compiler do
     end
 
     context 'variables' do
-      before do
-        @result = subject.compile(<<-END)
-          (define x 8)
-          ((lambda ()
-            (define y 10)
-            (set! y 11)
-            (set! x 9)
-            y))
-          x
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define', 'x', '8'],
+          [['lambda', [],
+            ['define', 'y', '10'],
+            ['set!', 'y', '11'],
+            ['set!', 'x', '9'],
+            'y']],
+          'x'
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -334,23 +346,28 @@ describe Compiler do
     end
 
     context 'variable out of scope' do
+      let(:erroring_ast) do
+        [
+          [VM::Atom.new('include', __FILE__), '"./fixtures/library-test"'],
+          ['lambda', [],
+            'n'],
+          ['define', 'n', '10']
+        ]
+      end
+
       it 'fails to compile' do
-        expect {
-          subject.compile(<<-END)
-            (lambda ()
-              n)
-            (define n 10)
-          END
-        }.to raise_error(VM::VariableUndefined)
+        compiler = described_class.new(erroring_ast, filename: __FILE__, program: program)
+        expect { compiler.compile }.to raise_error(VM::VariableUndefined)
       end
     end
 
     context 'quote' do
       context 'given a list' do
-        before do
-          @result = subject.compile(<<-END)
-            (quote (foo 2 3 (write 4)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quote', ['foo', '2', '3', ['write', '4']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -371,10 +388,11 @@ describe Compiler do
       end
 
       context 'given an empty list' do
-        before do
-          @result = subject.compile(<<-END)
-            (quote ())
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quote', []]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -388,10 +406,11 @@ describe Compiler do
       end
 
       context 'given an atom' do
-        before do
-          @result = subject.compile(<<-END)
-            (quote foo)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quote', 'foo']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -406,10 +425,11 @@ describe Compiler do
 
     context 'quasiquote' do
       context 'given a simple list' do
-        before do
-          @result = subject.compile(<<-END)
-            (quasiquote (foo 2 3 (write 4)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quasiquote', ['foo', '2', '3', ['write', '4']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -430,10 +450,11 @@ describe Compiler do
       end
 
       context 'given a list containing an unquote expression' do
-        before do
-          @result = subject.compile(<<-END)
-            (quasiquote (list 1 (unquote (+ 2 3))))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quasiquote', ['list', '1', ['unquote', ['+', '2', '3']]]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -452,10 +473,11 @@ describe Compiler do
       end
 
       context 'given a list containing an unquote-splicing expression' do
-        before do
-          @result = subject.compile(<<-END)
-            (quasiquote (list 1 (unquote-splicing (list 2 3))))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['quasiquote', ['list', '1', ['unquote-splicing', ['list', '2', '3']]]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -473,11 +495,12 @@ describe Compiler do
       end
 
       context 'given a list containing an unquoted variable' do
-        before do
-          @result = subject.compile(<<-END)
-            (define foo 2)
-            (quasiquote (list 1 (unquote foo)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'foo', '2'],
+            ['quasiquote', ['list', '1', ['unquote', 'foo']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -498,10 +521,11 @@ describe Compiler do
 
     context 'define' do
       context '<variable> <expression>' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x 1)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x', '1']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -514,11 +538,12 @@ describe Compiler do
       end
 
       context '(<variable> <formals>) <body>' do
-        before do
-          @result = subject.compile(<<-END)
-            (define (fn x y)
-              (list x y))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', ['fn', 'x', 'y'],
+              ['list', 'x', 'y']]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -541,11 +566,12 @@ describe Compiler do
       end
 
       context '(<variable> . <formal>) <body>' do
-        before do
-          @result = subject.compile(<<-END)
-            (define (fn . x)
-              x)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', ['fn', '.', 'x'],
+              'x']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -565,11 +591,12 @@ describe Compiler do
 
     context 'lambda' do
       context 'not storing in a variable or passing to a function' do
-        before do
-          @result = subject.compile(<<-END)
-            (lambda ()
-              (define x 1))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['lambda', [],
+              ['define', 'x', '1']]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -586,12 +613,13 @@ describe Compiler do
       end
 
       context 'storing in a variable' do
-        before do
-          @result = subject.compile(<<-END)
-            (define myfn
-              (lambda ()
-                (define x 1)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'myfn',
+              ['lambda', [],
+                ['define', 'x', '1']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -608,15 +636,16 @@ describe Compiler do
       end
 
       context 'mixed variable storage' do
-        before do
-          @result = subject.compile(<<-END)
-            (define one
-              (lambda ()
-                (lambda () 1)
-                (define two
-                  (lambda () 2))
-                (lambda () 3)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'one',
+              ['lambda', [],
+                ['lambda', [], '1'],
+                ['define', 'two',
+                  ['lambda', [], '2']],
+                ['lambda', [], '3']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -645,12 +674,13 @@ describe Compiler do
       end
 
       context 'with return value' do
-        before do
-          @result = subject.compile(<<-END)
-            (lambda ()
-              1
-              2)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['lambda', [],
+              '1',
+              '2']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -670,13 +700,14 @@ describe Compiler do
 
     context 'call' do
       context 'without args' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x
-              (lambda ()
-                1))
-            (x)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x',
+              ['lambda', [],
+                '1']],
+            ['x']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -694,12 +725,13 @@ describe Compiler do
       end
 
       context 'with args' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x
-              (lambda (y z) ()))
-            (x 2 4)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x',
+              ['lambda', ['y', 'z'], []]],
+            ['x', '2', '4']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -725,12 +757,13 @@ describe Compiler do
       end
 
       context 'with variable args' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x
-              (lambda args ()))
-            (x 2 4)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x',
+              ['lambda', 'args', []]],
+            ['x', '2', '4']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -754,12 +787,13 @@ describe Compiler do
       end
 
       context 'with destructuring args' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x
-              (lambda (first second . rest) ()))
-            (x 2 3 4 5)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x',
+              ['lambda', ['first', 'second', '.', 'rest'], []]],
+            ['x', '2', '3', '4', '5']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -789,10 +823,11 @@ describe Compiler do
       end
 
       context 'calling immediately' do
-        before do
-          @result = subject.compile(<<-END)
-            ((lambda (x) x) 1)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            [['lambda', ['x'], 'x'], '1']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -813,12 +848,13 @@ describe Compiler do
       end
 
       context 'calling self' do
-        before do
-          @result = subject.compile(<<-END)
-            (define x
-              (lambda ()
-                (x)))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'x',
+              ['lambda', [],
+                ['x']]]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -836,10 +872,11 @@ describe Compiler do
     end
 
     context 'call/cc' do
-      before do
-        @result = subject.compile(<<-END)
-          (call/cc (lambda (k) 1))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['call/cc', ['lambda', ['k'], '1']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -857,11 +894,12 @@ describe Compiler do
     end
 
     context 'apply' do
-      before do
-        @result = subject.compile(<<-END)
-          (define (foo))
-          (apply foo (list 1 2))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define', ['foo']],
+          ['apply', 'foo', ['list', '1', '2']]
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -884,10 +922,11 @@ describe Compiler do
     end
 
     context 'list' do
-      before do
-        @result = subject.compile(<<-END)
-          (list 1 2)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['list', '1', '2']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -903,10 +942,11 @@ describe Compiler do
     end
 
     context 'eq?' do
-      before do
-        @result = subject.compile(<<-END)
-          (eq? 1 1)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['eq?', '1', '1']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -922,11 +962,12 @@ describe Compiler do
 
     context 'if' do
       context 'given value is not used' do
-        before do
-          @result = subject.compile(<<-END)
-            (if #t 2 3)
-            0
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['if', '#t', '2', '3'],
+            '0'
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -945,10 +986,11 @@ describe Compiler do
       end
 
       context 'given value is used' do
-        before do
-          @result = subject.compile(<<-END)
-            (write-string (if #t 2 3))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['write-string', ['if', '#t', '2', '3']]
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -968,11 +1010,12 @@ describe Compiler do
       end
 
       context 'inside a function body' do
-        before do
-          @result = subject.compile(<<-END)
-            (lambda ()
-              (if #t 2 3))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['lambda', [],
+              ['if', '#t', '2', '3']]
+          ]
         end
 
         it 'compiles into vm instructions, optimizing out the JUMP with a RETURN' do
@@ -993,10 +1036,11 @@ describe Compiler do
       end
 
       context 'without else' do
-        before do
-          @result = subject.compile(<<-END)
-            (if #f #f)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['if', '#f', '#f']
+          ]
         end
 
         it 'compiles into vm instructions, adding PUSH_UNDEF for else' do
@@ -1015,16 +1059,17 @@ describe Compiler do
 
     context 'define-syntax' do
       context 'at the top level' do
-        before do
-          @result = subject.compile(<<-END)
-            (define local-foo 1)
-            (define-syntax macro-foo (syntax-rules () ()))
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['define', 'local-foo', '1'],
+            ['define-syntax', 'macro-foo', ['syntax-rules', [], []]],
 
-            (define-syntax and
-              (syntax-rules ()
-                ((and) #t)))
-            (and)
-          END
+            ['define-syntax', 'and',
+              ['syntax-rules', [],
+                [['and'], '#t']]],
+            ['and']
+          ]
         end
 
         it 'stores the transformer in the top-level syntax accessor' do
@@ -1051,14 +1096,15 @@ describe Compiler do
       end
 
       context 'inside a lambda' do
-        before do
-          @result = subject.compile(<<-END)
-            (lambda ()
-              (define-syntax my-and
-                (syntax-rules ()
-                  ((my-and) #t)))
-              (and))
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            ['lambda', [],
+              ['define-syntax', 'my-and',
+                ['syntax-rules', [],
+                  [['my-and'], '#t']]],
+              ['and']]
+          ]
         end
 
         it 'does not store the transformer in the top-level syntax accessor' do
@@ -1080,15 +1126,16 @@ describe Compiler do
 
     context 'include' do
       context 'given a path' do
-        before do
-          @result = subject.compile(<<-END)
-            (include "./fixtures/include-test")
-            "hello from main"
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+            [VM::Atom.new('include', __FILE__), '"./fixtures/include-test"'],
+            '"hello from main"'
+          ]
         end
 
         it 'includes the code' do
-          expect(d(@result)).to eq([
+          expected = [
             'VM::IMPORT_LIB', 'scheme/base', 'write-string', 'write-string',
             'VM::PUSH_STR', 'hello from include-test',
             'VM::PUSH_NUM', 1,
@@ -1098,26 +1145,33 @@ describe Compiler do
             'VM::PUSH_STR', 'hello from main',
             'VM::POP',
             'VM::HALT'
-          ])
+          ]
+          expect(d(@result, skip_libs: false)[-expected.size..-1]).to eq(expected)
         end
       end
 
       context 'given a path to a library' do
+        let(:erroring_ast) do
+          [
+            [VM::Atom.new('include', __FILE__), '"./fixtures/library-test"'],
+            ['macro']
+          ]
+        end
+
         it 'does not import macros into the current namespace' do
-          expect {
-            subject.compile('(include "./fixtures/library-test") (macro)')
-          }.to raise_error(VM::VariableUndefined)
+          compiler = described_class.new(erroring_ast, filename: __FILE__, program: program)
+          expect { compiler.compile }.to raise_error(VM::VariableUndefined)
         end
       end
     end
 
     context 'exit' do
       context 'given no arguments' do
-        before do
-          @result = subject.compile(<<-END)
-            (import (only (scheme process-context) exit))
-            (exit)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', __FILE__), ['only', ['scheme', 'process-context'], 'exit']],
+            ['exit']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -1129,11 +1183,11 @@ describe Compiler do
       end
 
       context 'given an integer argument' do
-        before do
-          @result = subject.compile(<<-END)
-            (import (only (scheme process-context) exit))
-            (exit 10)
-          END
+        let(:ast) do
+          [
+            [VM::Atom.new('import', __FILE__), ['only', ['scheme', 'process-context'], 'exit']],
+            ['exit', '10']
+          ]
         end
 
         it 'compiles into vm instructions' do
@@ -1147,16 +1201,17 @@ describe Compiler do
     end
 
     context 'macro expansion' do
-      before do
-        @result = subject.compile(<<-END)
-          (define-syntax foo
-            (syntax-rules ()
-              ((foo ((name1 val1) ...))
-                (list
-                  (list "names" (quote name1)) ...
-                  (list "vals" (quote val1)) ...))))
-          (foo ((x "foo") (y "bar") (z "baz")))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define-syntax', 'foo',
+            ['syntax-rules', [],
+              [['foo', [['name1', 'val1'], '...']],
+                ['list',
+                  ['list', '"names"', ['quote', VM::Atom.new('name1')]], '...',
+                  ['list', '"vals"', ['quote', VM::Atom.new('val1')]], '...']]]],
+          ['foo', [['x', '"foo"'], ['y', '"bar"'], ['z', '"baz"']]]
+        ]
       end
 
       it 'expands the macro' do
@@ -1200,34 +1255,37 @@ describe Compiler do
     end
 
     context 'define-library and import' do
-      before do
-        @result = subject.compile(<<-END)
-          (define-library (my-lib 1)
-            (import (only (scheme base) define define-syntax))
-            (begin
-              (define foo "foo")
-              (define-syntax macro1
-                (syntax-rules ()
-                  ((macro1) 1))))
-            (export foo macro1))
-          (define-library (my-lib 2)
-            (import (only (scheme base) define define-syntax))
-            (import (my-lib 1))
-            (begin
-              (define baz "baz")
-              (define-syntax macro2
-                (syntax-rules ()
-                  ((macro2) macro1))))
-            (export foo baz macro2 (rename foo bar)))
-          (import (only (scheme base) define))
-          (import (my-lib 1) (my-lib 2))
-          (import (only (my-lib 1) foo))
-          (import (only (my-lib 1) bar)) ; wrong name
-          (import (prefix (my-lib 1) my-))
-          (import (rename (my-lib 1) (foo baz)))
-          (import (except (my-lib 2) bar))
-          (import (rename (prefix (except (my-lib 2) bar) my-) (my-foo my-baz)))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define-library', [VM::Atom.new('my-lib', filename: ''), '1'],
+            ['import', ['only', ['scheme', 'base'], 'define', 'define-syntax']],
+            ['begin',
+              ['define', 'foo', '"foo"'],
+              ['define-syntax', 'macro1',
+                ['syntax-rules', [],
+                  [['macro1'], '1']]]],
+            ['export', 'foo', 'macro1']],
+          ['define-library', [VM::Atom.new('my-lib', filename: ''), '2'],
+            ['import', ['only', ['scheme', 'base'], 'define', 'define-syntax']],
+            ['import', ['my-lib', '1']],
+            ['begin',
+              ['define', 'baz', '"baz"'],
+              ['define-syntax', 'macro2',
+                ['syntax-rules', [],
+                  [['macro2'], 'macro1']]]],
+            ['export', 'foo', 'baz', 'macro2', ['rename', 'foo', 'bar']]],
+          [VM::Atom.new('import', filename: ''), ['only', ['scheme', 'base'], 'define']],
+          [VM::Atom.new('import', filename: ''), ['my-lib', '1'], ['my-lib', '2']],
+          [VM::Atom.new('import', filename: ''), ['only', ['my-lib', '1'], 'foo']],
+          [VM::Atom.new('import', filename: ''), ['only', ['my-lib', '1'], 'bar']], # wrong name
+          [VM::Atom.new('import', filename: ''), ['prefix', ['my-lib', '1'], 'my-']],
+          [VM::Atom.new('import', filename: ''), ['rename', ['my-lib', '1'], ['foo', 'baz']]],
+          [VM::Atom.new('import', filename: ''), ['except', ['my-lib', '2'], 'bar']],
+          [VM::Atom.new('import', filename: ''), ['rename',
+                                                  ['prefix', ['except', ['my-lib', '2'], 'bar'], 'my-'],
+                                                  ['my-foo', 'my-baz']]]
+        ]
       end
 
       it 'records export names for the libraries' do
@@ -1258,7 +1316,7 @@ describe Compiler do
       end
 
       it 'compiles into vm instructions' do
-        expect(d(@result, skip_libs: false)).to eq([
+        expected = [
           'VM::SET_LIB', 'my-lib/1',
           'VM::PUSH_STR', 'foo',
           'VM::DEFINE_VAR', 'foo',
@@ -1283,20 +1341,22 @@ describe Compiler do
           'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'my-baz',
 
           'VM::HALT'
-        ])
+        ]
+        expect(d(@result, skip_libs: false)[-expected.size..-1]).to eq(expected)
       end
     end
   end
 
   context 'define-syntax and syntax-rules' do
     context 'given a template with two arguments and a nested template' do
-      before do
-        @result = subject.compile(<<-END)
-          (define-syntax listify
-            (syntax-rules ()
-              ((listify first second) (list (list first) (list second)))))
-          (listify 1 2)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define-syntax', 'listify',
+            ['syntax-rules', [],
+             [['listify', 'first', 'second'], ['list', ['list', VM::Atom.new('first')], ['list', VM::Atom.new('second')]]]]],
+          ['listify', '1', '2']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -1316,16 +1376,17 @@ describe Compiler do
     end
 
     context 'given multiple templates, recursive expansion' do
-      before do
-        @result = subject.compile(<<-END)
-          (define-syntax and
-            (syntax-rules ()
-              ((and) #t)
-              ((and test) test)
-              ((and test1 test2 ...)
-                (if test1 (and test2 ...) #f))))
-          (and 1 2 3)
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define-syntax', 'and',
+            ['syntax-rules', [],
+              [['and'], '#t'],
+              [['and', 'test'], 'test'],
+              [['and', 'test1', 'test2', '...'],
+                 ['if', VM::Atom.new('test1'), ['and', VM::Atom.new('test2'), '...'], '#f']]]],
+          ['and', '1', '2', '3']
+        ]
       end
 
       it 'compiles into vm instructions' do
@@ -1346,15 +1407,16 @@ describe Compiler do
     end
 
     context 'given multiple templates, recursive expansion' do
-      before do
-        @result = subject.compile(<<-END)
-          (define-syntax let
-            (syntax-rules ()
-              ((let ((name val) ...) body1 body2 ...)
-                ((lambda (name ...) body1 body2 ...)
-                val ...))))
-          (let ((x 1) (y 2) (z 3)) (list x y z))
-        END
+      let(:ast) do
+        [
+          [VM::Atom.new('import', filename: ''), ['scheme', 'base']],
+          ['define-syntax', 'let',
+            ['syntax-rules', [],
+              [['let', [['name', 'val'], '...'], 'body1', 'body2', '...'],
+                [['lambda', [VM::Atom.new('name'), '...'], VM::Atom.new('body1'), VM::Atom.new('body2'), '...'],
+                VM::Atom.new('val'), '...']]]],
+          ['let', [['x', '1'], ['y', '2'], ['z', '3']], ['list', 'x', 'y', 'z']]
+        ]
       end
 
       it 'compiles into vm instructions' do

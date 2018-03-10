@@ -31,7 +31,8 @@ program = if options[:script]
           end
 
 if program
-  exit program.run(debug: options[:debug])
+  program.debug = options[:debug]
+  exit program.run
 else
   puts opt_parser
 end

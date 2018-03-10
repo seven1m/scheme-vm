@@ -116,8 +116,8 @@ describe Program do
     context 'when the program fails' do
       let(:code) { 'foo' }
 
-      it 'returns 1' do
-        expect(subject.run).to eq(1)
+      it 'returns 2' do
+        expect(subject.run).to eq(2)
       end
     end
 
@@ -196,8 +196,8 @@ describe Program do
         '(foo)'
       end
 
-      it 'sets the exit code to 1' do
-        expect(subject.run).to eq(1)
+      it 'sets the exit code to 2' do
+        expect(subject.run).to eq(2)
       end
 
       it 'shows the filename, line and column of the error' do
@@ -280,8 +280,8 @@ describe Program do
         '      (()'
       end
 
-      it 'sets the exit code to 3' do
-        expect(subject.run).to eq(3)
+      it 'sets the exit code to 1' do
+        expect(subject.run).to eq(1)
       end
 
       it 'shows the filename, line and column of the error' do

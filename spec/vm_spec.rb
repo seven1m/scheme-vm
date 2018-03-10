@@ -1167,7 +1167,7 @@ describe VM do
   describe 'tail call elimination' do
     context 'when the return is in the true position of an if' do
       before do
-        c = Compiler.new(<<-END, filename: 'tce.scm')
+        ast = Parser.new(<<-END, filename: 'tce.scm').parse
           (import (only (scheme base) >= - define if))
           (import (only (scheme process-context) exit))
           (define (fn n)
@@ -1177,6 +1177,7 @@ describe VM do
               n))
           (fn 2)
         END
+        c = Compiler.new(ast, filename: 'tce.scm', program: Program.new(''))
         instr = c.compile
         subject.execute(instr)
       end
@@ -1195,7 +1196,7 @@ describe VM do
 
     context 'when the return is in the false position of an if' do
       before do
-        c = Compiler.new(<<-END, filename: 'tce.scm')
+        ast = Parser.new(<<-END, filename: 'tce.scm').parse
           (import (only (scheme base) < - define if))
           (import (only (scheme process-context) exit))
           (define (fn n)
@@ -1205,6 +1206,7 @@ describe VM do
               (fn (- n 1))))
           (fn 2)
         END
+        c = Compiler.new(ast, filename: 'tce.scm', program: Program.new(''))
         instr = c.compile
         subject.execute(instr)
       end
@@ -1223,7 +1225,7 @@ describe VM do
 
     context 'inside nested ifs' do
       before do
-        c = Compiler.new(<<-END, filename: 'tce.scm')
+        ast = Parser.new(<<-END, filename: 'tce.scm').parse
           (import (only (scheme base) >= - define if))
           (import (only (scheme process-context) exit))
           (define (fn n)
@@ -1235,6 +1237,7 @@ describe VM do
               #f))
           (fn 2)
         END
+        c = Compiler.new(ast, filename: 'tce.scm', program: Program.new(''))
         instr = c.compile
         subject.execute(instr)
       end
@@ -1253,7 +1256,7 @@ describe VM do
 
     context 'when the call uses apply' do
       before do
-        c = Compiler.new(<<-END, filename: 'tce.scm')
+        ast = Parser.new(<<-END, filename: 'tce.scm').parse
           (import (only (scheme base) >= - define if apply list))
           (import (only (scheme process-context) exit))
           (define (fn n)
@@ -1263,6 +1266,7 @@ describe VM do
               n))
           (fn 2)
         END
+        c = Compiler.new(ast, filename: 'tce.scm', program: Program.new(''))
         instr = c.compile
         subject.execute(instr)
       end

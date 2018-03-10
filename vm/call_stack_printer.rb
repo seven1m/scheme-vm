@@ -1,9 +1,9 @@
 class VM
   class CallStackPrinter
-    def initialize(title: 'Error', call_stack:, compiler:, message:)
+    def initialize(title: 'Error', call_stack:, source:, message:)
       @title = title
       @call_stack = call_stack
-      @compiler = compiler
+      @source = source
       @message = message
     end
 
@@ -12,7 +12,7 @@ class VM
       @call_stack.reverse.each do |frame|
         next unless (name = frame[:name] || frame[:orig_name])
         out << "#{name.filename}##{name.line}"
-        code = @compiler.source[name.filename].split("\n")[name.line - 1]
+        code = @source[name.filename].split("\n")[name.line - 1]
         out << "  #{code}"
         out << " #{' ' * name.column}^#{' ' + @message if @message}"
       end

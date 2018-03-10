@@ -3,35 +3,33 @@ require_relative 'compiler'
 require 'time'
 
 class Program
-  EXIT_CODE_VAR_UNDEFINED  = 1
-  EXIT_CODE_STACK_TOO_DEEP = 2
-  EXIT_CODE_SYNTAX_ERROR   = 3
+  EXIT_CODE_SYNTAX_ERROR   = 1
+  EXIT_CODE_VAR_UNDEFINED  = 2
+  EXIT_CODE_STACK_TOO_DEEP = 3
   EXIT_CODE_FATAL_ERROR    = 4
 
   def initialize(code, filename: '(unknown)', args: [], stdout: $stdout)
     @filename = filename
     @args = args
     @stdout = stdout
-    start_parse = Time.now
-    @compiler = Compiler.new(code, filename: filename)
-    @total_parse = Time.now - start_parse
-  rescue Parser::ParseError => e
-    print_syntax_error(e, code)
-    @error_parsing = true
+    @source = {}
+    @code = code
+    @debug = 0
   end
 
-  def run(code: nil, debug: 0)
-    return EXIT_CODE_SYNTAX_ERROR if @error_parsing
-    start_compile = Time.now
-    @instr = @compiler.compile(code)
-    @total_compile = Time.now - start_compile
-    VM::PrettyPrinter.new(@instr, grouped: true, ip: true).print if debug >= 1
-    vm.debug = debug
-    start_execute = Time.now
+  attr_accessor :debug
+
+  def run
+    @ast = parse(@code)
+    @compiler = Compiler.new(@ast, filename: @filename, program: self)
+    @instr = @compiler.compile
+    VM::PrettyPrinter.new(@instr, grouped: true, ip: true).print if @debug >= 1
+    vm.debug = @debug
     vm.execute(@instr)
-    @total_execute = Time.now - start_execute
-    print_timings if ENV['PRINT_TIMINGS']
     vm.return_value
+  rescue Parser::ParseError => e
+    print_syntax_error(e, @code)
+    EXIT_CODE_SYNTAX_ERROR
   rescue VM::VariableUndefined => e
     print_general_error(e)
     EXIT_CODE_VAR_UNDEFINED
@@ -53,6 +51,11 @@ class Program
     vm.stdout = io
   end
 
+  def parse(code, filename: @filename)
+    @source[filename] = code
+    Parser.new(code, filename: filename).parse
+  end
+
   private
 
   def vm
@@ -60,7 +63,7 @@ class Program
   end
 
   def print_general_error(e)
-    code = @compiler.source[e.filename]
+    code = @source[e.filename]
     VM::SourceCodeErrorPrinter.new(
       title: "Error: #{e.message}",
       code: code,
@@ -80,14 +83,8 @@ class Program
     VM::CallStackPrinter.new(
       title: "Error: #{e.message}",
       call_stack: e.call_stack,
-      compiler: @compiler,
+      source: @source,
       message: e.message
     ).print(@stdout)
-  end
-
-  def print_timings
-    puts "parse:   #{@total_parse}"
-    puts "compile: #{@total_compile}"
-    puts "execute: #{@total_execute}"
   end
 end

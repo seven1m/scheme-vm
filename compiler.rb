@@ -17,7 +17,8 @@ class Compiler
   include Compiler::Lib::Scheme::ProcessContext
   include Compiler::Lib::Scheme::Write
 
-  def initialize(code = nil, filename:, arguments: {}, load_path: LOAD_PATH)
+  def initialize(ast = nil, filename:, arguments: {}, load_path: LOAD_PATH, program:)
+    @program = program
     @variables = {}
     @filename = filename
     @arguments = arguments
@@ -26,20 +27,14 @@ class Compiler
     @locals = {}              # top-level locals (globals)
     @libs = {}                # loaded libraries
     @mangled_identifiers = {} # used for macro hygiene
-    @source = {}              # store source code for each file compiled
-    @source[filename] = code
     @sexps = []
-    @sexps += Parser.new(code, filename: filename).parse if code
+    @sexps += ast if ast
   end
 
-  attr_reader :variables, :arguments, :syntax, :source, :libs
+  attr_reader :variables, :arguments, :syntax, :libs
   attr_accessor :filename
 
-  def compile(code = nil)
-    if code
-      @source[@filename] = code
-      @sexps = Parser.new(code, filename: filename).parse
-    end
+  def compile
     compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }) + [VM::HALT]
   end
 
@@ -286,6 +281,10 @@ class Compiler
     return VM::POP unless options[:use]
   end
 
+  def source
+    @program.source
+  end
+
   def parse_file(filename, relative_to: nil)
     path = if filename.start_with?('.') && relative_to
              File.join(File.dirname(relative_to), filename)
@@ -294,7 +293,6 @@ class Compiler
            end
     raise "File #{filename} not found in load path #{@load_path.join(';')}" unless path
     code = File.read(path)
-    @source[filename] = code
-    Parser.new(code, filename: filename).parse
+    @program.parse(code, filename: filename)
   end
 end

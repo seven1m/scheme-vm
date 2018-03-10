@@ -10,7 +10,12 @@ RSpec.configure do |c|
   def d(instructions, skip_libs: true)
     pretty = VM::PrettyPrinter.new(instructions).format
     if skip_libs
-      pretty.slice_after('VM::ENDL').to_a.last
+      pretty = pretty.slice_after('VM::ENDL').to_a.last
+      if (import_index = pretty.rindex('VM::IMPORT_LIB'))
+        pretty[(import_index + 4)..-1]
+      else
+        pretty
+      end
     else
       pretty
     end
