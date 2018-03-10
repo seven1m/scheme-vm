@@ -23,9 +23,16 @@ def compile
 end
 
 def focused_tests
+  return ['spec/lib_spec.rb'] if focused_lib_spec.any?
   Dir['spec/**/*_spec.rb'].to_a.select do |path|
     !path.end_with?('lib_spec.rb') && \
       File.read(path).match(/focus:|fdescribe|fcontext|fit ['"]/) rescue nil
+  end
+end
+
+def focused_lib_spec
+  Dir['spec/lib/*.scm'].to_a.select do |path|
+    File.read(path).match(/;; focus/)
   end
 end
 
