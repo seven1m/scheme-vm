@@ -1,4 +1,5 @@
 require_relative '../vm'
+require_relative '../loader'
 
 class Compiler
   module Libraries
@@ -16,9 +17,15 @@ class Compiler
       paths.map do |path|
         raise "include expects a string, but got #{path.inspect}" unless path =~ /\A"(.+)?"\z/
         filename = $1
-        sexps = parse_file(filename, relative_to: relative_to)
+        sexps = load_and_parse_file(filename, relative_to: relative_to)
         compile_sexps(sexps, options: options)
       end
+    end
+
+    def load_and_parse_file(filename, relative_to:)
+      loader = Loader.new(filename, relative_to: relative_to)
+      loader.load
+      @program.parse(loader.code, filename: loader.path)
     end
 
     def do_import((*sets), relative_to, options)

@@ -9,20 +9,16 @@ require 'pp'
 require 'pry'
 
 class Compiler
-  ROOT_PATH = VM::ROOT_PATH
-  LOAD_PATH = [File.join(ROOT_PATH, 'lib')].freeze
-
   include Compiler::Libraries
   include Compiler::Lib::Scheme::Base
   include Compiler::Lib::Scheme::ProcessContext
   include Compiler::Lib::Scheme::Write
 
-  def initialize(ast = nil, filename:, arguments: {}, load_path: LOAD_PATH, program:)
+  def initialize(ast = nil, filename:, arguments: {}, program:)
     @program = program
     @variables = {}
     @filename = filename
     @arguments = arguments
-    @load_path = load_path
     @syntax = {}              # macro transformers
     @locals = {}              # top-level locals (globals)
     @libs = {}                # loaded libraries
@@ -283,16 +279,5 @@ class Compiler
 
   def source
     @program.source
-  end
-
-  def parse_file(filename, relative_to: nil)
-    path = if filename.start_with?('.') && relative_to
-             File.join(File.dirname(relative_to), filename)
-           else
-             @load_path.map { |p| File.join(p, filename) }.detect { |p| File.exist?(p) }
-           end
-    raise "File #{filename} not found in load path #{@load_path.join(';')}" unless path
-    code = File.read(path)
-    @program.parse(code, filename: filename)
   end
 end

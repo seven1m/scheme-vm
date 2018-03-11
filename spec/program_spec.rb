@@ -265,7 +265,7 @@ describe Program do
         stdout.rewind
         expect(stdout.read).to eq(
           "Error: foo is not defined\n\n" \
-            "./fixtures/bad-macro.scm#5\n\n" \
+            "#{File.expand_path('../fixtures/bad-macro.scm', __FILE__)}#5\n\n" \
             "    (syntax-rules ()\n" \
             "      ((bad-macro) (foo))))\n" \
             "                    ^ foo is not defined\n"
