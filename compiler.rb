@@ -14,24 +14,21 @@ class Compiler
   include Compiler::Lib::Scheme::ProcessContext
   include Compiler::Lib::Scheme::Write
 
-  def initialize(ast = nil, filename:, arguments: {}, program:)
-    @program = program
-    @variables = {}
+  def initialize(ast = nil, filename:, program:)
+    @ast = ast
     @filename = filename
-    @arguments = arguments
+    @program = program
     @syntax = {}              # macro transformers
     @locals = {}              # top-level locals (globals)
     @libs = {}                # loaded libraries
     @mangled_identifiers = {} # used for macro hygiene
-    @sexps = []
-    @sexps += ast if ast
   end
 
-  attr_reader :variables, :arguments, :syntax, :libs
+  attr_reader :syntax, :libs
   attr_accessor :filename
 
   def compile
-    compile_sexps(@sexps, options: { syntax: @syntax, locals: @locals }) + [VM::HALT]
+    compile_sexps(@ast, options: { syntax: @syntax, locals: @locals }) + [VM::HALT]
   end
 
   def mangle_identifier(name)
