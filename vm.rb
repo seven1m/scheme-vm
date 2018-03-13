@@ -302,7 +302,7 @@ class VM
   end
 
   def find_call_stack_frame_with_symbol(name)
-    @call_stack.reverse.detect { |f| f[:named_args].key?(name) }
+    @call_stack.reverse.detect { |f| f[:named_args] && f[:named_args].key?(name) }
   end
 
   def build_pair(car, cdr)

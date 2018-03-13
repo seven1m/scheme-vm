@@ -1080,44 +1080,69 @@ describe VM do
   end
 
   describe 'DEFINE_VAR' do
-    before do
-      subject.execute([
-        VM::PUSH_FUNC,
-        VM::PUSH_STR, 'func.',
-        VM::DEFINE_VAR, 'x',
-        VM::PUSH_VAR, 'x',
-        VM::INT, VM::INT_WRITE,
-        VM::POP,
-        VM::RETURN,
-        VM::ENDF,
-        VM::DEFINE_VAR, 'fn',
+    context do
+      before do
+        subject.execute([
+          VM::PUSH_FUNC,
+          VM::PUSH_STR, 'func.',
+          VM::DEFINE_VAR, 'x',
+          VM::PUSH_VAR, 'x',
+          VM::INT, VM::INT_WRITE,
+          VM::POP,
+          VM::RETURN,
+          VM::ENDF,
+          VM::DEFINE_VAR, 'fn',
 
-        VM::PUSH_VAR, 'fn',
-        VM::CALL,
+          VM::PUSH_VAR, 'fn',
+          VM::CALL,
 
-        VM::PUSH_STR, 'main.',
-        VM::DEFINE_VAR, 'x',
+          VM::PUSH_STR, 'main.',
+          VM::DEFINE_VAR, 'x',
 
-        VM::PUSH_VAR, 'x',
-        VM::INT, VM::INT_WRITE,
-        VM::POP,
+          VM::PUSH_VAR, 'x',
+          VM::INT, VM::INT_WRITE,
+          VM::POP,
 
-        VM::PUSH_VAR, 'fn',
-        VM::CALL,
+          VM::PUSH_VAR, 'fn',
+          VM::CALL,
 
-        VM::HALT
-      ])
+          VM::HALT
+        ])
+      end
+
+      it 'stores the stack value in given variable index' do
+        expect(subject.local_values['x']).to eq(
+          VM::ByteArray.new('main.')
+        )
+      end
+
+      it 'keeps locals from different call frames separate' do
+        subject.stdout.rewind
+        expect(subject.stdout.read).to eq('func.main.func.')
+      end
     end
 
-    it 'stores the stack value in given variable index' do
-      expect(subject.local_values['x']).to eq(
-        VM::ByteArray.new('main.')
-      )
-    end
+    context 'inside a library' do
+      before do
+        subject.execute([
+          VM::SET_LIB, 'my-lib',
+          VM::PUSH_FUNC,
+          VM::PUSH_ARG,
+          VM::NAME_ARG, 'x',
+          VM::PUSH_VAR, 'x',
+          VM::RETURN,
+          VM::ENDF,
+          VM::DEFINE_VAR, 'fn3',
+          VM::PUSH_VAR, 'fn3',
+          VM::DEFINE_VAR, 'fn4',
+          VM::ENDL,
+          VM::HALT
+        ])
+      end
 
-    it 'keeps locals from different call frames separate' do
-      subject.stdout.rewind
-      expect(subject.stdout.read).to eq('func.main.func.')
+      it 'stores the library and does not cause an exception' do
+        expect(subject.libs['my-lib']).to be
+      end
     end
   end
 
