@@ -10,7 +10,8 @@ class VM
       return @title unless @error.filename && @error.filename != ''
       return @title unless @code
       lines_range = (@error.line - 2)..(@error.line - 1)
-      code = @code.split("\n")[lines_range].map { |l| "  #{l}" }.join("\n")
+      lines = @code.split("\n")[lines_range]
+      code = lines && lines.map { |l| "  #{l}" }.join("\n")
       line = "#{@error.filename}##{@error.line}"
       pointer = " #{' ' * @error.column}^ #{@error.message}"
       "#{@title}\n\n#{line}\n\n#{code}\n#{pointer}"

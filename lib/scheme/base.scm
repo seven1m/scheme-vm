@@ -106,14 +106,14 @@
     (--define-native apply base_apply)
     (--define-native call-with-current-continuation base_call_cc)
     (--define-native call/cc base_call_cc)
-    (--define-native car base_car)
-    (--define-native cdr base_cdr)
+    (--define-native car-macro base_car)
+    (--define-native cdr-macro base_cdr)
     (--define-native char? base_char?)
     (--define-native char->integer base_char_to_integer)
     (--define-native cons base_cons)
     (--define-native define base_define)
     (--define-native define-syntax base_define_syntax)
-    (--define-native empty? base_null?)
+    (--define-native empty-macro base_null?)
     (--define-native eq? base_eq?)
     (--define-native if base_if)
     (--define-native integer? base_integer?)
@@ -255,6 +255,17 @@
          (and (eq? n1 n2)
               (= n2 n3 ...)))))
 
+    ; FIXME: this seems like a dirty hack
+    (define (car list)
+      (car-macro list))
+
+    ; FIXME: this seems like a dirty hack
+    (define (cdr list)
+      (cdr-macro list))
+
+    ; FIXME: this seems like a dirty hack
+    (define (empty? list)
+      (empty-macro list))
 
     (define (>= a b)
       (or (= a b) (> a b)))
@@ -610,12 +621,33 @@
     (define (odd? n)
       (= 1 (modulo n 2)))
 
-    (define (map fn l)
+    ; FIXME: not sure if this is a standard thing, but I need it below for now...
+    (define (any? fn list)
+      (cond
+       ((empty? list) #f)
+       ((fn (car list)) #t)
+       (else (any? fn (cdr list)))))
+
+    ; don't export this -- it is only used by the real map
+    (define (map-over-single-list fn l)
       (letrec ((m (lambda (l l2)
                     (if (empty? l)
                       l2
                       (m (cdr l) (cons (fn (car l)) l2))))))
         (reverse (m l '()))))
+
+    (define (map fn . lists)
+      (if (= 1 (length lists))
+        (map-over-single-list fn (car lists))
+        (letrec ((m (lambda (l l2)
+                      (if (any? empty? l)
+                        l2
+                        (let ((cars (map-over-single-list car l))
+                              (cdrs (map-over-single-list cdr l)))
+                          (m cdrs (cons (apply fn cars) l2)))))))
+          (reverse (m lists '())))))
+
+    ;(define map map-over-single-list)
 
     (define (string->number str)
       (letrec* ((digits (map (lambda (c)

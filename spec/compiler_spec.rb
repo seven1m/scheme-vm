@@ -199,8 +199,10 @@ describe Compiler do
           'VM::PUSH_NUM', '3',
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
-          'VM::CAR',
-          'VM::POP',
+          'VM::PUSH_NUM', 1,
+          'VM::SET_ARGS',
+          'VM::PUSH_VAR', 'car',
+          'VM::CALL',
           'VM::HALT'
         ])
       end
@@ -221,8 +223,10 @@ describe Compiler do
           'VM::PUSH_NUM', '3',
           'VM::PUSH_NUM', 3,
           'VM::PUSH_LIST',
-          'VM::CDR',
-          'VM::POP',
+          'VM::PUSH_NUM', 1,
+          'VM::SET_ARGS',
+          'VM::PUSH_VAR', 'cdr',
+          'VM::CALL',
           'VM::HALT'
         ])
       end
