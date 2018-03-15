@@ -1,5 +1,6 @@
 require_relative '../vm'
 require_relative '../loader'
+require_relative './import_binding'
 
 class Compiler
   module Libraries
@@ -38,32 +39,23 @@ class Compiler
       (include, bindings) = import_set_bindings(set, relative_to, options)
       [
         include,
-        bindings.map do |(library_name, internal_name, external_name, syntax)|
-          if syntax
-            options[:syntax][external_name] = syntax
+        bindings.map do |binding|
+          if binding.syntax
+            options[:syntax][binding.external_name] = binding.syntax
             []
           else
-            options[:locals][external_name] = true
-            [VM::IMPORT_LIB, library_name, internal_name, external_name]
+            options[:locals][binding.external_name] = true
+            [VM::IMPORT_LIB, binding.library_name, binding.internal_name, binding.external_name]
           end
         end
       ]
     end
 
-    # This method and import_set_all below return an array [include, bindings];
-    # bindings is an array that looks like this:
-    #
-    #     [library_name, internal_binding_name, external_binding_name, syntax]
-    #
-    # which is shortened as:
-    #
-    #     [n, i, e, s]
-    #
     def import_set_bindings(set, relative_to, options)
       return import_set_all(set, relative_to, options) unless set[1].is_a?(Array)
       (directive, source, *identifiers) = set
       (include, bindings) = import_set_bindings(source, relative_to, options)
-      available = bindings.each_with_object({}) { |(n, i, e, s), h| h[e] = [n, i, e, s] }
+      available = bindings.each_with_object({}) { |binding, hash| hash[binding.external_name] = binding }
       case directive
       when 'only'
         bindings = available.values_at(*identifiers).compact
@@ -71,11 +63,12 @@ class Compiler
         bindings = available.values_at(*(available.keys - identifiers)).compact
       when 'prefix'
         prefix = identifiers.first
-        bindings = bindings.map { |(n, i, e, s)| [n, i, prefix + e, s] }
+        bindings.each { |binding| binding.prefix = prefix }
       when 'rename'
         renamed = Hash[identifiers]
-        bindings = bindings.map do |name, internal_name, external_name, syntax|
-          [name, internal_name, renamed[external_name] || external_name, syntax]
+        bindings.each do |binding|
+          next unless (new_name = renamed[binding.external_name])
+          binding.external_name = new_name
         end
       else
         raise "unknown import directive #{directive}"
@@ -90,12 +83,12 @@ class Compiler
       [
         include,
         @libs[name][:bindings].map do |external_name, internal_name|
-          [
-            name,
-            internal_name,
-            external_name,
-            @libs[name][:syntax][internal_name]
-          ]
+          ImportBinding.new(
+            library_name: name,
+            internal_name: internal_name,
+            external_name: external_name,
+            syntax: @libs[name][:syntax][internal_name]
+          )
         end
       ]
     end
