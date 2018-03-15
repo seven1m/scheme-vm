@@ -1140,7 +1140,7 @@ describe Compiler do
 
         it 'includes the code' do
           expected = [
-            'VM::IMPORT_LIB', 'scheme/base', 'write-string', 'write-string',
+            'VM::IMPORT_LIB', 'scheme.base', 'write-string', 'write-string',
             'VM::PUSH_STR', 'hello from include-test',
             'VM::PUSH_NUM', 1,
             'VM::SET_ARGS',
@@ -1293,25 +1293,25 @@ describe Compiler do
       end
 
       it 'records export names for the libraries' do
-        expect(subject.libs['my-lib/1'][:syntax]['macro1']).to include(
+        expect(subject.libs['my-lib.1'][:syntax]['macro1']).to include(
           locals: Array,
           transformer: [
             'syntax-rules', [],
             [['macro1'], '1']
           ]
         )
-        expect(subject.libs['my-lib/1'][:bindings]).to eq(
+        expect(subject.libs['my-lib.1'][:bindings]).to eq(
           'foo'    => 'foo',
           'macro1' => 'macro1'
         )
-        expect(subject.libs['my-lib/2'][:syntax]['macro2']).to include(
+        expect(subject.libs['my-lib.2'][:syntax]['macro2']).to include(
           locals: Array,
           transformer: [
             'syntax-rules', [],
             [['macro2'], 'macro1']
           ]
         )
-        expect(subject.libs['my-lib/2'][:bindings]).to eq(
+        expect(subject.libs['my-lib.2'][:bindings]).to eq(
           'foo'    => 'foo',
           'baz'    => 'baz',
           'bar'    => 'foo',
@@ -1321,28 +1321,28 @@ describe Compiler do
 
       it 'compiles into vm instructions' do
         expected = [
-          'VM::SET_LIB', 'my-lib/1',
+          'VM::SET_LIB', 'my-lib.1',
           'VM::PUSH_STR', 'foo',
           'VM::DEFINE_VAR', 'foo',
           'VM::ENDL',
 
-          'VM::SET_LIB', 'my-lib/2',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
+          'VM::SET_LIB', 'my-lib.2',
+          'VM::IMPORT_LIB', 'my-lib.1', 'foo', 'foo',
           'VM::PUSH_STR', 'baz',
           'VM::DEFINE_VAR', 'baz',
           'VM::ENDL',
 
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
-          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'foo',
-          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'baz',
-          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'bar',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'foo',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'my-foo',
-          'VM::IMPORT_LIB', 'my-lib/1', 'foo', 'baz',
-          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'foo',
-          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'baz',
-          'VM::IMPORT_LIB', 'my-lib/2', 'foo', 'my-baz',
-          'VM::IMPORT_LIB', 'my-lib/2', 'baz', 'my-baz',
+          'VM::IMPORT_LIB', 'my-lib.1', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib.2', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib.2', 'baz', 'baz',
+          'VM::IMPORT_LIB', 'my-lib.2', 'foo', 'bar',
+          'VM::IMPORT_LIB', 'my-lib.1', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib.1', 'foo', 'my-foo',
+          'VM::IMPORT_LIB', 'my-lib.1', 'foo', 'baz',
+          'VM::IMPORT_LIB', 'my-lib.2', 'foo', 'foo',
+          'VM::IMPORT_LIB', 'my-lib.2', 'baz', 'baz',
+          'VM::IMPORT_LIB', 'my-lib.2', 'foo', 'my-baz',
+          'VM::IMPORT_LIB', 'my-lib.2', 'baz', 'my-baz',
 
           'VM::HALT'
         ]

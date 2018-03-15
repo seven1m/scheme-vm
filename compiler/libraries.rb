@@ -77,7 +77,7 @@ class Compiler
     end
 
     def import_set_all(set, relative_to, _options)
-      name = set.join('/')
+      name = set.join('.')
       isolated_options = { locals: {}, syntax: {} }
       include = include_library_if_needed(name, relative_to, isolated_options)
       [
@@ -95,11 +95,12 @@ class Compiler
 
     def include_library_if_needed(name, relative_to, options)
       return [] if @libs.key?(name)
-      do_include(["\"#{name}.scm\""], relative_to, options)
+      filename = name.tr('.', '/')
+      do_include(["\"#{filename}.scm\""], relative_to, options)
     end
 
     def do_define_library((name, *declarations), options)
-      name_as_string = name.join('/')
+      name_as_string = name.join('.')
       exports = @libs[name_as_string] = {
         syntax: {},
         bindings: {}
