@@ -1,6 +1,6 @@
 require_relative '../vm'
 require_relative '../loader'
-require_relative './import_binding'
+require_relative './import'
 
 class Compiler
   module Libraries
@@ -30,73 +30,14 @@ class Compiler
     end
 
     def do_import((*sets), relative_to, options)
-      sets.map do |set|
-        import_set(set, relative_to, options)
-      end
+      import = Import.new(import_sets: sets, options: options, relative_to: relative_to, compiler: self)
+      import.compile
     end
 
-    def import_set(set, relative_to, options)
-      (include, bindings) = import_set_bindings(set, relative_to, options)
-      [
-        include,
-        bindings.map do |binding|
-          if binding.syntax
-            options[:syntax][binding.external_name] = binding.syntax
-            []
-          else
-            options[:locals][binding.external_name] = true
-            [VM::IMPORT_LIB, binding.library_name, binding.internal_name, binding.external_name]
-          end
-        end
-      ]
-    end
-
-    def import_set_bindings(set, relative_to, options)
-      return import_set_all(set, relative_to, options) unless set[1].is_a?(Array)
-      (directive, source, *identifiers) = set
-      (include, bindings) = import_set_bindings(source, relative_to, options)
-      available = bindings.each_with_object({}) { |binding, hash| hash[binding.external_name] = binding }
-      case directive
-      when 'only'
-        bindings = available.values_at(*identifiers).compact
-      when 'except'
-        bindings = available.values_at(*(available.keys - identifiers)).compact
-      when 'prefix'
-        prefix = identifiers.first
-        bindings.each { |binding| binding.prefix = prefix }
-      when 'rename'
-        renamed = Hash[identifiers]
-        bindings.each do |binding|
-          next unless (new_name = renamed[binding.external_name])
-          binding.external_name = new_name
-        end
-      else
-        raise "unknown import directive #{directive}"
-      end
-      [include, bindings]
-    end
-
-    def import_set_all(set, relative_to, _options)
-      name = set.join('.')
-      isolated_options = { locals: {}, syntax: {} }
-      include = include_library_if_needed(name, relative_to, isolated_options)
-      [
-        include,
-        @libs[name][:bindings].map do |external_name, internal_name|
-          ImportBinding.new(
-            library_name: name,
-            internal_name: internal_name,
-            external_name: external_name,
-            syntax: @libs[name][:syntax][internal_name]
-          )
-        end
-      ]
-    end
-
-    def include_library_if_needed(name, relative_to, options)
-      return [] if @libs.key?(name)
-      filename = name.tr('.', '/')
-      do_include(["\"#{filename}.scm\""], relative_to, options)
+    def include_library_if_needed(library_name, relative_to, options)
+      return [] if @libs.key?(library_name)
+      filename = library_name.tr('.', '/') + '.scm'
+      do_include(["\"#{filename}\""], relative_to, options)
     end
 
     def do_define_library((name, *declarations), options)
