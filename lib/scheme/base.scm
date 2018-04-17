@@ -647,8 +647,6 @@
                           (m cdrs (cons (apply fn cars) l2)))))))
           (reverse (m lists '())))))
 
-    ;(define map map-over-single-list)
-
     (define (string->number str)
       (letrec* ((digits (map (lambda (c)
                               (- (char->integer c) 48))
